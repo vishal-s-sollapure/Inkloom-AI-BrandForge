@@ -230,22 +230,26 @@ With this release, our system eliminates human managers and editorial review bec
   }
 
   function saveGuidelines(guidelines) {
+    currentGuidelines = guidelines;
     try {
-      localStorage.setItem(STORAGE_KEYS.GUIDELINES, JSON.stringify(guidelines));
-      currentGuidelines = guidelines;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(STORAGE_KEYS.GUIDELINES, JSON.stringify(guidelines));
+      }
       return true;
     } catch (e) {
-      console.error('Failed to save guidelines to localStorage.', e);
-      return false;
+      console.warn('localStorage is unavailable; guidelines preserved in-memory for this session.', e);
+      return true;
     }
   }
 
   function loadHistory() {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.HISTORY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) return parsed;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem(STORAGE_KEYS.HISTORY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) return parsed;
+        }
       }
     } catch (e) {
       console.warn('Could not read history from localStorage.', e);
@@ -254,16 +258,18 @@ With this release, our system eliminates human managers and editorial review bec
   }
 
   function saveHistory(history) {
+    currentReviewHistory = history;
+    updateOverviewMetrics();
+    renderHistoryTable();
+    renderInsights();
     try {
-      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
-      currentReviewHistory = history;
-      updateOverviewMetrics();
-      renderHistoryTable();
-      renderInsights();
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+      }
       return true;
     } catch (e) {
-      console.error('Failed to save history to localStorage.', e);
-      return false;
+      console.warn('localStorage is unavailable; review history preserved in-memory for this session.', e);
+      return true;
     }
   }
 
@@ -870,7 +876,14 @@ With this release, our system eliminates human managers and editorial review bec
 
     if (sortedRules.length > 0) {
       const topRule = sortedRules[0][0];
-      adviceP.innerHTML = `<strong>High Friction Area Detected:</strong> <em>"${topRule}"</em> is your organization's most repeated brand inconsistency (${sortedRules[0][1]} times). Consider refining guidelines to provide clearer copy examples or distributing an approved facts cheat-sheet.`;
+      const strong = document.createElement('strong');
+      strong.textContent = 'High Friction Area Detected: ';
+      const em = document.createElement('em');
+      em.textContent = `"${topRule}"`;
+      const textAfter = document.createTextNode(` is your organization's most repeated brand inconsistency (${sortedRules[0][1]} times). Consider refining guidelines to provide clearer copy examples or distributing an approved facts cheat-sheet.`);
+      adviceP.appendChild(strong);
+      adviceP.appendChild(em);
+      adviceP.appendChild(textAfter);
     } else {
       adviceP.textContent = 'Guidelines are performing effectively with minimal repeated discrepancies across reviews.';
     }
@@ -1046,7 +1059,11 @@ With this release, our system eliminates human managers and editorial review bec
     DOM.detailFindingsList.innerHTML = '';
 
     if (!record.findings || record.findings.length === 0) {
-      DOM.detailFindingsList.innerHTML = '<span style="color: var(--status-success-text); font-size: 0.8rem;">✓ No policy issues detected.</span>';
+      const cleanSpan = document.createElement('span');
+      cleanSpan.style.color = 'var(--status-success-text)';
+      cleanSpan.style.fontSize = '0.8rem';
+      cleanSpan.textContent = '✓ No policy issues detected.';
+      DOM.detailFindingsList.appendChild(cleanSpan);
     } else {
       record.findings.forEach(f => {
         const item = document.createElement('div');
@@ -1055,7 +1072,18 @@ With this release, our system eliminates human managers and editorial review bec
         item.style.background = 'var(--bg-surface)';
         item.style.border = '1px solid var(--border-subtle)';
         item.style.fontSize = '0.775rem';
-        item.innerHTML = `<strong>${f.severity.toUpperCase()}:</strong> ${f.ruleTitle} <em>(${f.evidence})</em>`;
+
+        const strong = document.createElement('strong');
+        strong.textContent = `${f.severity.toUpperCase()}: `;
+
+        const titleText = document.createTextNode(`${f.ruleTitle} `);
+
+        const em = document.createElement('em');
+        em.textContent = `(${f.evidence})`;
+
+        item.appendChild(strong);
+        item.appendChild(titleText);
+        item.appendChild(em);
         DOM.detailFindingsList.appendChild(item);
       });
     }
@@ -1188,15 +1216,16 @@ With this release, our system eliminates human managers and editorial review bec
     DOM.modalConfirmApproveBtn.addEventListener('click', () => {
       if (!latestCheckResults) return;
 
+      const approvedContent = (DOM.suggestedRevisionText && DOM.suggestedRevisionText.value.trim()) || latestCheckResults.rawText;
       const record = {
         id: `rev-${Date.now()}`,
         timestamp: new Date().toISOString(),
-        title: latestCheckResults.title,
+        title: (DOM.contentTitle && DOM.contentTitle.value.trim()) || latestCheckResults.title,
         type: latestCheckResults.type,
         score: latestCheckResults.score,
         findings: latestCheckResults.findings,
-        rawText: latestCheckResults.rawText,
-        status: latestCheckResults.score >= 80 ? 'approved' : 'flagged'
+        rawText: approvedContent,
+        status: 'approved'
       };
 
       const updatedHistory = [record, ...currentReviewHistory];
@@ -1266,6 +1295,15 @@ With this release, our system eliminates human managers and editorial review bec
           overlay.classList.remove('open');
         }
       });
+    });
+
+    // Keyboard Accessibility: Close open modals on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open').forEach(modal => {
+          modal.classList.remove('open');
+        });
+      }
     });
   }
 

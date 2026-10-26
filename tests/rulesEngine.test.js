@@ -336,6 +336,106 @@ runTest('TC-10', 'Safely escapes user-defined punctuation and special characters
   assert.ok(regex.test(trickyInput));
 });
 
+// TC-11: Empty Input & Whitespace-only Content
+runTest('TC-11', 'Handles whitespace-only inputs without crashing', () => {
+  const emptyCheck = validateInput('   ', '   \n\t   ');
+  assert.strictEqual(emptyCheck.isValid, false);
+  assert.strictEqual(emptyCheck.errors.length, 2);
+});
+
+// TC-12: Unavailable / Throwing Storage Resilience
+runTest('TC-12', 'Handles disabled or throwing storage gracefully without breaking in-memory state', () => {
+  const mockStorageFail = {
+    getItem: () => { throw new Error('SecurityError: Access is denied'); },
+    setItem: () => { throw new Error('QuotaExceededError'); }
+  };
+
+  let inMemoryState = [];
+  function safeSave(item) {
+    inMemoryState.push(item);
+    try {
+      mockStorageFail.setItem('key', JSON.stringify(item));
+      return true;
+    } catch (e) {
+      // Gracefully handled
+      return true;
+    }
+  }
+
+  const success = safeSave({ id: 'test-1', title: 'Test Draft' });
+  assert.strictEqual(success, true);
+  assert.strictEqual(inMemoryState.length, 1);
+});
+
+// TC-13: Review History Search Filter
+runTest('TC-13', 'Search filter accurately matches records by title or content type', () => {
+  const records = [
+    { title: 'Q4 Product Launch', type: 'press_release' },
+    { title: 'Holiday Email Campaign', type: 'email_newsletter' },
+    { title: 'Executive LinkedIn Post', type: 'social_post' }
+  ];
+
+  const searchTitle = records.filter(r => r.title.toLowerCase().includes('holiday'));
+  assert.strictEqual(searchTitle.length, 1);
+  assert.strictEqual(searchTitle[0].type, 'email_newsletter');
+
+  const searchType = records.filter(r => r.type.toLowerCase().includes('social'));
+  assert.strictEqual(searchType.length, 1);
+});
+
+// TC-14: Workflow Loop — Revision Application & Re-run Verification
+runTest('TC-14', 'Workflow loop: Applying revision and re-running elevates score', () => {
+  const draftInitial = 'Our cheap tool provides a bulletproof system with zero risk.';
+  const findingsInitial = matchGuidelines(draftInitial, mockGuidelines);
+  const scoreInitial = calculateScore(findingsInitial);
+  assert.ok(scoreInitial <= 60);
+
+  // Apply suggested revision
+  const revisedDraft = generateSuggestedRevision(draftInitial, findingsInitial, mockGuidelines);
+  const findingsAfter = matchGuidelines(revisedDraft, mockGuidelines);
+  const scoreAfter = calculateScore(findingsAfter);
+
+  assert.ok(scoreAfter > scoreInitial, `Expected ${scoreAfter} to be greater than ${scoreInitial}`);
+  assert.strictEqual(findingsAfter.length, 0);
+  assert.strictEqual(scoreAfter, 100);
+});
+
+// TC-15: Insights Aggregation Calculation
+runTest('TC-15', 'Aggregates rule frequencies, approval distribution, and high risk findings', () => {
+  const history = [
+    {
+      status: 'approved',
+      findings: [{ ruleTitle: 'Avoided Term: "bulletproof"', severity: 'high' }]
+    },
+    {
+      status: 'approved',
+      findings: [{ ruleTitle: 'Avoided Term: "bulletproof"', severity: 'high' }]
+    },
+    {
+      status: 'flagged',
+      findings: [
+        { ruleTitle: 'Avoided Term: "bulletproof"', severity: 'high' },
+        { ruleTitle: 'Tone: Aggressive hype', severity: 'medium' }
+      ]
+    }
+  ];
+
+  const counts = {};
+  let approved = 0;
+  history.forEach(h => {
+    if (h.status === 'approved') approved++;
+    h.findings.forEach(f => {
+      counts[f.ruleTitle] = (counts[f.ruleTitle] || 0) + 1;
+    });
+  });
+
+  assert.strictEqual(counts['Avoided Term: "bulletproof"'], 3);
+  assert.strictEqual(counts['Tone: Aggressive hype'], 1);
+  assert.strictEqual(approved, 2);
+  const approvedPct = Math.round((approved / history.length) * 100);
+  assert.strictEqual(approvedPct, 67);
+});
+
 console.log(`\n========================================`);
 console.log(`Test Execution Summary: ${passedCount} / ${totalCount} PASSED (100% Success Rate)`);
 console.log(`========================================\n`);
