@@ -158,3 +158,5 @@ When evaluating BrandForge, test these key scenarios:
 ## 👥 Authors & Contribution
 
 - **Vishal** — Full-Stack Engineer, Brand Systems Architect & System Designer.
+# I n k l o o m - A I - B r a n d F o r g e  
+ 
