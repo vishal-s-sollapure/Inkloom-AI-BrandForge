@@ -1,0 +1,14 @@
+# Netlify Configuration for BrandForge (Zero-Build Static MVP)
+
+[build]
+  # Publish the root directory where index.html, styles.css, and app.js live
+  publish = "."
+  # No build command needed for Vanilla HTML5/CSS/JS
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
