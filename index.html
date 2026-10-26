@@ -1,19 +1,561 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="BrandForge by Inkloom AI - Intelligent Brand Governance Platform. Pre-publication brand compliance, tone analysis, claim verification, asset governance, and role-based review workflows." />
-    <meta name="keywords" content="brand governance, content compliance, AI brand safety, tone of voice, claim verification, pre-publication review" />
-    <title>BrandForge by Inkloom AI | Intelligent Pre-Publication Brand Governance</title>
-    <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  </head>
-  <body class="dark-theme">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrandForge | Pre-Publication Brand Governance Platform</title>
+  <meta name="description" content="BrandForge helps teams check marketing content against approved brand guidelines before publication. Built for Inkloom AI Brand Governance Challenge Round 2.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-wrapper">
+
+    <!-- Header & Brand Identity -->
+    <header class="app-header" role="banner">
+      <div class="brand-identity">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="brand-title-wrap">
+          <div class="brand-title">
+            BrandForge <span class="brand-tag">ROUND 2 MVP</span>
+          </div>
+          <div class="brand-subtitle">
+            Inkloom AI Brand Governance • Participant: Vishal S Sollapure
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="main-nav" role="tablist" aria-label="Main Navigation">
+        <button class="nav-btn active" role="tab" id="tab-btn-checker" aria-selected="true" aria-controls="view-checker" data-target="view-checker">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Brand Checker
+        </button>
+
+        <button class="nav-btn" role="tab" id="tab-btn-guidelines" aria-selected="false" aria-controls="view-guidelines" data-target="view-guidelines">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Brand Guidelines
+        </button>
+
+        <button class="nav-btn" role="tab" id="tab-btn-history" aria-selected="false" aria-controls="view-history" data-target="view-history">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Review History
+          <span class="badge" id="nav-history-count">0</span>
+        </button>
+
+        <button class="nav-btn" role="tab" id="tab-btn-insights" aria-selected="false" aria-controls="view-insights" data-target="view-insights">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Insights
+        </button>
+      </nav>
+
+      <!-- Local Demo Disclosure -->
+      <div class="header-meta">
+        <span class="demo-pill" title="Demo runs 100% in browser memory and localStorage. No external server used.">
+          <span class="demo-dot"></span>
+          Local Demo Mode (Browser Only)
+        </span>
+      </div>
+    </header>
+
+    <!-- Overview Metrics Strip (Calculated dynamically from localStorage) -->
+    <section class="overview-metrics-grid" aria-label="Dashboard Overview Metrics">
+      <div class="metric-card">
+        <div class="metric-header">Total Reviews</div>
+        <div class="metric-value" id="metric-total-reviews">0</div>
+        <div class="metric-subtext">All content audits saved in local history</div>
+      </div>
+
+      <div class="metric-card approved">
+        <div class="metric-header">Approved Content</div>
+        <div class="metric-value" id="metric-approved-reviews">0</div>
+        <div class="metric-subtext">Verified & signed off for publishing</div>
+      </div>
+
+      <div class="metric-card flagged">
+        <div class="metric-header">Flagged Reviews</div>
+        <div class="metric-value" id="metric-flagged-reviews">0</div>
+        <div class="metric-subtext">Containing high or medium findings</div>
+      </div>
+
+      <div class="metric-card outstanding">
+        <div class="metric-header">Outstanding Findings</div>
+        <div class="metric-value" id="metric-outstanding-items">0</div>
+        <div class="metric-subtext">Drafts requiring creator resolution</div>
+      </div>
+    </section>
+
+    <!-- Onboarding State Banner for First-Time Users -->
+    <aside class="onboarding-banner" id="onboarding-banner" role="region" aria-label="Quick Start Onboarding">
+      <div class="onboarding-content">
+        <h4>👋 Welcome to BrandForge Pre-Publication Governance</h4>
+        <p>
+          Prevent unapproved claims, off-brand tone, and prohibited terminology before publication. Click <strong>"Load Sample Campaign"</strong> below to test a live scenario, or enter your own draft.
+        </p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-clay btn-sm" id="btn-quick-sample">Load Sample Draft</button>
+        <button class="btn btn-secondary btn-sm" id="btn-dismiss-onboarding" aria-label="Dismiss banner">Dismiss</button>
+      </div>
+    </aside>
+
+    <!-- ===================================================================
+         TAB 1: BRAND CHECKER
+         =================================================================== -->
+    <main class="tab-view active" id="view-checker" role="tabpanel" aria-labelledby="tab-btn-checker">
+      <div class="checker-grid">
+
+        <!-- Left Column: Content Input & Editor -->
+        <section class="content-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h2>Content Draft Input</h2>
+              <p>Enter marketing copy or load a realistic scenario for deterministic brand linting</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" id="btn-load-sample" title="Loads realistic marketing copy with known brand issues">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Load Sample Campaign
+              </button>
+              <button class="btn btn-secondary btn-sm" id="btn-clear-draft" title="Clear title and content">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Metadata Fields -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="content-title">Content Title / Asset Name *</label>
+              <input type="text" id="content-title" class="form-input" placeholder="e.g. Q4 Enterprise Product Launch Announcement" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="content-type">Content Type</label>
+              <select id="content-type" class="form-select">
+                <option value="press_release">Press Release / News</option>
+                <option value="social_post">Social Media Announcement</option>
+                <option value="email_newsletter">Email Newsletter</option>
+                <option value="digital_ad">Digital Advertisement / Copy</option>
+                <option value="landing_page">Landing Page Copy</option>
+                <option value="blog_post">Thought Leadership Blog</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Text Editor -->
+          <div class="form-group">
+            <label class="form-label" for="draft-input">Draft Content to Review *</label>
+            <textarea 
+              id="draft-input" 
+              class="form-textarea" 
+              placeholder="Paste or write your marketing draft here. BrandForge will evaluate it against the active brand guidelines..."
+              rows="10"
+              required
+            ></textarea>
+
+            <div class="editor-footer">
+              <div>
+                <span>Words: <strong id="editor-word-count">0</strong></span> • 
+                <span>Characters: <strong id="editor-char-count">0</strong></span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span>Deterministic rules engine active</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary btn-lg" id="btn-run-check" style="flex: 1;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Run Brand Check
+            </button>
+          </div>
+
+          <!-- Progress feedback -->
+          <div id="check-progress" style="display: none; font-size: 0.8rem; color: var(--accent-clay); text-align: center; padding: 4px 0;">
+            Checking draft against active brand rules and verified claims...
+          </div>
+        </section>
+
+        <!-- Right Column: Results, Findings & Suggested Revision -->
+        <section class="content-card" id="results-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>Governance Findings & Recommendations</h3>
+              <p>Transparent rule matches, claim verification alerts, and suggested revision</p>
+            </div>
+          </div>
+
+          <!-- Score & Summary Bar -->
+          <div class="results-header" id="results-header-bar">
+            <div class="score-display">
+              <div class="score-badge score-high" id="compliance-score-badge" aria-label="Compliance score">
+                --
+              </div>
+              <div class="score-info">
+                <h3 id="score-status-text">Ready for Check</h3>
+                <p id="score-subtext">Click "Run Brand Check" to analyze draft content.</p>
+              </div>
+            </div>
+
+            <!-- Severity Filter Pills -->
+            <div class="findings-filters" id="findings-filters" style="display: none;">
+              <button class="filter-pill active" data-filter="all">All (<span id="filter-all-count">0</span>)</button>
+              <button class="filter-pill" data-filter="high">High (<span id="filter-high-count">0</span>)</button>
+              <button class="filter-pill" data-filter="medium">Medium (<span id="filter-med-count">0</span>)</button>
+              <button class="filter-pill" data-filter="low">Low (<span id="filter-low-count">0</span>)</button>
+            </div>
+          </div>
+
+          <!-- Findings List Container -->
+          <div class="findings-list" id="findings-list">
+            <!-- Empty initial state -->
+            <div class="empty-state" id="initial-findings-empty">
+              <div class="empty-state-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              </div>
+              <h4>No Findings to Display Yet</h4>
+              <p>Enter your content or load the sample draft on the left, then click <strong>Run Brand Check</strong>.</p>
+            </div>
+          </div>
+
+          <!-- Suggested Revision Section -->
+          <div class="suggested-revision-box" id="suggested-revision-section" style="display: none;">
+            <div class="revision-header">
+              <h4>Suggested Brand-Aligned Revision</h4>
+              <span class="revision-disclaimer">Deterministic draft • Requires human author review</span>
+            </div>
+
+            <textarea 
+              id="suggested-revision-text" 
+              class="form-textarea" 
+              rows="6" 
+              aria-label="Editable Suggested Revision"
+            ></textarea>
+
+            <div class="revision-actions">
+              <button class="btn btn-clay btn-sm" id="btn-use-suggestion" title="Replaces the left draft editor text with this suggestion">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                Use Suggested Revision
+              </button>
+
+              <button class="btn btn-secondary btn-sm" id="btn-copy-suggestion">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span id="copy-text-label">Copy Text</span>
+              </button>
+
+              <button class="btn btn-secondary btn-sm" id="btn-rerun-check">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                Re-run Check
+              </button>
+
+              <div style="margin-left: auto;">
+                <button class="btn btn-primary btn-sm" id="btn-approve-version">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Approve This Version
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+    </main>
+
+    <!-- ===================================================================
+         TAB 2: BRAND GUIDELINES EDITOR
+         =================================================================== -->
+    <section class="tab-view" id="view-guidelines" role="tabpanel" aria-labelledby="tab-btn-guidelines">
+      <div class="content-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2>Brand Guidelines Configuration</h2>
+            <p>Customize brand voice, terminology, approved facts, and verification triggers (saved in browser localStorage)</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" id="btn-restore-guidelines">Restore Defaults</button>
+            <button class="btn btn-primary btn-sm" id="btn-save-guidelines">Save Guidelines</button>
+          </div>
+        </div>
+
+        <form id="guidelines-form" onsubmit="return false;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gl-brand-name">Brand Name *</label>
+              <input type="text" id="gl-brand-name" class="form-input" required>
+              <span class="form-hint">Used to check capitalization and authorized brand nomenclature</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="gl-brand-voice">Primary Voice & Tone</label>
+              <input type="text" id="gl-brand-voice" class="form-input" placeholder="e.g. Authoritative, Empathetic, Clear, Honest">
+              <span class="form-hint">Descriptive guidance reinforced in editorial feedback</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gl-preferred-terms">Preferred Terminology (one per line or comma-separated)</label>
+              <textarea id="gl-preferred-terms" class="form-textarea code-style" rows="4"></textarea>
+              <span class="form-hint">Terms that should be used when discussing the product</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="gl-avoid-terms">Terms & Phrases to Avoid (one per line, with format: term -> replacement)</label>
+              <textarea id="gl-avoid-terms" class="form-textarea code-style" rows="4"></textarea>
+              <span class="form-hint">Format: <code>bulletproof -> resilient</code> or plain terms to flag</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gl-approved-facts">Approved Facts & Substantiated Messaging (one per line)</label>
+              <textarea id="gl-approved-facts" class="form-textarea" rows="4"></textarea>
+              <span class="form-hint">Verified statistics and official claims that do not trigger verification flags</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="gl-verification-claims">Words / Superlatives Requiring Human Verification (comma-separated)</label>
+              <textarea id="gl-verification-claims" class="form-textarea code-style" rows="4"></textarea>
+              <span class="form-hint">Flags unsupported claims such as "best", "guaranteed", "100%", "zero risk"</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="gl-accessibility-rules">Accessibility & Language Guidance</label>
+            <textarea id="gl-accessibility-rules" class="form-textarea" rows="3"></textarea>
+            <span class="form-hint">Maximum sentence length (30 words) and readability checks</span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 3: REVIEW HISTORY
+         =================================================================== -->
+    <section class="tab-view" id="view-history" role="tabpanel" aria-labelledby="tab-btn-history">
+      <div class="content-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2>Local Review History</h2>
+            <p>Audits and approvals stored securely in your browser's local storage</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-danger btn-sm" id="btn-clear-history">Clear History</button>
+          </div>
+        </div>
+
+        <div class="history-controls">
+          <input type="text" id="history-search-input" class="form-input history-search-input" placeholder="Search by title or content type...">
+          <div style="font-size: 0.775rem; color: var(--text-muted);">
+            Stored locally in this browser. Not shared across devices.
+          </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="history-table-wrapper">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Content Title</th>
+                <th>Type</th>
+                <th>Compliance Score</th>
+                <th>Findings</th>
+                <th>Status</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty History State -->
+        <div class="empty-state" id="history-empty-state" style="display: none;">
+          <div class="empty-state-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h4>No Review History Found</h4>
+          <p>Run your first brand check and approve or record it to see local review history.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 4: INSIGHTS & GOVERNANCE DRIFT
+         =================================================================== -->
+    <section class="tab-view" id="view-insights" role="tabpanel" aria-labelledby="tab-btn-insights">
+      <div class="content-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2>Governance Insights & Guideline Gap Detection</h2>
+            <p>Aggregated patterns derived from actual stored review history</p>
+          </div>
+          <div>
+            <button class="btn btn-secondary btn-sm" id="btn-toggle-demo-insights">
+              Toggle Demo Analytics Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Insights Container -->
+        <div id="insights-content-area">
+          <div class="insights-grid">
+            
+            <!-- Insight 1: Most Frequently Triggered Rules -->
+            <div class="insight-card">
+              <div class="insight-card-header">
+                <h4>Most Frequently Triggered Rules</h4>
+              </div>
+              <div class="insight-list" id="insights-frequent-rules">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+
+            <!-- Insight 2: High Priority Unresolved Findings -->
+            <div class="insight-card">
+              <div class="insight-card-header">
+                <h4>High-Priority Governance Risks</h4>
+              </div>
+              <div class="insight-list" id="insights-high-risks">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+
+            <!-- Insight 3: Approval Ratio & Status Distribution -->
+            <div class="insight-card">
+              <div class="insight-card-header">
+                <h4>Approval & Review Distribution</h4>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;" id="insights-distribution-bars">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+
+            <!-- Insight 4: Potential Guideline Gaps & Advice -->
+            <div class="insight-card">
+              <div class="insight-card-header">
+                <h4>Guideline Gap & Clarity Recommendations</h4>
+              </div>
+              <div id="insights-guideline-advice" style="font-size: 0.825rem; color: var(--text-secondary); line-height: 1.5;">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Empty Insights State -->
+        <div class="empty-state" id="insights-empty-state" style="display: none;">
+          <div class="empty-state-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <h4>Insufficient Review Data for Real Insights</h4>
+          <p>Run brand checks and approve reviews to build local governance intelligence, or click <strong>"Toggle Demo Analytics Data"</strong> to preview data visualizations.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- App Footer -->
+    <footer class="app-footer" role="contentinfo">
+      <div>
+        <strong>BrandForge</strong> • Inkloom AI Brand Governance Challenge (Round 2 MVP)
+      </div>
+      <div>
+        Built with HTML5, CSS3, & Vanilla JavaScript • Zero build step • 100% Client-Side Privacy
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ===================================================================
+       MODAL DIALOGS
+       =================================================================== -->
+
+  <!-- Modal: Approval Confirmation -->
+  <div class="modal-overlay" id="modal-approve" role="dialog" aria-modal="true" aria-labelledby="modal-approve-title">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-approve-title">Confirm Brand Approval</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-close="modal-approve" aria-label="Close dialog">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>You are about to sign off and approve this content for publication:</p>
+        <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <div><strong>Title:</strong> <span id="modal-approve-doc-title"></span></div>
+          <div><strong>Compliance Score:</strong> <span id="modal-approve-score"></span></div>
+          <div><strong>Outstanding Issues:</strong> <span id="modal-approve-issues"></span></div>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">
+          Note: This action records an approved entry in your browser's local review history. It does not replace independent legal counsel where required.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-approve">Cancel</button>
+        <button class="btn btn-primary" id="modal-confirm-approve-btn">Confirm & Save Approval</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Inspect History Record -->
+  <div class="modal-overlay" id="modal-history-detail" role="dialog" aria-modal="true" aria-labelledby="modal-detail-title">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-detail-title">Review Record Details</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-close="modal-history-detail" aria-label="Close dialog">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <div><strong>Date:</strong> <span id="detail-date"></span></div>
+          <div><strong>Type:</strong> <span id="detail-type"></span></div>
+          <div><strong>Status:</strong> <span id="detail-status"></span></div>
+          <div><strong>Score:</strong> <span id="detail-score"></span></div>
+        </div>
+        <div>
+          <label class="form-label">Reviewed Content Text:</label>
+          <div id="detail-content-text" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 12px; border-radius: var(--radius-sm); font-size: 0.85rem; max-height: 200px; overflow-y: auto; white-space: pre-wrap; margin-top: 4px;"></div>
+        </div>
+        <div>
+          <label class="form-label">Findings Summary (<span id="detail-findings-count">0</span>):</label>
+          <div id="detail-findings-list" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px; max-height: 180px; overflow-y: auto;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-history-detail">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Clear History Confirmation -->
+  <div class="modal-overlay" id="modal-clear-history" role="dialog" aria-modal="true" aria-labelledby="modal-clear-title">
+    <div class="modal-container" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 id="modal-clear-title">Clear Review History?</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-close="modal-clear-history" aria-label="Close dialog">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>This will permanently delete all stored review records and associated insights from this browser. This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-clear-history">Cancel</button>
+        <button class="btn btn-danger" id="modal-confirm-clear-history-btn">Clear All Records</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- Vanilla Application Logic -->
+  <script src="app.js"></script>
+</body>
 </html>

@@ -1,162 +1,197 @@
-# BrandForge by Inkloom AI
-### Intelligent Pre-Publication Brand Governance & Compliance Platform
-
-[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![WCAG 2.1](https://img.shields.io/badge/WCAG-2.1%20AA%2FAAA-10B981)](#)
-[![Zero Data Retention](https://img.shields.io/badge/Privacy-Zero%20Data%20Retention-10B981)](#)
-[![SHA-256 Seals](https://img.shields.io/badge/Verification-WebCrypto%20SHA--256-6366F1)](#)
+# BrandForge
+### Intelligent Pre-Publication Brand Governance Platform
+**Inkloom AI Brand Governance Challenge — Round 2 (The Build)**
 
 ---
 
-## 🎯 Executive Overview
+## 📌 Project Overview
 
-Growing organizations produce content across distributed teams, advertising agencies, freelance copywriters, and generative AI tools. Without centralized automated guardrails, **unsupported promotional claims, outdated statistics, off-brand terminology, and inaccessible visual assets** slip into published channels—eroding brand trust and exposing organizations to legal liability.
+**BrandForge** is a pre-publication brand governance platform that reviews marketing copy against approved brand guidelines, preferred terminology, verified facts, and tone rules before content is published.
 
-**BrandForge by Inkloom AI** is an intelligent, explainable brand-governance platform that reviews content *prior to publication* against approved guidelines, verified facts, and design standards. Instead of functioning as a black-box gatekeeper, BrandForge provides transparent citations, context-preserving rewrites, a multi-role collaborative workflow, and organizational governance analytics.
+In fast-paced organizations, marketing teams, agencies, and generative AI tools frequently introduce off-brand terminology (*"cheap tool"*, *"our bot"*), unsubstantiated superlatives (*"100% foolproof"*, *"guarantees zero risk"*), and aggressive hype that damages brand trust and creates regulatory exposure.
 
----
-
-## 📑 Official Submission Documents
-
-This repository contains comprehensive documentation corresponding to each judging round:
-
-- 📋 [**ROUND_1_THE_PLAN.md**](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/ROUND_1_THE_PLAN.md): Problem definition, empirical research, personas, system architecture, planned features, privacy/security, and impact model (100 Points).
-- 🛠️ [**ROUND_2_THE_BUILD.md**](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/ROUND_2_THE_BUILD.md): Product architecture, technical decisions, datasets/APIs, **The Three Named Improvements**, user testing evidence, and contributions (100 Points).
-- 🏆 [**ROUND_3_THE_FINISH.md**](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/ROUND_3_THE_FINISH.md): Product completeness audit, reliability benchmarks, usability evidence, ethical AI disclosures, and 2027 roadmap (100 Points).
+BrandForge solves this problem by providing an explainable, human-centered review workbench that flags issues, cites active brand rules, differentiates rule mismatches from unverified factual claims, and generates editable, brand-aligned suggested revisions.
 
 ---
 
-## 🌟 The 6 Governance Pillars Evaluated in Real-Time
+## 👥 Team & Challenge Details
 
-BrandForge analyzes content concurrently across 6 distinct dimensions:
-
-| Pillar | Focus Area | Example Flagged Issue & Resolution |
-| :--- | :--- | :--- |
-| **1. Tone & Voice** | Brand personality & demeanor | Flags aggressive hype (*"100% foolproof"*, *"literally magic"*); suggests measured enterprise phrasing. |
-| **2. Terminology** | Nomenclature & forbidden lexicons | Flags deprecated or demeaning terms (*"cheap tool"*, *"our bot"*); suggests approved brand names (*"BrandForge platform"*). |
-| **3. Facts & Claims** | Substantiation of statistics & ROI | Matches numbers against the **Approved Facts Vault**; flags unverified assertions (*"$100 billion savings"*) under FTC rules. |
-| **4. Messaging** | Strategic value proposition | Enforces required compliance disclaimers (e.g. ISO/IEC 27001 references on press releases). |
-| **5. Visual Assets** | Color fidelity & safe zones | Verifies brand palette adherence and logo safe-zone clear space (1x icon height). |
-| **6. Accessibility** | Readability & WCAG contrast | Computes Flesch-Kincaid grade level and evaluates foreground/background contrast ratios against WCAG 2.1 AA (4.5:1) and AAA (7:1). |
+- **Challenge:** Inkloom AI — Intelligent Brand Governance
+- **Project Name:** BrandForge
+- **Team Name:** BrandForge
+- **Participant:** Vishal S Sollapure
+- **Round:** 2 — Functional Minimum Viable Product (MVP)
+- **Deployment Status:** *Pending Deployment* (Ready for zero-build deployment on GitHub Pages or Netlify)
 
 ---
 
-## 🚀 The Three Named Improvements (Judging Criteria)
+## 🚀 Key Features Implemented
 
-1. **Context-Preserving Semantic Intent Engine**: Rather than robotic word-substitution, the engine analyzes rhetorical intent and syntactic context to suggest natural rewrites that preserve creator voice while eliminating legal and policy violations.
-2. **Guideline Ambiguity & Friction Radar**: Identifies brand rules that generate the most creator pushback, exemption requests, or repeat violations—turning governance into a continuous guideline improvement loop for brand custodians.
-3. **Cryptographic Pre-Publication Compliance Seal**: Issues an immutable, tamper-evident SHA-256 digital certificate binding approved text, reviewer signatures, and active brand rule versions.
+1. **Brand Checker Workbench:**
+   - Content title and format selector (Press Release, Social Post, Email, Ad, Landing Page, Blog).
+   - Rich draft editor with live word and character counters.
+   - **Load Sample Campaign:** Instantly populates realistic marketing copy with intentional brand inconsistencies for demonstration.
+2. **Explainable Deterministic Rules Engine:**
+   - Detects avoided terminology with direct replacements.
+   - Flags missing preferred brand terminology.
+   - Identifies aggressive marketing hype and out-of-character tone.
+   - Detects unsupported superlatives and promissory assertions.
+   - **Verification Needed Tagging:** Explicitly distinguishes confirmed rule mismatches from claims requiring human verification.
+   - Flags accessibility issues (sentences exceeding 30 words).
+3. **Heuristic Compliance Score:**
+   - Dynamic 0–100 score weighted by finding severity (High: -18, Medium: -8, Low: -3) with a minimum floor of 10.
+4. **Suggested Revision Generator:**
+   - Synthesizes an editable suggested revision replacing avoided terms and softening hyperbole while preserving author voice and structure.
+   - Actions to "Use Suggested Revision", "Copy Text", and "Re-run Check".
+5. **Human-in-the-Loop Approval Workflow:**
+   - Confirmation modal before signing off and recording approved content.
+6. **Brand Guidelines Configuration:**
+   - Custom editor for brand name, voice, preferred terms, avoided terms with replacements, approved facts, verification claims, and accessibility rules.
+   - Persists in browser `localStorage` with defensive fallbacks and "Restore Defaults".
+7. **Local Review History:**
+   - Searchable log of past checks with date, title, format, score, findings count, status, and an inspection modal.
+8. **Governance Insights:**
+   - Derived from real stored review history: most frequently triggered rules, high-priority unresolved findings, approval distribution, and guideline clarity advice.
 
 ---
 
-## 🏗️ System Architecture
+## 🛠️ Technology Stack & Architecture
+
+- **Structure:** HTML5 (Semantic, accessible markup)
+- **Styling:** CSS3 (Vanilla design system with a dark, polished plum, rose, and warm clay palette; responsive across desktop, tablet, and mobile; reduced-motion support)
+- **Logic:** Vanilla JavaScript (ES2022) with a modular deterministic rules engine
+- **Persistence:** Browser `localStorage` (100% client-side privacy, zero data retention)
+- **Zero Build Requirement:** No npm compilation, Node dependencies, or paid APIs required to run the application.
+
+### Project File Structure
 
 ```
-+-----------------------------------------------------------------------------------+
-|                           BRANDFORGE FRONTEND RUNTIME                             |
-|                                                                                   |
-|  [Header & Brand Vault Selector]   [Role Switcher: Creator / Manager / Legal]     |
-|                                                                                   |
-|  +------------------------+  +------------------------+  +---------------------+  |
-|  |  Pre-Publication Studio|  | Visual & WCAG Inspector|  | Brand Vault Manager |  |
-|  +------------------------+  +------------------------+  +---------------------+  |
-|  |  Review & Approvals Hub|  | Governance Analytics   |  | AI Ethics Sandbox   |  |
-|  +------------------------+  +------------------------+  +---------------------+  |
-+-----------------------------------------+-----------------------------------------+
-                                          |
-                                          v
-+-----------------------------------------------------------------------------------+
-|                        6-PILLAR CLIENT INTELLIGENCE ENGINE                        |
-|                                                                                   |
-|  * Tone & Valence Evaluator            * Terminology AST Matcher                  |
-|  * Approved Facts Verifier             * sRGB Luminance Contrast Calculator       |
-|  * Flesch-Kincaid Readability Parser   * Native Web Crypto SHA-256 Engine         |
-+-----------------------------------------+-----------------------------------------+
-                                          |
-                                          v
-+-----------------------------------------------------------------------------------+
-|                     SECURE CLIENT-SIDE VAULT & AUDIT TRAIL                        |
-|  * Zero Data Retention Guarantee (Embargoed draft content never leaves browser)   |
-|  * Rule-to-Source Citation Index                                                  |
-|  * Revision Snapshots & Cryptographic Compliance Certificates                     |
-+-----------------------------------------------------------------------------------+
+Inkloom-AI-BrandForge/
+├── index.html                 # Complete semantic application structure & layout
+├── styles.css                 # Responsive stylesheet (Plum, rose, & clay palette)
+├── app.js                     # Modular application logic & rules engine
+├── server.js                  # Optional zero-dependency local static server
+├── README.md                  # Comprehensive setup, architecture, and guide
+├── ROUND2-SUBMISSION-NOTES.md # Submission checklist & honest feature status report
+├── ROUND2-PROJECT-SUMMARY.md  # 2–3 page summary formatted for PDF conversion
+├── TEST-REPORT.md             # Empirical test results from real checks executed
+└── tests/
+    └── rulesEngine.test.js    # Automated unit test suite (10/10 passed)
 ```
 
 ---
 
-## ⚡ Quickstart Guide
+## 📐 Rules Engine & Scoring Methodology
 
-### Prerequisites
-- Node.js `v18.0+` or `v20.18+`
-- npm `v9+` or `v10+`
+BrandForge uses a transparent, deterministic rules engine:
 
-### Installation & Run
+### 1. Evaluation Functions
+- `validateInput(title, text)`: Ensures required content fields are present.
+- `matchGuidelines(text, guidelines)`: Evaluates avoided words, verification claims, tone, and sentence length.
+- `calculateScore(findings)`: Calculates the heuristic compliance score.
+- `generateSuggestedRevision(text, findings, guidelines)`: Generates a softened draft replacing flagged terms.
 
-1. Clone or open the repository:
-   ```bash
-   cd c:\Users\VISHAL\OneDrive\Desktop\Inkloom-AI-BrandForge
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Launch the development server:
-   ```bash
-   npm run dev
-   ```
-   Open your browser at: `http://localhost:5173/` (or `http://127.0.0.1:5173/`)
-
-4. Validate production build:
-   ```bash
-   npm run build
-   ```
+### 2. Scoring Formula
+The compliance score is a **heuristic indicator**, not a guarantee of legal or brand compliance:
+$$\text{Score} = \max\left(10, \; 100 - \sum \text{Deductions}\right)$$
+- **High Severity Finding:** $-18$ points (e.g. prohibited terminology, unverified absolute guarantees).
+- **Medium Severity Finding:** $-8$ points (e.g. juvenile tone, aggressive marketing hype).
+- **Low Severity Finding:** $-3$ points (e.g. sentence $>30$ words, missing official brand name).
 
 ---
 
-## 🎮 Interactive Demonstration Walkthrough
+## 💻 How to Run Locally
 
-When evaluating BrandForge, test these key scenarios:
+### Option 1: Direct File Open (Zero Dependencies)
+Simply double-click `index.html` or open it directly in any modern browser (Google Chrome, Mozilla Firefox, Microsoft Edge, Safari).
 
-1. **Test Scenario 1 (Violations & Real-Time Linting)**:
-   - Select **"⚠️ Problematic Press Release"** in the *Load Demo* dropdown in the top header.
-   - Observe the initial compliance score (~42%) and review the 6-pillar cards on the right.
-   - Click **"Guideline Rule: RULE-TERM-02"** to inspect the official rule excerpt.
-   - Click **"Apply All Safe Fixes"** to watch the text automatically update and the compliance score climb to 100%.
+### Option 2: Local Static Server (Node.js)
+If you have Node.js installed:
+```bash
+node server.js
+```
+Open your browser at `http://localhost:5173/` or `http://127.0.0.1:5173/`.
 
-2. **Test Scenario 2 (Visual WCAG & Accessibility Audit)**:
-   - Click the **"Visual & Asset Inspector"** tab.
-   - Inspect the interactive OpenGraph banner graphic, logo safe-zone guide, and WCAG 2.1 AA/AAA contrast analysis.
-   - Click on any approved color swatch to test real-time contrast calculations.
-
-3. **Test Scenario 3 (Collaborative Review & Cryptographic Seal)**:
-   - Click the **"Review & Approvals Hub"** tab.
-   - In the top header, switch the Role selector to **"Legal / Compliance"**.
-   - Click **"Approve & Issue Compliance Seal"** to trigger celebration confetti and generate an immutable SHA-256 compliance certificate.
-
-4. **Test Scenario 4 (Governance Analytics & Ambiguity Radar)**:
-   - Click the **"Governance Analytics"** tab.
-   - Explore the Brand Health Index (94%), Repeated Brand Inconsistencies chart, and the **Guideline Ambiguity & Friction Radar**.
-
-5. **Test Scenario 5 (Zero-Retention Privacy Sandbox)**:
-   - Click the **"Zero-Retention Guard"** button in the top header to inspect the AI Ethics & Privacy Disclosure.
-   - Test the live Web Crypto SHA-256 verifier with any custom phrase.
+### Option 3: Python Static Server
+```bash
+python -m http.server 5173
+```
+Open `http://localhost:5173/`.
 
 ---
 
-## 🛡️ Privacy, Security & AI Disclosure
+## 🌐 How to Deploy
 
-- **Zero Data Retention:** Content drafted inside BrandForge is analyzed client-side in an in-memory browser sandbox. Embargoed product announcements and confidential marketing drafts are never shared with or used to train third-party public foundation models.
-- **Explainability Standard:** Every flag identifies the specific guideline rule ID, rationale, and approved source excerpt.
-- **Human Authority:** The platform never automatically overrides human creative decisions without author review.
+### Deploy to GitHub Pages
+1. Push this repository to GitHub:
+   ```bash
+   git add .
+   git commit -m "feat: complete BrandForge Round 2 MVP"
+   git remote add origin https://github.com/<your-username>/BrandForge.git
+   git branch -M main
+   git push -u origin main
+   ```
+2. In your GitHub repository, navigate to **Settings** > **Pages**.
+3. Under **Build and deployment** > **Branch**, select `main` and root folder `/`. Click **Save**.
+4. Your application will be live at `https://<your-username>.github.io/BrandForge/`.
+
+### Deploy to Netlify
+1. Log in to [Netlify](https://app.netlify.com/).
+2. Drag and drop the `Inkloom-AI-BrandForge` directory into the Netlify Sites dashboard.
+3. The site will deploy instantly with a live URL.
 
 ---
 
-## 👥 Authors & Contribution
+## 🧪 Testing Instructions & Results
 
-- **Vishal** — Full-Stack Engineer, Brand Systems Architect & System Designer.
-# I n k l o o m - A I - B r a n d F o r g e  
- 
+We executed an automated unit test suite verifying the rules engine, scoring, and text utilities:
+```bash
+node tests/rulesEngine.test.js
+```
+
+### Actual Test Results (from `TEST-REPORT.md`):
+- `TC-01`: Input validation rejects empty title or content &rarr; **PASS**
+- `TC-02`: Detects prohibited terminology (`"cheap tool"`, `"bulletproof"`, `"foolproof"`) &rarr; **PASS**
+- `TC-03`: Flags unapproved promissory claims for human verification (`"guaranteed"`, `"100%"`) &rarr; **PASS**
+- `TC-04`: Flags juvenile hyperbole and aggressive hype (`"literally magic"`, `"total dominance"`) &rarr; **PASS**
+- `TC-05`: Flags sentences exceeding the 30-word accessibility limit &rarr; **PASS**
+- `TC-06`: Returns zero findings and 100% score for compliant content &rarr; **PASS**
+- `TC-07`: Deducts score by severity with floor of 10 &rarr; **PASS**
+- `TC-08`: Generates transparent deterministic replacement preserving text structure &rarr; **PASS**
+- `TC-09`: Accurately computes words and characters with whitespace handling &rarr; **PASS**
+- `TC-10`: Safely escapes user-defined punctuation and special characters &rarr; **PASS**
+
+**Result: 10 / 10 Tests Passed (100% Pass Rate).** Full details are documented in [`TEST-REPORT.md`](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/TEST-REPORT.md).
+
+---
+
+## 🔒 Privacy, Security & Disclosures
+
+- **100% Client-Side:** All checking, revision generation, and storage occurs in local browser memory and `localStorage`.
+- **Zero Third-Party Model Training:** Draft marketing copy is never transmitted across the network or shared with external LLM APIs.
+- **No Secret Exposure:** Does not require API keys or environment variables.
+- **Local Storage Advisory:** `localStorage` is suitable for local demonstration; sensitive or regulated enterprise data should not be placed in shared browser storage.
+- **No Autonomous Overrides:** BrandForge never alters author text without explicit human review and confirmation.
+
+---
+
+## ⚠️ Known Limitations of Round 2 MVP
+
+1. **Browser-Scoped Storage:** Records and guidelines reside in the active browser and do not synchronize across team members without a backend.
+2. **Language Support:** Rules and terminology checks are currently optimized for English text.
+3. **No External Fact-Checking:** BrandForge verifies text against configured brand rules; it does not claim to verify external reality or legal compliance automatically.
+
+---
+
+## 🔮 Three Major Round 3 Improvements (Roadmap)
+
+1. **Evidence-Backed AI Brand Review:**
+   - Integrate a production LLM service constrained by structured schemas and approved brand documentation with citations to exact rules.
+   - Separate confirmed rule mismatches from claims that require external factual documentation.
+2. **Collaborative Governance Workflow:**
+   - Multi-user roles (Content Creator, Brand Custodian, Legal Counsel) with approval stages and assignment queues.
+   - In-line contextual comments and side-by-side visual diff comparison.
+   - Cryptographic SHA-256 pre-publication seals.
+3. **Governance Intelligence & Analytics:**
+   - Detect recurring team-wide brand violations over time.
+   - Identify ambiguous or contradictory guidelines where authors frequently request exemptions.
