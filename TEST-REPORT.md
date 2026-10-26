@@ -7,7 +7,8 @@
 - **Participant:** Vishal S Sollapure
 - **Team:** BrandForge
 - **Local Project Path:** `C:\Users\VISHAL\OneDrive\Desktop\Inkloom-AI-BrandForge`
-- **Live Deployed URL:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
+- **Live Deployed URL:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/) *(HTTP 200 OK)*
+- **Source Code Repository:** [https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge)
 - **Target Runtime:** HTML5, CSS3, Modern Vanilla JavaScript (ES2022)
 - **Local Test Server:** `http://127.0.0.1:5173/` (HTTP 200 OK verified)
 
