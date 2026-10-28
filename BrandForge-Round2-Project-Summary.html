@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BrandForge Round 2 Project Summary</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 20mm 18mm 20mm 18mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      color: #1a1a1a;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+      font-size: 13px;
+    }
+    h1 {
+      font-size: 24px;
+      color: #180D1C;
+      border-bottom: 2px solid #D9778F;
+      padding-bottom: 6px;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 17px;
+      color: #6E3358;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 4px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 14px;
+      color: #2b2b2b;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      page-break-after: avoid;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      font-size: 12px;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #d0d0d0;
+      padding: 6px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f7f3f6;
+      color: #4a154b;
+      font-weight: 600;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 11.5px;
+      background-color: #f5f0f3;
+      color: #6E3358;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+    pre {
+      background-color: #180D1C;
+      color: #f7e8ee;
+      padding: 10px 14px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 11px;
+      line-height: 1.4;
+      page-break-inside: avoid;
+    }
+    pre code {
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+    }
+    blockquote {
+      margin: 12px 0;
+      padding: 8px 14px;
+      border-left: 4px solid #D9778F;
+      background-color: #faf5f7;
+      color: #4a4a4a;
+      font-size: 12.5px;
+      page-break-inside: avoid;
+    }
+    ul, ol {
+      margin-top: 4px;
+      margin-bottom: 12px;
+      padding-left: 22px;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #e0d0d8;
+      margin: 18px 0;
+    }
+    a {
+      color: #9c2750;
+      text-decoration: underline;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+  </style>
+</head>
+<body>
+<h1>BrandForge: Intelligent Pre-Publication Brand Governance</h1>
+<h2>Inkloom AI Brand Governance Challenge — Round 2 Project Summary</h2>
+<hr/>
+<h3>Submission Metadata & Verification Details</h3>
+<table><thead><tr><th>Attribute</th><th>Detail</th></tr></thead><tbody><tr><td><strong>Project Name</strong></td><td><strong>BrandForge</strong> — Intelligent Pre-Publication Brand Governance</td></tr><tr><td><strong>Challenge</strong></td><td>Inkloom AI Brand Governance Challenge</td></tr><tr><td><strong>Stage</strong></td><td>Round 2 — Functional Minimum Viable Product (The Build)</td></tr><tr><td><strong>Participant</strong></td><td>Vishal S Sollapure</td></tr><tr><td><strong>Team Name</strong></td><td>BrandForge</td></tr><tr><td><strong>Date</strong></td><td>October 28, 2026</td></tr><tr><td><strong>Live Deployed Application</strong></td><td><a href="https://brandforge-inkloom.netlify.app/">https://brandforge-inkloom.netlify.app/</a> <em>(HTTP 200 OK Verified)</em></td></tr><tr><td><strong>Source Code Repository</strong></td><td><a href="https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge">https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge</a> <em>(Confirmed GitHub Origin)</em></td></tr><tr><td><strong>Runtime Architecture</strong></td><td>Zero-Build Vanilla HTML5, CSS3, ES2022 JavaScript</td></tr><tr><td><strong>Automated Test Results</strong></td><td>20 / 20 Passed (100% Pass Rate via <code>node tests/rulesEngine.test.js</code>)</td></tr></tbody></table>
+<hr/>
+<h2>1. Problem Statement</h2>
+<p>Growing organizations publish high volumes of marketing copy across decentralized teams, external agencies, freelance copywriters, and generative AI drafting tools. Without pre-publication governance, brand trust and legal standing erode quickly:<br/><li value="1"><strong>Inconsistent Brand Terminology & Nomenclature:</strong> Decentralized copywriters frequently refer to flagship products using deprecated, informal, or diminished phrasing (<em>"cheap tool"</em>, <em>"our bot"</em>, <em>"unbreakable widget"</em>), diluting brand positioning and confusing prospective buyers.</li><br/><li value="2"><strong>Unsubstantiated Promotional Claims & Superlatives:</strong> Generative AI drafting tools routinely introduce unverified absolute guarantees (<em>"100% foolproof"</em>, <em>"guarantees zero risk"</em>, <em>"bulletproof security"</em>). These assertions violate truth-in-advertising regulations (e.g., FTC Act § 5, UK ASA CAP Code) and expose companies to regulatory scrutiny, class actions, and reputational backlash.</li><br/><li value="3"><strong>Tone & Demeanor Misalignment:</strong> Uncalibrated aggressive hype (<em>"literally magic"</em>, <em>"total market dominance"</em>, <em>"crush competitors"</em>) alienates enterprise decision-makers and clashes with established, authoritative brand voices.</li><br/><li value="4"><strong>Editorial Review Bottlenecks & Fatigue:</strong> Brand managers and legal teams spend disproportionate hours manually redlining routine terminology and punctuation issues across documents instead of focusing on strategic messaging and campaign impact.</li></p>
+<hr/>
+<h2>2. Proposed Solution</h2>
+<p><strong>BrandForge</strong> is an explainable, pre-publication brand governance workbench designed to intercept and evaluate marketing content <em>before</em> it is staged, scheduled, or published.</p>
+<p>Unlike black-box generative AI wrappers that produce unpredictable suggestions or hallucinated rules, BrandForge operates on a <strong>transparent, deterministic rules engine</strong> governed directly by the organization's published brand standards:<br/><ul><li><strong>Explainable Policy Attribution:</strong> Every detected issue is tied directly to an active brand rule, displaying exact matching text quotes, policy rationale, and actionable guidance.</li><br/><li><strong>Claim Verification Delineation:</strong> The platform critically separates an actual guideline violation (e.g., a prohibited term) from an unsubstantiated factual assertion that requires human evidence verification before publication (<code>isVerificationNeeded: true</code>).</li><br/><li><strong>Context-Preserving Suggested Revisions:</strong> Synthesizes an editable draft replacement that swaps out avoided terms and softens hyperbole while strictly preserving the creator's syntax, context, and intent.</li><br/><li><strong>Human-in-the-Loop Sign-Off:</strong> Revisions and approvals are strictly human-governed. BrandForge assists the reviewer; it never autonomously publishes or alters content without explicit confirmation.</li></p>
+<hr/>
+<h2>3. End-to-End Workflow</h2>
+<p>The BrandForge workflow integrates into the content lifecycle between drafting and publication:</p>
+<p>``<code><br/>┌────────────────────────────────────────────────────────────────────────┐<br/>│                        1. DRAFT INGESTION                              │<br/>│   Enter asset title, select format (Press Release, Social, Email, Ad), │<br/>│   and paste copy — or click "Load Sample Campaign" for demonstration.  │<br/>└───────────────────────────────────┬────────────────────────────────────┘<br/>                                    │<br/>                                    ▼<br/>┌────────────────────────────────────────────────────────────────────────┐<br/>│                   2. BRAND GUIDELINES RETRIEVAL                        │<br/>│   Active brand rules (preferred naming, avoided terms, tone limits,    │<br/>│   sentence thresholds) are loaded from local browser persistence.      │<br/>└───────────────────────────────────┬────────────────────────────────────┘<br/>                                    │<br/>                                    ▼<br/>┌────────────────────────────────────────────────────────────────────────┐<br/>│              3. DETERMINISTIC BRAND COMPLIANCE EVALUATION              │<br/>│   Executes regex token-matching across 5 governance dimensions:        │<br/>│   Avoided Terms, Verification Claims, Tone Hype, Brand Name, & Length. │<br/>└───────────────────────────────────┬────────────────────────────────────┘<br/>                                    │<br/>                                    ▼<br/>┌────────────────────────────────────────────────────────────────────────┐<br/>│                     4. EXPLAINABLE FINDINGS AUDIT                      │<br/>│   Displays dynamic 0–100 compliance score, categorized severity pills  │<br/>│   (High / Medium / Low), exact text quotes, and policy rationales.    │<br/>└───────────────────────────────────┬────────────────────────────────────┘<br/>                                    │<br/>                                    ▼<br/>┌────────────────────────────────────────────────────────────────────────┐<br/>│                 5. REVISION REVIEW & SYNTHESIS LOOP                    │<br/>│   Inspect synthesized revision draft. Edit directly, copy to clipboard,│<br/>│   or click "Use Suggested Revision" to re-check against guidelines.    │<br/>└───────────────────────────────────┬────────────────────────────────────┘<br/>                                    │<br/>                                    ▼<br/>┌────────────────────────────────────────────────────────────────────────┐<br/>│                     6. HUMAN APPROVAL SIGN-OFF                         │<br/>│   Reviewer confirms approval via modal dialog. Timestamped record is   │<br/>│   persisted to local Review History with full audit snapshot.          │<br/>└───────────────────────────────────┬────────────────────────────────────┘<br/>                                    │<br/>                                    ▼<br/>┌────────────────────────────────────────────────────────────────────────┐<br/>│                  7. GOVERNANCE INSIGHTS & ANALYTICS                    │<br/>│   Aggregates repeat rule violations, highlights high-risk patterns,    │<br/>│   and identifies ambiguous guidelines requiring executive clarity.     │<br/>└────────────────────────────────────────────────────────────────────────┘<br/></code>`<code></p>
+<hr/>
+<h2>4. Feature Implementation & Verification Breakdown</h2>
+<p>To ensure absolute integrity and transparency during judging, features are classified across four explicit categories:</p>
+<h3>A. Fully Implemented & Empirically Verified Features (Round 2 MVP)</h3>
+<li value="1"><strong>Brand Checker Workbench:</strong> Asset title input with 120-char limit, format selector (<em>Press Release, Social Post, Email Newsletter, Digital Ad, Landing Page, Thought Leadership Blog</em>), and copy editor with live word and character counters plus minimum word limits (&gt;= 4 words) and character limits (&lt;= 25,000 chars).</li>
+<li value="2"><strong>Realistic Sample Campaign Loader:</strong> One-click preloader populating authentic enterprise launch copy with intentional terminology, claim, and tone discrepancies.</li>
+<li value="3"><strong>Deterministic Rules Engine:</strong> Lightweight, transparent JavaScript engine evaluating avoided terminology, unapproved verification claims, aggressive tone hyperbole, missing brand naming, and sentence length (&gt;30 words).</li>
+<li value="4"><strong>Heuristic Compliance Scoring:</strong> Transparent 0–100 score weighted by finding severity (High: -18, Medium: -8, Low: -3) with a baseline floor of 10. Explicitly labeled as an editorial heuristic indicator.</li>
+<li value="5"><strong>Explainable Findings Cards with Policy Traceability:</strong> Color-coded severity badges, policy section tags (</code>guidelineSection<code>), exact matching quotes, policy violation rationales, and suggested actionable replacements.</li>
+<li value="6"><strong>Claim Verification Tagging:</strong> Distinguishes an actual rule mismatch from an unverified factual assertion requiring human documentation (</code>isVerificationNeeded: true<code>).</li>
+<li value="7"><strong>Intent-Preserving Suggested Revisions:</strong> Automated text synthesis that replaces prohibited terms and softens hyperbole while keeping sentence syntax intact; includes "Use Suggested Revision", "Copy Text", and "Re-run Check" controls.</li>
+<li value="8"><strong>Side-by-Side Visual Diff Comparison:</strong> Dedicated modal dialog displaying the original draft with removed terms highlighted in red strikethrough (</code>.diff-del<code>) alongside the revised draft with additions highlighted in green (</code>.diff-ins<code>), complete with dynamic change counts.</li>
+<li value="9"><strong>Dual-Action Human-in-the-Loop Governance:</strong></li>
+<li><strong>Explicit Approval:</strong> Confirmation modal capturing reviewer confirmation, timestamp, and audit record with </code>status: 'approved'<code>.</li>
+<li><strong>Explicit Rejection / Changes Requested:</strong> Dedicated modal enabling reviewers to request revisions with custom reviewer feedback notes, recorded with </code>status: 'rejected'<code>.</li>
+<li value="10"><strong>Structured Audit Export:</strong> Generates exportable records in both versioned machine-readable JSON (</code>brandForgeAuditVersion: '2.0-MVP'<code>) and executive Markdown formats, complete with clipboard copy and file download options.</li>
+<li value="11"><strong>Interactive Brand Guidelines Configuration:</strong> Full UI to inspect and customize brand name, voice attributes, preferred terms, avoided terms with replacements, approved facts, verification claims, accessibility rules, and visual formatting rules, complete with a tangible Good vs. Avoid editorial reference table and "Restore Defaults".</li>
+<li value="12"><strong>Searchable & Filterable Review History:</strong> Tabular audit log displaying review timestamp, title, format, compliance score, findings count, status, with real-time text search and status filter buttons (All, Approved, Changes Requested), plus batch JSON history export.</li>
+<li value="13"><strong>Inspection Modal with Direct Record Export:</strong> Reviewers can inspect past checks, view reviewer notes and policy citations, and export individual audit records as standalone JSON.</li>
+<li value="14"><strong>Governance Insights Dashboard:</strong> Real-time analytics aggregating most frequently triggered rules, unresolved high-risk findings, approval distribution, and guideline clarity suggestions. Includes an optional demo data toggle for empty state preview.</li>
+<li value="15"><strong>Defensive Storage Resilience:</strong> Full in-memory fallback mechanism ensuring application functionality even when browser </code>localStorage<code> is disabled or quota is exceeded.</li>
+<h3>B. Scoped / Partially Implemented Features</h3>
+<li value="1"><strong>Language Scope:</strong> The current lexicon, regex boundary detection, and token rules are optimized for English-language marketing copy.</li>
+<li value="2"><strong>Persistence Scope:</strong> Data is persisted client-side in browser </code>localStorage<code>. It is scoped strictly to the individual browser profile on a single device, rather than a synchronized cloud team database.</li>
+<h3>C. Excluded / Untested Features (Not Present in Round 2 MVP)</h3>
+<li value="1"><strong>No External LLM API Integration:</strong> The Round 2 MVP does not connect to third-party generative models (e.g., OpenAI, Anthropic, Gemini); it executes locally via deterministic JavaScript rules.</li>
+<li value="2"><strong>No External Fact-Checking:</strong> BrandForge evaluates text strictly against user-configured guidelines; it does not query live external web search APIs or verify real-world empirical facts.</li>
+<li value="3"><strong>No Legal Compliance Guarantee:</strong> The platform provides heuristic editorial assistance; it does not provide legal counsel or guarantee immunity under advertising laws.</li>
+<li value="4"><strong>No Raster / Image OCR:</strong> Graphic assets, banners, and video files are not parsed in this text-focused MVP.</li>
+<h3>D. Planned Roadmap Items (Round 3 — The Finish)</h3>
+<li>Multi-user role-based governance (Creator, Custodian, Legal Counsel) with assignment queues.</li>
+<li>Side-by-side visual diff comparisons with inline comment threads.</li>
+<li>Cryptographic SHA-256 pre-publication audit seals and exportable compliance certificates.</li>
+<li>Production LLM integration with structured JSON output constrained by approved documentation.</li>
+<hr/>
+<h2>5. Technology Stack & Architecture</h2>
+<p>BrandForge was architected for zero-friction evaluation, instant client-side execution, and zero deployment overhead:</p>
+<p></code>`<code><br/>[ Active Deployed Runtime: Zero-Build Static Web App ]<br/>  ├── index.html       Semantic HTML5 (Accessible landmarks, ARIA tablists, Modals)<br/>  ├── styles.css       Custom Vanilla CSS3 (Plum, rose, & clay palette; Responsive grid)<br/>  └── app.js           ES2022 JavaScript Engine (Modular architecture)<br/>         ├── Validation Module        (Input sanitation & length boundaries)<br/>         ├── Rules & Matching Engine  (Dynamic regex boundary detection)<br/>         ├── Scoring System           (Weighted severity deduction formula)<br/>         ├── Diff Comparison Engine  (Visual HTML side-by-side diff generator)<br/>         ├── Revision Synthesizer     (Context-preserving term replacement)<br/>         ├── Storage Controller       (Defensive localStorage + In-memory fallback)<br/>         └── Audit Serializer         (Versioned JSON & Markdown report export)</p>
+<p>[ Reference Scaffolding & Tooling (Repository Context) ]<br/>  ├── netlify.toml     Direct root publishing (publish = ".", command = "")<br/>  ├── package.json     Standard scripts (npm test, npm start, npm run build)<br/>  ├── server.js        Zero-dependency native Node.js static server<br/>  ├── src/             Experimental React 18 + TypeScript prototype scaffold (Reference)<br/>  └── tests/           Automated unit test suite (20 / 20 tests passed via npm test)<br/></code>`<code></p>
+<p>&gt; <strong>Architecture Clarification:</strong> The live production deployment on Netlify serves the zero-build Vanilla HTML5/CSS3/ES2022 application directly from the root (</code>index.html<code>, </code>styles.css<code>, </code>app.js<code>). The </code>src/<code> directory contains an experimental React/TypeScript scaffold explored during early prototyping. </code>npm run build<code> runs </code>tsc && vite build<code> and validates TypeScript compilation, but the active, tested, and deployed Round 2 product evaluated by judges is the zero-dependency vanilla application.</p>
+<h3>Design System & Visual Aesthetics</h3>
+BrandForge avoids generic framework templates, implementing a bespoke, professional dark theme using a <strong>plum, rose, and warm clay palette</strong>:
+<li><strong>Background Deep Plum:</strong> </code>#110913<code> (canvas) and </code>#180D1C<code> (cards / panels)</li>
+<li><strong>Primary Rose Accent:</strong> </code>#D9778F<code> (action buttons, active navigation, focus rings)</li>
+<li><strong>Warm Clay Secondary:</strong> </code>#E0A899<code> (interactive highlights, secondary buttons)</li>
+<li><strong>Deep Wine Border:</strong> </code>#6E3358<code> (subtle dividers, card outlines)</li>
+<li><strong>Typography:</strong> Inter & system sans-serif hierarchy for maximum readability.</li>
+<li><strong>Accessibility:</strong> High-contrast text ratios, visible </code>:focus-visible<code> keyboard focus rings, and </code>prefers-reduced-motion<code> compliance.</li>
+<hr/>
+<h2>6. Privacy, Storage & Security Considerations</h2>
+<li value="1"><strong>100% Client-Side Processing:</strong> All text analysis, compliance checks, and revision generation execute strictly in the local browser runtime. Draft marketing copy is never transmitted across the network, logged on external servers, or ingested into third-party AI training corpora.</li>
+<li value="2"><strong>Browser LocalStorage Scope:</strong> Persisted guidelines and review history reside in the user's local browser profile (</code>localStorage<code>). It is <strong>not</strong> a shared team database and does not sync between different users or devices without an external backend.</li>
+<li value="3"><strong>Defensive Storage Resilience:</strong> All storage operations are wrapped in safe </code>try...catch<code> handlers. If storage is blocked (e.g., strict private browsing) or quota is exhausted, the application falls back to in-memory state without crashing or dropping user sessions.</li>
+<li value="4"><strong>DOM Safety & XSS Prevention:</strong> Dynamic user-submitted evidence quotes, titles, and review notes are injected into the DOM exclusively using </code>textContent<code> and programmatic element creation, completely preventing cross-site scripting (XSS) vectors.</li>
+<hr/>
+<h2>7. Honest Implementation Status & Evolution from Round 1</h2>
+<li><strong>Refinement to Zero-Build Architecture:</strong> In Round 1, a multi-toolchain framework stack was proposed. For Round 2, we deliberately refined the architecture into a lightweight, zero-dependency browser application (</code>index.html<code>, </code>styles.css<code>, </code>app.js<code>). This eliminated build-step fragility, peer-dependency conflicts, and deployment friction, allowing immediate double-click evaluation across any browser or static host.</li>
+<li><strong>Deterministic Transparency over Simulated AI:</strong> Rather than connecting a slow, unpredictable external API or pretending to run an LLM, the MVP transparently executes deterministic JavaScript rules with exact line and rule citations.</li>
+<li><strong>Curated Enterprise Design:</strong> Replaced standard generic styling with a bespoke plum, rose, and clay palette tailored specifically for corporate governance workflows.</li>
+<hr/>
+<h2>8. Planned Round 3 Roadmap (Three Major Improvements)</h2>
+<p>The following three capabilities represent our planned roadmap for Round 3 (The Finish) and are not present in the Round 2 MVP:<br/><li value="1"><strong>Evidence-Backed AI Brand Review:</strong></li><br/><li>Integrate a production LLM service constrained by structured JSON schemas and approved brand documentation with citations to exact rules.</li><br/><li>Separate confirmed rule mismatches from claims requiring external factual documentation.</li><br/><li value="2"><strong>Collaborative Governance Workflow:</strong></li><br/><li>Multi-user roles (Content Creator, Brand Custodian, Legal Counsel) with approval stages and assignment queues.</li><br/><li>In-line contextual comments and side-by-side visual diff comparison.</li><br/><li>Cryptographic SHA-256 pre-publication seals.</li><br/><li value="3"><strong>Governance Intelligence & Analytics:</strong></li><br/><li>Detect recurring team-wide brand violations over time.</li><br/><li>Identify ambiguous or contradictory guidelines where authors frequently request exemptions.</li><br/><li>Exportable compliance certificates with tamper-evident audit hashes.</li></p>
+<hr/>
+<h2>9. Expected Impact & Current Limitations</h2>
+<h3>Target Intended Impact (Design Hypotheses)</h3>
+<li><strong>Review Turnaround Acceleration:</strong> Designed to automate repetitive redlining of prohibited terms and unapproved superlatives, aiming to streamline manual editorial triage.  </li>
+  <em>(Important Disclosure: The proposed 80%+ review-time reduction is a conceptual design objective and engineering hypothesis. It is not an empirically measured benchmark; formal time-motion studies have not been conducted for this MVP).</em>
+<li><strong>Proactive Risk Mitigation:</strong> Flags unapproved promissory language before content reaches staging or social schedulers.</li>
+<li><strong>Actionable Creator Guidance:</strong> Replaces punitive rejections with educational explanations and ready-to-use suggested revisions.</li>
+<h3>Current Limitations of the Round 2 MVP</h3>
+<li><strong>Local Browser Isolation:</strong> Review records and custom guidelines do not sync between team members without a backend database.</li>
+<li><strong>Monolingual Support:</strong> Current rules engine is optimized for English text.</li>
+<li><strong>Text-Only Scope:</strong> Non-text assets (raster graphics, audio, video) are not analyzed by this MVP.</li>
+<hr/>
+<h2>10. Live Demo & Source Repository Links</h2>
+<li><strong>Live Deployed Application:</strong> <a href="https://brandforge-inkloom.netlify.app/">https://brandforge-inkloom.netlify.app/</a> <em>(Hosted on Netlify, HTTP 200 OK)</em></li>
+<li><strong>Source Code Repository:</strong> <a href="https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge">https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge</a> <em>(Confirmed GitHub Origin)</em></li>
+<li><strong>Local Testing Server:</strong> Static server available via </code>node server.js<code> or </code>npm start<code> on </code>http://127.0.0.1:5173/<code>.</li>
+<li><strong>Test Suite Execution:</strong> Run </code>npm test<code> or </code>node tests/rulesEngine.test.js` to execute all 20 automated verification checks.</li></ul>
+
+</body>
+</html>

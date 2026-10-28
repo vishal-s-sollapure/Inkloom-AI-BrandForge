@@ -552,7 +552,7 @@ export const BrandVault: React.FC<BrandVaultProps> = ({
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Verified Statement / Claim:</label>
                 <textarea
-                  placeholder="e.g. Inkloom AI achieved 99.4% precision in benchmark testing across 5,000 corporate assets..."
+                  placeholder="e.g. Inkloom AI evaluates marketing copy against active brand rules with human sign-off..."
                   value={newFact.claim}
                   onChange={(e) => setNewFact({ ...newFact, claim: e.target.value })}
                   style={{ width: '100%', minHeight: '70px', padding: '0.5rem', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', outline: 'none' }}

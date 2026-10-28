@@ -24,7 +24,7 @@
       'BrandForge platform',
       'intelligent brand-governance engine',
       'resilient and battle-tested',
-      'statistically verified precision',
+      'systematic guideline verification',
       'cost-effective solution',
       'empowers creators'
     ],
@@ -33,15 +33,15 @@
       { term: 'foolproof', replacement: 'rigorously validated', reason: 'Patronizing tone; implies impossibility of error.' },
       { term: 'cheap tool', replacement: 'cost-effective enterprise platform', reason: 'Degrades brand equity and perceived quality.' },
       { term: 'our bot', replacement: 'BrandForge engine', reason: 'Associated with low-quality conversational spam.' },
-      { term: 'guarantees 100% success', replacement: 'delivers statistically verified 99.4% precision', reason: 'Unsubstantiated promissory guarantee creating legal exposure.' },
+      { term: 'guarantees 100% success', replacement: 'applies systematic guideline verification with human confirmation', reason: 'Unsubstantiated promissory guarantee creating legal exposure.' },
       { term: 'eliminates human', replacement: 'empowers human creators and reviewers', reason: 'Violates our ethical AI commitment to human-in-the-loop oversight.' },
       { term: 'literally magic', replacement: 'engineered with precision', reason: 'Unprofessional hyperbole; degrades technical authority.' }
     ],
     approvedFacts: [
-      'Inkloom AI evaluates over 45 million brand governance checks monthly across 1,200+ enterprise teams.',
-      'Certified under ISO/IEC 27001:2022 with a zero-retention policy for draft enterprise content.',
-      'Achieves 99.4% precision in deterministic guideline adherence benchmarking.',
-      'Accelerates manual review turnaround cycles from 4.8 business days to under 4 hours.'
+      'Inkloom AI evaluates draft marketing copy using deterministic brand rule matching.',
+      'Operates client-side with a strict zero-retention policy for draft enterprise content.',
+      'Supports human-in-the-loop review with side-by-side diff comparison and audit logging.',
+      'Designed to streamline repetitive terminology triage and pre-publication compliance checks.'
     ],
     verificationClaims: [
       'best',

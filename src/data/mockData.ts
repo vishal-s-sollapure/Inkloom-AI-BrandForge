@@ -46,7 +46,7 @@ export const mockBrandProfiles: BrandProfile[] = [
         pillar: 'terminology',
         title: 'Prohibited Reliability Claims ("Bulletproof" / "Unbreakable")',
         summary: 'Engineering terminology must reflect statistical probability ("resilient", "fault-tolerant") rather than impossible absolutes.',
-        sourceText: 'Inkloom Engineering Communications Policy Section 4: "Software is never \'bulletproof\' or \'infallible\'. Use \'resilient and battle-tested\' or \'statistically verified 99.4% precision\'."',
+        sourceText: 'Inkloom Engineering Communications Policy Section 4: "Software is never \'bulletproof\' or \'infallible\'. Use \'resilient and battle-tested\' or \'systematic guideline verification\'."',
         severity: 'warning',
         frictionCount: 19
       },
@@ -125,7 +125,7 @@ export const mockBrandProfiles: BrandProfile[] = [
         term: 'guarantees 100% success',
         category: 'prohibited',
         reason: 'Unsubstantiated promissory guarantee creating severe legal exposure.',
-        suggestedReplacement: 'delivers statistically verified 99.4% precision',
+        suggestedReplacement: 'applies systematic guideline verification with human confirmation',
         guidelineRuleId: 'RULE-CLAIM-01'
       },
       {
@@ -172,11 +172,11 @@ export const mockBrandProfiles: BrandProfile[] = [
       },
       {
         id: 'FACT-03',
-        claim: 'Delivers 99.4% precision in guideline compliance checks backed by verified deterministic heuristics.',
+        claim: 'Applies systematic guideline compliance checks backed by verified deterministic heuristics.',
         category: 'AI Performance',
-        source: 'Stanford HAI Brand Governance Evaluation Benchmark 2026',
+        source: 'BrandForge Deterministic Engine Validation 2026',
         dateVerified: '2026-07-20',
-        confidence: 0.98
+        confidence: 1.0
       },
       {
         id: 'FACT-04',
@@ -295,7 +295,7 @@ With this release, creators no longer need human managers or editorial review. O
     channel: 'linkedin',
     rawText: `Excited to unveil how Inkloom AI is transforming enterprise brand governance! 
 
-Traditional review cycles take 4.8 days and cost organizations up to 23% in brand equity dilution. BrandForge delivers 99.4% precision in guideline compliance checks backed by verified deterministic heuristics.
+Traditional review cycles consume excessive editorial time on routine terminology triage. BrandForge applies systematic guideline compliance checks backed by verified deterministic heuristics.
 
 By augmenting creators with real-time explainability, we help organizations protect brand trust without slowing down content velocity.`,
     author: {

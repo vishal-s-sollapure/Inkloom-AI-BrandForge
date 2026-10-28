@@ -21,10 +21,11 @@ Every requirement is mapped to one of four statuses:
 ### High-Level Status Distribution
 | Status | Submission Criteria (Phase A) | Product Features (Phase B) | Quality & Security (Phase D) | Total |
 | :--- | :---: | :---: | :---: | :---: |
-| **PASS** | 7 | 8 | 8 | **23** |
-| **PARTIAL** | 1 | 5 | 1 | **7** |
+| **PASS** | 8 | 10 | 6 | **24** |
+| **PARTIAL (Scoped Boundaries)** | 0 | 3 (Lang, Storage, Media) | 1 (Manual UI vs Headless) | **4** |
 | **FAIL** | 0 | 0 | 0 | **0** |
-| **NOT VERIFIED** | 3 | 0 | 0 | **3** |
+| **NOT VERIFIED (External / Sandbox)** | 3 (Drive, Incognito, Reg) | 0 | 1 (Sandbox Browser CDN) | **4** |
+| **Total Requirements** | **11** | **13** | **8** | **32** |
 
 ---
 
@@ -116,11 +117,13 @@ All 7 prioritized remediation gaps were implemented, tested, and empirically ver
 | **Gap 6: Visual Guidelines & Examples** | Added Visual & Editorial Formatting Rules field (`#gl-visual-rules`) and Editorial Reference Guide with Good vs. Avoid examples in `index.html` and `styles.css`. | Verified in Guidelines tab; persists in `localStorage`. | **PASS** |
 | **Gap 7: Test Suite & Docs Suite** | Expanded test suite to 20/20 tests. Created `ROUND2-DEMO-SCRIPT.md`, `ROUND2-ROUND3-ROADMAP.md`. Updated `TEST-REPORT.md`, `README.md`, `ROUND2-PROJECT-SUMMARY.md`, `ROUND2-SUBMISSION-NOTES.md`. | **20/20 PASS** (`node tests/rulesEngine.test.js`). `npm run build` succeeds (code 0). | **PASS** |
 
-### Final Status Distribution (Post-Implementation)
-| Category | PASS | PARTIAL | FAIL | NOT VERIFIED (Manual User Actions) | Total |
+### Final Status Distribution (Post-Implementation & Scoped Reconciliation)
+| Category | PASS | PARTIAL (Scoped Boundaries) | FAIL | NOT VERIFIED (External / Sandbox) | Total |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Submission Requirements (Phase A)** | 8 | 0 | 0 | 3 (Drive PDF link, Incognito check, Match Reg) | **11** |
-| **Product Functionality (Phase B)** | 13 | 0 | 0 | 0 | **13** |
-| **Quality & Security (Phase D)** | 9 | 0 | 0 | 0 | **9** |
-| **Total** | **30** | **0** | **0** | **3** | **33** |
+| **Product Functionality (Phase B)** | 10 | 3 (English-only, Local Storage, Text-only) | 0 | 0 | **13** |
+| **Quality & Security (Phase D)** | 6 | 1 (Manual UI vs Headless) | 0 | 1 (Sandbox Browser CDN blocked) | **8** |
+| **Total** | **24** | **4** | **0** | **4** | **32** |
+
+> **Audit Integrity Note:** Rather than forcing all items into a blanket "100% verified" status, BrandForge transparently records its real-world implementation boundaries: English copy focus, browser-local persistence, and text-only evaluation are documented as PARTIAL scopes, while external Google Drive permissions, incognito checks, and registration matching are properly identified as NOT VERIFIED until verified directly by the user.
 
