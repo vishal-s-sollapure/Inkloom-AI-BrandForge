@@ -1,8 +1,8 @@
 # Comprehensive QA Audit & Test Report — BrandForge
 ### Inkloom AI Brand Governance Challenge (Round 2 MVP)
 
-- **Audit Date:** October 26, 2026
-- **Auditor Role:** Senior QA Engineer
+- **Audit Date:** October 28, 2026
+- **Auditor Role:** Senior QA Lead & Security Reviewer
 - **Project Name:** BrandForge
 - **Participant:** Vishal S Sollapure
 - **Team:** BrandForge
@@ -18,19 +18,19 @@
 
 An exhaustive quality audit was conducted across the BrandForge codebase (`index.html`, `styles.css`, `app.js`) and the live Netlify production deployment ([https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)).
 
-The audit evaluated 12 critical user workflows, executed 15 automated unit test cases, assessed accessibility (focus outlines, keyboard navigation, reduced motion), stress-tested storage unavailability, and inspected DOM-safety for cross-site scripting vulnerabilities.
+The audit evaluated 16 critical user workflows, executed 20 automated unit test cases, assessed accessibility (focus outlines, keyboard navigation, reduced motion), stress-tested storage unavailability, and inspected DOM-safety for cross-site scripting vulnerabilities.
 
 ### Quality Scorecard
 | Testing Category | Executed | Passed | Failed | Verification Method | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Automated Engine & Unit Tests** | 15 | 15 | 0 | Automated via Node.js test harness | **100% PASS** |
-| **Manual User Workflow Audits** | 12 | 12 | 0 | Interactive HTTP server & Netlify | **100% PASS** |
+| **Automated Engine & Unit Tests** | 20 | 20 | 0 | Automated via Node.js test harness (`node tests/rulesEngine.test.js`) | **100% PASS** |
+| **Manual User Workflow Audits** | 16 | 16 | 0 | Interactive HTTP server (`server.js`) & Netlify | **100% PASS** |
 | **Accessibility & Keyboard Nav** | 4 | 4 | 0 | Focus testing, reduced-motion, Escape keys | **100% PASS** |
-| **Security & DOM Safety** | 3 | 3 | 0 | Code audit for unsafe `innerHTML` | **VERIFIED CLEAN** |
+| **Security & DOM Safety** | 4 | 4 | 0 | Code audit for unsafe `innerHTML` & sanitized diff rendering | **VERIFIED CLEAN** |
 
 ---
 
-## 2. Automated Test Suite Results (15 / 15 Passed)
+## 2. Automated Test Suite Results (20 / 20 Passed)
 
 *Executed via `node tests/rulesEngine.test.js`*
 
@@ -51,6 +51,11 @@ The audit evaluated 12 critical user workflows, executed 15 automated unit test 
 | **TC-13** | Review History Search Filter | Filter records by title (`"Holiday"`) and type (`"social"`). | Filters collection accurately; returns exact subset. | Returned expected single match for each query. | **PASS** |
 | **TC-14** | Workflow Loop Verification | Apply revision & re-run check on initial 42% draft. | Elevates score from 42% to 100% with 0 remaining findings. | Score elevated from 42% to 100%; 0 findings. | **PASS** |
 | **TC-15** | Insights Aggregation | Aggregate rule counts, approval percentages, and high risks. | Accurately calculates rule counts and approval percentages. | Rule counts (3x, 1x) and approval percentage (67%) matched. | **PASS** |
+| **TC-16** | Input Boundary Conditions | Test title >120 chars, draft <4 words, draft >25,000 chars, valid input. | Enforces length boundaries with explicit error messaging. | All 3 boundary limits rejected; valid draft passes. | **PASS** |
+| **TC-17** | Guideline Section Traceability | Evaluate findings across terminology, claims, tone, brand name, and length. | Every finding object includes an explicit `guidelineSection` attribution. | Verified all findings contain valid `guidelineSection`. | **PASS** |
+| **TC-18** | Visual Diff Generator Markup | Run `buildDiffData` on draft with avoid terms and synthesized replacements. | Generates HTML diff wrapping deletions in `.diff-del` and additions in `.diff-ins`. | Diff markup accurately wraps removed/added spans with count tracking. | **PASS** |
+| **TC-19** | Human Rejection & Reviewer Notes | Record explicit rejection with reviewer feedback notes and filter by status. | Stores record with `status: 'rejected'`, notes preserved, filterable. | Rejected record stored with notes; correctly isolated by filter. | **PASS** |
+| **TC-20** | Audit Serializer (JSON & Markdown) | Serialize review record with `generateAuditJson` and `generateAuditMarkdown`. | Outputs valid JSON with version schema and clean Markdown summary. | JSON parses with all schema fields; Markdown matches format. | **PASS** |
 
 ---
 
@@ -72,6 +77,10 @@ The audit evaluated 12 critical user workflows, executed 15 automated unit test 
 | **MW-10** | Refresh & Persistence | Perform reviews, refresh browser window (`F5`). | Overview metrics, history table, and guidelines remain intact from `localStorage`. | **PASS** |
 | **MW-11** | Responsive Layout & Accessibility | Resize viewport to 375px (mobile), 768px (tablet), and 1440px (desktop). Test keyboard navigation (`Tab`, `Enter`, `Escape`). | Responsive grid shifts cleanly from 2-columns to single-column stack. Visible rose focus outline (`#D9778F`) on all active controls. `Escape` key closes modals. | **PASS** |
 | **MW-12** | Defensive Handling of Empty / Invalid Data | Click *"Run Brand Check"* with empty fields; simulate corrupted `localStorage` JSON string. | Shows friendly toast: *"Content title is required."* Corrupted JSON in `localStorage` safely falls back to defaults without unhandled exceptions. | **PASS** |
+| **MW-13** | Side-by-Side Visual Diff Comparison | Run brand check, click *"Compare with Original"*. Inspect modal. | Opens 2-column comparison showing original draft with deleted terms (`.diff-del`) in red strikethrough, and revised draft with insertions (`.diff-ins`) in green. | **PASS** |
+| **MW-14** | Human Rejection & Reviewer Notes | Click *"Request Changes"*, enter reviewer feedback note, confirm rejection. | Persists review with `status: 'rejected'` and reviewer note to `localStorage`; updates Overview flagged metric. | **PASS** |
+| **MW-15** | Structured Audit Export (JSON & Markdown) | Click *"Export Report"* on active review; test single-record export in history. | Displays formatted JSON preview with version schema and copy/download controls; download generates `.json` and `.md` files. | **PASS** |
+| **MW-16** | Review History Multi-Status Filtering | Navigate to Review History, click *"Approved"* and *"Changes Requested"* filters. | Table filters dynamically by status; filter counts update accurately (`All: N`, `Approved: A`, `Changes Requested: R`). | **PASS** |
 
 ---
 

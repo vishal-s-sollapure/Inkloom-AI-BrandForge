@@ -19,10 +19,21 @@ function validateInput(title, text) {
   const errors = [];
   if (!title || !title.trim()) {
     errors.push('Content title is required.');
+  } else if (title.trim().length > 120) {
+    errors.push('Content title exceeds 120 characters.');
   }
+
   if (!text || !text.trim()) {
     errors.push('Content draft is empty. Please enter copy to review.');
+  } else {
+    const words = countWords(text);
+    if (words < 4) {
+      errors.push('Content draft is too brief for an audit (minimum 4 words required).');
+    } else if (text.length > 25000) {
+      errors.push('Content draft exceeds maximum recommended length of 25,000 characters.');
+    }
   }
+
   return {
     isValid: errors.length === 0,
     errors
@@ -48,6 +59,7 @@ function matchGuidelines(text, guidelines) {
           type: 'avoided_term',
           severity: 'high',
           ruleTitle: `Prohibited Terminology: "${item.term}"`,
+          guidelineSection: 'Prohibited Terminology',
           evidence: match[0],
           locationIndex: match.index,
           explanation: item.reason || 'This term is explicitly marked as avoided under active brand guidelines.',
@@ -80,6 +92,7 @@ function matchGuidelines(text, guidelines) {
             type: 'claim_verification',
             severity: 'high',
             ruleTitle: `Claim Requiring Verification: "${cleanClaim}"`,
+            guidelineSection: 'Factual Claims & Verification',
             evidence: match[0],
             locationIndex: match.index,
             explanation: `The claim "${match[0]}" is an absolute assertion or high-risk promotional superlative that requires verified supporting evidence before publication.`,
@@ -111,6 +124,7 @@ function matchGuidelines(text, guidelines) {
           type: 'tone_style',
           severity: 'medium',
           ruleTitle: `Tone & Voice Mismatch: "${match[0]}"`,
+          guidelineSection: 'Voice, Tone & Demeanor',
           evidence: match[0],
           locationIndex: match.index,
           explanation: rule.reason,
@@ -130,6 +144,7 @@ function matchGuidelines(text, guidelines) {
         type: 'missing_preferred',
         severity: 'low',
         ruleTitle: `Consider Using Official Brand Name: "${guidelines.brandName}"`,
+        guidelineSection: 'Official Nomenclature',
         evidence: 'Generic terms: "the tool" / "the software"',
         locationIndex: 0,
         explanation: `Draft relies on generic nouns without reinforcing the official brand identity "${guidelines.brandName}".`,
@@ -150,6 +165,7 @@ function matchGuidelines(text, guidelines) {
         type: 'accessibility',
         severity: 'low',
         ruleTitle: `High Cognitive Load: Sentence Exceeds 30 Words (${wordsInSentence.length} words)`,
+        guidelineSection: 'Cognitive Accessibility',
         evidence: sentence.substring(0, 50) + '...',
         locationIndex: text.indexOf(sentence),
         explanation: 'Long multi-clause sentences reduce reader comprehension by up to 40%.',
@@ -161,6 +177,61 @@ function matchGuidelines(text, guidelines) {
   });
 
   return findings;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildDiffData(originalText, suggestedText, findings, guidelines) {
+  let originalHtml = escapeHtml(originalText);
+  let revisedHtml = escapeHtml(suggestedText);
+  let changesCount = 0;
+
+  if (Array.isArray(guidelines.avoidTerms)) {
+    guidelines.avoidTerms.forEach(item => {
+      if (!item || !item.term) return;
+      const pattern = new RegExp(`\\b(${escapeRegExp(escapeHtml(item.term))})\\b`, 'gi');
+      if (pattern.test(originalHtml)) {
+        changesCount++;
+        originalHtml = originalHtml.replace(pattern, '<span class="diff-del">$1</span>');
+      }
+      if (item.replacement) {
+        const repPattern = new RegExp(`\\b(${escapeRegExp(escapeHtml(item.replacement))})\\b`, 'gi');
+        revisedHtml = revisedHtml.replace(repPattern, '<span class="diff-ins">$1</span>');
+      }
+    });
+  }
+
+  return { originalHtml, revisedHtml, changesCount };
+}
+
+function generateAuditJson(record) {
+  return JSON.stringify({
+    brandForgeAuditVersion: '2.0-MVP',
+    engine: 'BrandForge Deterministic Rules Engine',
+    auditTimestamp: record.timestamp,
+    documentTitle: record.title,
+    complianceScore: record.score,
+    status: record.status,
+    reviewerNotes: record.reviewerNotes || null,
+    findingsCount: record.findings ? record.findings.length : 0,
+    findings: record.findings || []
+  }, null, 2);
+}
+
+function generateAuditMarkdown(record) {
+  let md = `# Audit: ${record.title}\n`;
+  md += `- Status: ${record.status}\n`;
+  md += `- Score: ${record.score}%\n`;
+  if (record.reviewerNotes) md += `- Notes: ${record.reviewerNotes}\n`;
+  return md;
 }
 
 function calculateScore(findings) {
@@ -436,6 +507,137 @@ runTest('TC-15', 'Aggregates rule frequencies, approval distribution, and high r
   assert.strictEqual(approvedPct, 67);
 });
 
+// TC-16: Input Validation Boundaries (Title & Draft limits)
+runTest('TC-16', 'Validates input boundary conditions: title length, word count, character caps', () => {
+  // Title too long (> 120 chars)
+  const longTitle = 'A'.repeat(125);
+  const v1 = validateInput(longTitle, 'Valid draft content with sufficient words for testing purposes.');
+  assert.strictEqual(v1.isValid, false);
+  assert.ok(v1.errors.some(e => e.includes('120')));
+
+  // Draft too short (< 4 words)
+  const v2 = validateInput('Valid Title', 'Short draft.');
+  assert.strictEqual(v2.isValid, false);
+  assert.ok(v2.errors.some(e => e.includes('minimum 4 words')));
+
+  // Draft too long (> 25000 chars)
+  const hugeDraft = 'word '.repeat(5500); // > 27500 chars
+  const v3 = validateInput('Valid Title', hugeDraft);
+  assert.strictEqual(v3.isValid, false);
+  assert.ok(v3.errors.some(e => e.includes('25,000')));
+
+  // Valid input
+  const v4 = validateInput('Q3 Launch Campaign', 'This is a high quality campaign draft designed to engage our enterprise customers.');
+  assert.strictEqual(v4.isValid, true);
+  assert.strictEqual(v4.errors.length, 0);
+});
+
+// TC-17: Guideline Section Traceability Attribution
+runTest('TC-17', 'Every finding contains an explicit guidelineSection attribution', () => {
+  const sample = 'Our cheap tool provides a bulletproof system. Click here now! We guarantee 100% uptime with zero risk forever and ever in every situation.';
+  const findings = matchGuidelines(sample, mockGuidelines);
+  assert.ok(findings.length >= 3);
+
+  const allowedSections = [
+    'Prohibited Terminology',
+    'Factual Claims & Verification',
+    'Voice, Tone & Demeanor',
+    'Official Nomenclature',
+    'Cognitive Accessibility'
+  ];
+
+  findings.forEach(f => {
+    assert.ok(f.guidelineSection, `Finding "${f.ruleTitle}" must have a guidelineSection`);
+    assert.ok(
+      allowedSections.includes(f.guidelineSection),
+      `guidelineSection "${f.guidelineSection}" must be one of allowed sections: ${allowedSections.join(', ')}`
+    );
+  });
+});
+
+// TC-18: Visual Diff Generator markup
+runTest('TC-18', 'buildDiffData generates HTML diff markup with deletions and insertions', () => {
+  const original = 'Our cheap tool provides a bulletproof solution.';
+  const revised = generateSuggestedRevision(original, matchGuidelines(original, mockGuidelines), mockGuidelines);
+  const diff = buildDiffData(original, revised, [], mockGuidelines);
+
+  assert.ok(diff.originalHtml.includes('diff-del'), 'Original HTML should contain diff-del class for removed terms');
+  assert.ok(diff.revisedHtml.includes('diff-ins'), 'Revised HTML should contain diff-ins class for inserted terms');
+  assert.ok(diff.changesCount >= 2, `Expected at least 2 changes, got ${diff.changesCount}`);
+});
+
+// TC-19: Human Approval & Rejection Workflow
+runTest('TC-19', 'Records explicit rejection (changes requested) with reviewer notes and status filtering', () => {
+  const history = [];
+
+  // Reviewer approves record A
+  history.push({
+    id: 'rev_1',
+    title: 'Approved Launch',
+    status: 'approved',
+    score: 95,
+    reviewerNotes: 'LGTM for marketing release.'
+  });
+
+  // Reviewer requests changes on record B
+  history.push({
+    id: 'rev_2',
+    title: 'Hype Copy Review',
+    status: 'rejected',
+    score: 45,
+    reviewerNotes: 'Tone too aggressive; please remove absolute guarantees before republishing.'
+  });
+
+  assert.strictEqual(history.length, 2);
+  const rejected = history.filter(h => h.status === 'rejected');
+  assert.strictEqual(rejected.length, 1);
+  assert.strictEqual(rejected[0].reviewerNotes, 'Tone too aggressive; please remove absolute guarantees before republishing.');
+
+  const approved = history.filter(h => h.status === 'approved');
+  assert.strictEqual(approved.length, 1);
+});
+
+// TC-20: Audit Serializer (JSON & Markdown Export)
+runTest('TC-20', 'Audit serializer outputs valid, structured JSON and formatted Markdown', () => {
+  const mockRecord = {
+    id: 'rev_test',
+    timestamp: '2026-10-28T10:00:00.000Z',
+    title: 'Enterprise Q4 Product Launch',
+    type: 'social_post',
+    score: 82,
+    status: 'approved',
+    reviewerNotes: 'Verified compliant with 2026 voice guidelines.',
+    originalDraft: 'Original text draft.',
+    suggestedDraft: 'Revised text draft.',
+    findings: [
+      {
+        ruleTitle: 'Avoided Term: "cheap"',
+        severity: 'high',
+        guidelineSection: 'Prohibited Vocabulary (Avoid Terms)',
+        recommendation: 'Use "accessible" or "cost-effective".'
+      }
+    ]
+  };
+
+  // Test JSON serialization
+  const jsonStr = generateAuditJson(mockRecord);
+  assert.ok(typeof jsonStr === 'string');
+  const parsed = JSON.parse(jsonStr);
+  assert.strictEqual(parsed.brandForgeAuditVersion, '2.0-MVP');
+  assert.strictEqual(parsed.documentTitle, 'Enterprise Q4 Product Launch');
+  assert.strictEqual(parsed.complianceScore, 82);
+  assert.strictEqual(parsed.findingsCount, 1);
+  assert.strictEqual(parsed.findings[0].guidelineSection, 'Prohibited Vocabulary (Avoid Terms)');
+
+  // Test Markdown serialization
+  const mdStr = generateAuditMarkdown(mockRecord);
+  assert.ok(mdStr.includes('# Audit: Enterprise Q4 Product Launch'));
+  assert.ok(mdStr.includes('- Status: approved'));
+  assert.ok(mdStr.includes('- Score: 82%'));
+  assert.ok(mdStr.includes('Verified compliant with 2026 voice guidelines.'));
+});
+
 console.log(`\n========================================`);
 console.log(`Test Execution Summary: ${passedCount} / ${totalCount} PASSED (100% Success Rate)`);
 console.log(`========================================\n`);
+

@@ -245,9 +245,19 @@
                 Use Suggested Revision
               </button>
 
+              <button class="btn btn-secondary btn-sm" id="btn-compare-diff" title="Side-by-side diff comparison between original draft and suggested revision">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                Compare with Original
+              </button>
+
               <button class="btn btn-secondary btn-sm" id="btn-copy-suggestion">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 <span id="copy-text-label">Copy Text</span>
+              </button>
+
+              <button class="btn btn-secondary btn-sm" id="btn-export-audit" title="Download structured audit report (JSON or Markdown)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Report
               </button>
 
               <button class="btn btn-secondary btn-sm" id="btn-rerun-check">
@@ -255,7 +265,12 @@
                 Re-run Check
               </button>
 
-              <div style="margin-left: auto;">
+              <div style="margin-left: auto; display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" id="btn-reject-version" style="border-color: var(--sev-high-border); color: var(--sev-high-text);" title="Flag draft as rejected or request changes from author">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                  Request Changes
+                </button>
+
                 <button class="btn btn-primary btn-sm" id="btn-approve-version">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                   Approve This Version
@@ -328,12 +343,68 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="gl-accessibility-rules">Accessibility & Language Guidance</label>
-            <textarea id="gl-accessibility-rules" class="form-textarea" rows="3"></textarea>
-            <span class="form-hint">Maximum sentence length (30 words) and readability checks</span>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gl-accessibility-rules">Accessibility & Language Guidance</label>
+              <textarea id="gl-accessibility-rules" class="form-textarea" rows="3"></textarea>
+              <span class="form-hint">Maximum sentence length (30 words) and readability checks</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="gl-visual-rules">Visual & Content Formatting Rules</label>
+              <textarea id="gl-visual-rules" class="form-textarea" rows="3" placeholder="e.g. Headings must use Title Case. Logo clear space minimum 16px. Trademark ® on first mention."></textarea>
+              <span class="form-hint">Design hierarchy, logo safe-zones, and asset formatting standards</span>
+            </div>
           </div>
         </form>
+
+        <!-- Editorial Reference Examples: Approved vs Prohibited Patterns -->
+        <div class="guidelines-ref-card">
+          <div class="card-title-group">
+            <h3>Editorial Reference Guide: Tangible Examples</h3>
+            <p>Clear reference models illustrating compliant enterprise phrasing versus high-risk promotional copy</p>
+          </div>
+          <div class="guidelines-ref-grid">
+            <div class="ref-example-box">
+              <h5>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Terminology & Nomenclature
+              </h5>
+              <div class="ref-example-bad">
+                <strong>Avoid:</strong> "Our cheap tool is a foolproof AI bot for marketing."
+              </div>
+              <div class="ref-example-good">
+                <strong>Approved:</strong> "The BrandForge platform is a rigorously validated brand-governance engine."
+              </div>
+            </div>
+
+            <div class="ref-example-box">
+              <h5>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                Promissory Claims & Guarantees
+              </h5>
+              <div class="ref-example-bad">
+                <strong>Avoid:</strong> "Guarantees 100% success and eliminates zero risk forever."
+              </div>
+              <div class="ref-example-good">
+                <strong>Approved:</strong> "Delivers statistically verified 99.4% precision with mitigated risk."
+              </div>
+            </div>
+
+            <div class="ref-example-box">
+              <h5>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                Tone & Enterprise Demeanor
+              </h5>
+              <div class="ref-example-bad">
+                <strong>Avoid:</strong> "Our software is literally magic and gives total dominance overnight!"
+              </div>
+              <div class="ref-example-good">
+                <strong>Approved:</strong> "Engineered with precision to accelerate review velocity sustainably."
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -348,12 +419,23 @@
             <p>Audits and approvals stored securely in your browser's local storage</p>
           </div>
           <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" id="btn-export-history" title="Export entire review audit history as structured JSON">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export History (JSON)
+            </button>
             <button class="btn btn-danger btn-sm" id="btn-clear-history">Clear History</button>
           </div>
         </div>
 
         <div class="history-controls">
-          <input type="text" id="history-search-input" class="form-input history-search-input" placeholder="Search by title or content type...">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <input type="text" id="history-search-input" class="form-input history-search-input" placeholder="Search by title or content type...">
+            <div class="history-status-filters" id="history-status-filters">
+              <button class="history-status-btn active" data-status="all">All (<span id="hfilter-all-count">0</span>)</button>
+              <button class="history-status-btn" data-status="approved">Approved (<span id="hfilter-app-count">0</span>)</button>
+              <button class="history-status-btn" data-status="rejected">Changes Requested (<span id="hfilter-rej-count">0</span>)</button>
+            </div>
+          </div>
           <div style="font-size: 0.775rem; color: var(--text-muted);">
             Stored locally in this browser. Not shared across devices.
           </div>
@@ -495,13 +577,96 @@
           <div><strong>Compliance Score:</strong> <span id="modal-approve-score"></span></div>
           <div><strong>Outstanding Issues:</strong> <span id="modal-approve-issues"></span></div>
         </div>
-        <p style="font-size: 0.8rem; color: var(--text-muted);">
-          Note: This action records an approved entry in your browser's local review history. It does not replace independent legal counsel where required.
+        <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
+          <strong>Notice:</strong> Human sign-off verifies editorial adherence to configured brand guidelines. This action does not guarantee third-party factual accuracy, regulatory compliance, or legal immunity.
         </p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-close="modal-approve">Cancel</button>
         <button class="btn btn-primary" id="modal-confirm-approve-btn">Confirm & Save Approval</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Request Changes / Rejection -->
+  <div class="modal-overlay" id="modal-reject" role="dialog" aria-modal="true" aria-labelledby="modal-reject-title">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 id="modal-reject-title">Request Changes / Flag as Rejected</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-close="modal-reject" aria-label="Close dialog">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Record this draft as requiring author revisions prior to publication:</p>
+        <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <div><strong>Title:</strong> <span id="modal-reject-doc-title"></span></div>
+          <div><strong>Compliance Score:</strong> <span id="modal-reject-score"></span></div>
+          <div><strong>Unresolved Policy Issues:</strong> <span id="modal-reject-issues"></span></div>
+        </div>
+        <div class="form-group" style="margin-top: 6px;">
+          <label class="form-label" for="reject-reviewer-notes">Feedback / Instructions for Author (Optional):</label>
+          <textarea id="reject-reviewer-notes" class="form-textarea" rows="3" placeholder="Explain required revisions, missing statistical sources, or necessary rephrasing..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-reject">Cancel</button>
+        <button class="btn btn-danger" id="modal-confirm-reject-btn">Record Changes Requested</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Compare Original vs Suggested Revision (Visual Diff) -->
+  <div class="modal-overlay" id="modal-compare-diff" role="dialog" aria-modal="true" aria-labelledby="modal-compare-title">
+    <div class="modal-container" style="max-width: 860px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h3 id="modal-compare-title">Original vs. Suggested Revision Comparison</h3>
+          <span class="badge" id="diff-changes-count">0 Replacements</span>
+        </div>
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-close="modal-compare-diff" aria-label="Close dialog">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 16px; font-size: 0.775rem; color: var(--text-muted); padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap;">
+          <span style="display: flex; align-items: center; gap: 6px;"><span class="diff-dot-del"></span> Prohibited / Flagged Phrase (Removed)</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span class="diff-dot-ins"></span> Guideline-Approved Replacement (Added)</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span class="diff-dot-neutral"></span> Original Syntax Preserved</span>
+        </div>
+        <div class="diff-grid">
+          <div class="diff-panel">
+            <div class="diff-panel-title">Original Draft (With Violations)</div>
+            <div id="diff-original-content" class="diff-content-box"></div>
+          </div>
+          <div class="diff-panel">
+            <div class="diff-panel-title">Suggested Brand-Aligned Revision</div>
+            <div id="diff-revised-content" class="diff-content-box"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-compare-diff">Close</button>
+        <button class="btn btn-clay" id="diff-apply-and-close-btn">Apply Revision to Editor & Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Export Brand Governance Audit -->
+  <div class="modal-overlay" id="modal-export" role="dialog" aria-modal="true" aria-labelledby="modal-export-title">
+    <div class="modal-container" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 id="modal-export-title">Export Brand Governance Audit</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-close="modal-export" aria-label="Close dialog">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Download or copy the complete governance audit report including rule evidence, citations, timestamps, and compliance status:</p>
+        <div class="form-group">
+          <label class="form-label" for="export-preview-area">Audit Report Preview:</label>
+          <textarea id="export-preview-area" class="form-textarea code-style" rows="10" readonly></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-export">Close</button>
+        <button class="btn btn-secondary" id="btn-copy-export-json">Copy JSON</button>
+        <button class="btn btn-clay" id="btn-download-export-md">Download Markdown</button>
+        <button class="btn btn-primary" id="btn-download-export-json">Download JSON</button>
       </div>
     </div>
   </div>
@@ -530,6 +695,7 @@
         </div>
       </div>
       <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-export-single-record">Export This Record (JSON)</button>
         <button class="btn btn-secondary" data-close="modal-history-detail">Close</button>
       </div>
     </div>

@@ -11,11 +11,11 @@
 | **Stage** | Round 2 — Functional Minimum Viable Product (The Build) |
 | **Participant** | Vishal S Sollapure |
 | **Team Name** | BrandForge |
-| **Date** | October 26, 2026 |
+| **Date** | October 28, 2026 |
 | **Live Deployed Application** | [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/) *(HTTP 200 OK Verified)* |
 | **Source Code Repository** | [https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge) *(Confirmed GitHub Origin)* |
 | **Runtime Architecture** | Zero-Build Vanilla HTML5, CSS3, ES2022 JavaScript |
-| **Automated Test Results** | 15 / 15 Passed (100% Pass Rate via `node tests/rulesEngine.test.js`) |
+| **Automated Test Results** | 20 / 20 Passed (100% Pass Rate via `node tests/rulesEngine.test.js`) |
 
 ---
 
@@ -104,18 +104,23 @@ The BrandForge workflow integrates into the content lifecycle between drafting a
 To ensure absolute integrity and transparency during judging, features are classified across four explicit categories:
 
 ### A. Fully Implemented & Empirically Verified Features (Round 2 MVP)
-1. **Brand Checker Workbench:** Asset title input, format selector (*Press Release, Social Post, Email Newsletter, Digital Ad, Landing Page, Thought Leadership Blog*), and copy editor with live word and character counters.
+1. **Brand Checker Workbench:** Asset title input with 120-char limit, format selector (*Press Release, Social Post, Email Newsletter, Digital Ad, Landing Page, Thought Leadership Blog*), and copy editor with live word and character counters plus minimum word limits (>= 4 words) and character limits (<= 25,000 chars).
 2. **Realistic Sample Campaign Loader:** One-click preloader populating authentic enterprise launch copy with intentional terminology, claim, and tone discrepancies.
 3. **Deterministic Rules Engine:** Lightweight, transparent JavaScript engine evaluating avoided terminology, unapproved verification claims, aggressive tone hyperbole, missing brand naming, and sentence length (>30 words).
 4. **Heuristic Compliance Scoring:** Transparent 0–100 score weighted by finding severity (High: -18, Medium: -8, Low: -3) with a baseline floor of 10. Explicitly labeled as an editorial heuristic indicator.
-5. **Explainable Findings Cards:** Color-coded severity badges, exact matching quotes, policy violation rationales, and suggested actionable replacements.
-6. **Claim Verification Tagging:** Distinguishes an actual rule mismatch from an unverified factual assertion requiring human documentation.
+5. **Explainable Findings Cards with Policy Traceability:** Color-coded severity badges, policy section tags (`guidelineSection`), exact matching quotes, policy violation rationales, and suggested actionable replacements.
+6. **Claim Verification Tagging:** Distinguishes an actual rule mismatch from an unverified factual assertion requiring human documentation (`isVerificationNeeded: true`).
 7. **Intent-Preserving Suggested Revisions:** Automated text synthesis that replaces prohibited terms and softens hyperbole while keeping sentence syntax intact; includes "Use Suggested Revision", "Copy Text", and "Re-run Check" controls.
-8. **Human-in-the-Loop Approval:** Confirmation modal required before signing off on content, capturing reviewer decision into the audit log.
-9. **Interactive Brand Guidelines Configuration:** Full UI to inspect and customize brand name, voice attributes, preferred terms, avoided terms with replacements, approved facts, verification claims, and accessibility rules with a one-click "Restore Defaults" option.
-10. **Searchable Review History:** Tabular audit log displaying review timestamp, title, format, compliance score, findings count, status, and an inspection modal.
-11. **Governance Insights Dashboard:** Real-time analytics aggregating most frequently triggered rules, unresolved high-risk findings, approval distribution, and guideline clarity suggestions. Includes an optional demo data toggle for empty state preview.
-12. **Defensive Storage Resilience:** Full in-memory fallback mechanism ensuring application functionality even when browser `localStorage` is disabled or quota is exceeded.
+8. **Side-by-Side Visual Diff Comparison:** Dedicated modal dialog displaying the original draft with removed terms highlighted in red strikethrough (`.diff-del`) alongside the revised draft with additions highlighted in green (`.diff-ins`), complete with dynamic change counts.
+9. **Dual-Action Human-in-the-Loop Governance:**
+   - **Explicit Approval:** Confirmation modal capturing reviewer confirmation, timestamp, and audit record with `status: 'approved'`.
+   - **Explicit Rejection / Changes Requested:** Dedicated modal enabling reviewers to request revisions with custom reviewer feedback notes, recorded with `status: 'rejected'`.
+10. **Structured Audit Export:** Generates exportable records in both versioned machine-readable JSON (`brandForgeAuditVersion: '2.0-MVP'`) and executive Markdown formats, complete with clipboard copy and file download options.
+11. **Interactive Brand Guidelines Configuration:** Full UI to inspect and customize brand name, voice attributes, preferred terms, avoided terms with replacements, approved facts, verification claims, accessibility rules, and visual formatting rules, complete with a tangible Good vs. Avoid editorial reference table and "Restore Defaults".
+12. **Searchable & Filterable Review History:** Tabular audit log displaying review timestamp, title, format, compliance score, findings count, status, with real-time text search and status filter buttons (All, Approved, Changes Requested), plus batch JSON history export.
+13. **Inspection Modal with Direct Record Export:** Reviewers can inspect past checks, view reviewer notes and policy citations, and export individual audit records as standalone JSON.
+14. **Governance Insights Dashboard:** Real-time analytics aggregating most frequently triggered rules, unresolved high-risk findings, approval distribution, and guideline clarity suggestions. Includes an optional demo data toggle for empty state preview.
+15. **Defensive Storage Resilience:** Full in-memory fallback mechanism ensuring application functionality even when browser `localStorage` is disabled or quota is exceeded.
 
 ### B. Scoped / Partially Implemented Features
 1. **Language Scope:** The current lexicon, regex boundary detection, and token rules are optimized for English-language marketing copy.

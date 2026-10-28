@@ -1146,6 +1146,194 @@ code, .font-mono {
   gap: var(--space-sm);
 }
 
+/* ===================================================================
+   Visual Diff Comparison & Traceability Styles
+   =================================================================== */
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-top: var(--space-xs);
+}
+
+@media (max-width: 768px) {
+  .diff-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.diff-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.diff-panel-title {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diff-content-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  max-height: 280px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  color: var(--text-secondary);
+}
+
+.diff-del {
+  background: rgba(201, 74, 91, 0.22);
+  color: #FFA4AF;
+  text-decoration: line-through;
+  padding: 2px 4px;
+  border-radius: 3px;
+  border: 1px solid rgba(201, 74, 91, 0.4);
+}
+
+.diff-ins {
+  background: rgba(78, 154, 126, 0.22);
+  color: #7FE0BC;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 3px;
+  border: 1px solid rgba(78, 154, 126, 0.4);
+}
+
+.diff-dot-del {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--sev-high-text);
+}
+
+.diff-dot-ins {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--status-success-text);
+}
+
+.diff-dot-neutral {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+/* Guideline Section Citation Badge */
+.guideline-citation-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.685rem;
+  color: var(--accent-clay);
+  background: var(--accent-clay-subtle);
+  border: 1px solid var(--accent-clay-border);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+/* Rejection Status Pill */
+.status-pill.rejected {
+  background: var(--sev-high-bg);
+  border: 1px solid var(--sev-high-border);
+  color: var(--sev-high-text);
+}
+
+/* History Status Filters */
+.history-status-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.history-status-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.history-status-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.history-status-btn.active {
+  background: var(--accent-rose-subtle);
+  border-color: var(--accent-rose-border);
+  color: var(--accent-rose);
+}
+
+/* Guidelines Reference Examples Grid */
+.guidelines-ref-card {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.guidelines-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+}
+
+.ref-example-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.ref-example-box h5 {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ref-example-bad {
+  background: var(--sev-high-bg);
+  border: 1px solid var(--sev-high-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.775rem;
+  color: var(--sev-high-text);
+}
+
+.ref-example-good {
+  background: var(--status-success-bg);
+  border: 1px solid var(--status-success-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.775rem;
+  color: var(--status-success-text);
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

@@ -1,12 +1,10 @@
 # BrandForge
 ### Intelligent Pre-Publication Brand Governance Platform
-**Inkloom AI Brand Governance Challenge — Round 2 (The Build)**
-
-[![Netlify Status](https://img.shields.io/badge/Netlify-Deployed%20Live-10B981?logo=netlify&logoColor=white)](https://brandforge-inkloom.netlify.app/)
+**Inkloom AI Brand Governance Challenge — Round 2 (The Build)**[![Netlify Status](https://img.shields.io/badge/Netlify-Deployed%20Live-10B981?logo=netlify&logoColor=white)](https://brandforge-inkloom.netlify.app/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?logo=github&logoColor=white)](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge)
 [![Vanilla JS](https://img.shields.io/badge/Stack-HTML5%20%2F%20CSS3%20%2F%20JS-F7DF1E?logo=javascript&logoColor=black)](#)
 [![Zero Build](https://img.shields.io/badge/Build-Zero%20Dependencies-10B981)](#)
-[![Automated Tests](https://img.shields.io/badge/Tests-15%2F15%20Passed-10B981)](#)
+[![Automated Tests](https://img.shields.io/badge/Tests-20%2F20%20Passed-10B981)](#)
 
 ---
 
@@ -29,43 +27,53 @@ BrandForge solves this problem by providing an explainable, human-centered revie
 - **Stage:** Round 2 — Functional Minimum Viable Product (MVP)
 - **Live Deployed Application:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
 - **Source Code Repository:** [https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge)
-- **Submission Date:** October 26, 2026
+- **Submission Date:** October 28, 2026
 
 ---
 
 ## 🚀 Key Features Implemented & Verified
 
 1. **Brand Checker Workbench:**
-   - Content title and format selector (*Press Release, Social Post, Email Newsletter, Digital Ad, Landing Page, Thought Leadership Blog*).
-   - Rich draft editor with live word and character counters.
+   - Content title (<= 120 chars) and format selector (*Press Release, Social Post, Email Newsletter, Digital Ad, Landing Page, Thought Leadership Blog*).
+   - Rich draft editor with live word and character counters, boundary validation (min 4 words, max 25,000 chars).
    - **Load Sample Campaign:** Instantly populates realistic marketing copy with intentional brand inconsistencies for demonstration.
 2. **Explainable Deterministic Rules Engine:**
    - Detects avoided terminology with direct replacements.
    - Flags missing preferred brand terminology.
    - Identifies aggressive marketing hype and out-of-character tone.
    - Detects unsupported superlatives and promissory assertions.
+   - **Policy Section Traceability:** Every finding includes an explicit policy section tag (`guidelineSection`).
    - **Claim Verification Tagging:** Explicitly distinguishes confirmed rule mismatches from claims requiring human verification.
    - Flags accessibility issues (sentences exceeding 30 words).
 3. **Heuristic Compliance Score:**
    - Dynamic 0–100 score weighted by finding severity (High: -18, Medium: -8, Low: -3) with a minimum floor of 10. Explicitly labeled as a heuristic indicator, not a legal guarantee.
-4. **Suggested Revision Generator:**
+4. **Suggested Revision Generator & Side-by-Side Visual Diff:**
    - Synthesizes an editable suggested revision replacing avoided terms and softening hyperbole while preserving author voice and structure.
-   - Actions to "Use Suggested Revision", "Copy Text", and "Re-run Check".
-5. **Human-in-the-Loop Approval Workflow:**
-   - Confirmation modal required before signing off and recording approved content into review history.
-6. **Brand Guidelines Configuration:**
-   - Custom editor for brand name, voice, preferred terms, avoided terms with replacements, approved facts, verification claims, and accessibility rules.
+   - **Side-by-Side Visual Diff:** Modal highlighting deleted terms (`.diff-del`) in red strikethrough and inserted terms (`.diff-ins`) in green with change count tracking.
+   - Actions to "Use Suggested Revision", "Compare with Original", "Copy Text", and "Re-run Check".
+5. **Dual-Action Human Governance:**
+   - **Explicit Approval:** Confirmation modal required before signing off and recording approved content into review history.
+   - **Explicit Rejection / Changes Requested:** Dedicated modal enabling reviewers to request changes with custom feedback notes.
+6. **Structured Audit Report Export:**
+   - Export review records as versioned JSON (`brandForgeAuditVersion: '2.0-MVP'`) or executive Markdown with clipboard copy and file download.
+7. **Brand Guidelines Configuration & Editorial Reference:**
+   - Custom editor for brand name, voice, preferred terms, avoided terms with replacements, approved facts, verification claims, accessibility rules, and visual formatting rules.
+   - Visual editorial reference table comparing tangible Good vs. Avoid examples.
    - Persists in browser `localStorage` with defensive fallbacks and "Restore Defaults".
-7. **Local Review History:**
-   - Searchable log of past checks with date, title, format, score, findings count, status, and an inspection modal.
-9. **Defensive Storage Resilience:**
-   - Graceful in-memory fallback ensures the application continues operating smoothly if `localStorage` is disabled or blocked.
+8. **Local Review History & Multi-Status Filtering:**
+   - Searchable tabular log of past checks with date, title, format, score, findings count, status pills, and direct single-record JSON export.
+   - Status filter buttons: All, Approved, Changes Requested.
+   - Batch JSON export of entire review history.
+9. **Governance Insights Dashboard:**
+   - Aggregates repeat rule violations, high-risk items, and approval percentages with optional demo preview.
+10. **Defensive Storage Resilience:**
+    - Graceful in-memory fallback ensures the application continues operating smoothly if `localStorage` is disabled or blocked.
 
 ### 🔍 Feature Implementation Categories
-- **A. Fully Implemented & Verified:** Features 1–9 above are 100% functional and tested in the current codebase.
+- **A. Fully Implemented & Verified:** Features 1–10 above are 100% functional and tested in the current codebase.
 - **B. Scoped / Partially Implemented:** English-language copy focus; single-browser profile `localStorage` persistence.
 - **C. Excluded / Untested:** No external LLM API connection; no external web fact-checking; no legal compliance guarantees; no image OCR.
-- **D. Planned Roadmap (Round 3):** Collaborative roles, visual diffs, cryptographic audit seals, and constrained production LLM integration.
+- **D. Planned Roadmap (Round 3):** Collaborative roles, team comment threads, cryptographic audit seals, and constrained production LLM integration.
 
 ---
 
