@@ -613,7 +613,7 @@ runTest('TC-20', 'Audit serializer outputs valid, structured JSON and formatted 
       {
         ruleTitle: 'Avoided Term: "cheap"',
         severity: 'high',
-        guidelineSection: 'Prohibited Vocabulary (Avoid Terms)',
+        guidelineSection: 'Prohibited Terminology',
         recommendation: 'Use "accessible" or "cost-effective".'
       }
     ]
@@ -627,7 +627,7 @@ runTest('TC-20', 'Audit serializer outputs valid, structured JSON and formatted 
   assert.strictEqual(parsed.documentTitle, 'Enterprise Q4 Product Launch');
   assert.strictEqual(parsed.complianceScore, 82);
   assert.strictEqual(parsed.findingsCount, 1);
-  assert.strictEqual(parsed.findings[0].guidelineSection, 'Prohibited Vocabulary (Avoid Terms)');
+  assert.strictEqual(parsed.findings[0].guidelineSection, 'Prohibited Terminology');
 
   // Test Markdown serialization
   const mdStr = generateAuditMarkdown(mockRecord);

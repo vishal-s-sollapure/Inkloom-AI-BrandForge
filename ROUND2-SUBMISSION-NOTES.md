@@ -64,8 +64,9 @@ To ensure absolute fidelity with judging requirements, features are classified b
 
 ## 3. Technology & Implementation Details
 
-- **Core Technologies:** HTML5, CSS3, Vanilla JavaScript (ES2022).
-- **Zero Build Step:** Runs immediately upon opening `index.html` in Chrome, Firefox, Safari, or Edge, or via a simple static file server.
+- **Core Technologies (Active Runtime):** HTML5, CSS3, Vanilla JavaScript (ES2022).
+- **Zero Build Step for Runtime:** Runs immediately upon opening `index.html` in Chrome, Firefox, Safari, or Edge, or via `npm start` / `node server.js`.
+- **Repository Context & Tooling:** Retains prototype React 18 + TypeScript scaffold in `src/` from early design exploration. Standard scripts in `package.json` support `npm test` (running the 20-test suite) and `npm run build` (running `tsc && vite build`).
 - **Visual Design:** Dark theme with a refined **plum, rose, and clay palette** (`#110913`, `#180D1C`, `#D9778F`, `#E0A899`, `#6E3358`). No generic neon or template styling.
 - **Persistence & Privacy:** Browser `localStorage` with safe `try...catch` error handling and defensive in-memory fallbacks. Persisted data is strictly local to the single browser profile and does not sync to external servers.
 - **Security & Client-Side Execution:** 100% client-side execution. No user drafts are transmitted over the network or shared with third-party foundation models.
@@ -180,5 +181,5 @@ Technical Challenges Solved:
 - Configured via [`netlify.toml`](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/netlify.toml) with `publish = "."` and zero build command.
 
 ### Option B: Local Verification
-- Execute automated test suite: `node tests/rulesEngine.test.js` (20/20 Passed).
-- Run local server: `node server.js` (available at `http://127.0.0.1:5173/`).
+- Execute automated test suite: `npm test` or `node tests/rulesEngine.test.js` (20/20 Passed).
+- Run local server: `npm start` or `node server.js` (available at `http://127.0.0.1:5173/`).

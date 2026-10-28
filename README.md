@@ -79,27 +79,42 @@ BrandForge solves this problem by providing an explainable, human-centered revie
 
 ## 🛠️ Technology Stack & Architecture
 
-- **Structure:** Semantic HTML5 (`index.html`) with accessible ARIA landmarks, roles, and modals.
-- **Styling:** CSS3 (`styles.css`) featuring a bespoke dark, polished **plum, rose, and warm clay palette** (`#110913`, `#180D1C`, `#D9778F`, `#E0A899`, `#6E3358`). Fully responsive across desktop, tablet, and mobile, with visible focus indicators (`:focus-visible`) and reduced-motion support.
-- **Logic:** Vanilla JavaScript (`app.js`, ES2022) with a modular deterministic rules engine. DOM-safe element rendering prevents XSS vulnerabilities.
-- **Persistence:** Browser `localStorage` with defensive in-memory fallback if storage is disabled.
-- **Zero Build Requirement:** No npm compilation, Node dependencies, or paid APIs required to run the application.
+BrandForge features a deliberate, transparent architectural design:
 
-### Project File Structure
+1. **Active Deployed Runtime (Zero-Build Static Web Application):**
+   - **Structure:** Semantic HTML5 ([index.html](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/index.html)) with accessible ARIA landmarks, roles, and accessible dialogs.
+   - **Styling:** Vanilla CSS3 ([styles.css](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/styles.css)) featuring a bespoke dark, polished **plum, rose, and warm clay palette** (`#110913`, `#180D1C`, `#D9778F`, `#E0A899`, `#6E3358`). Fully responsive across desktop, tablet, and mobile, with visible focus indicators (`:focus-visible`) and reduced-motion support.
+   - **Logic:** Vanilla JavaScript ([app.js](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/app.js), ES2022) with a modular deterministic rules engine. DOM-safe element rendering prevents XSS vulnerabilities.
+   - **Persistence:** Browser `localStorage` with defensive in-memory fallback if storage is disabled or quota is exceeded.
+   - **Zero Build Requirement for Evaluators:** Runs immediately upon opening `index.html` in Chrome, Firefox, Safari, or Edge, or via `node server.js` / `npm start`.
+   - **Netlify Hosting:** Configured via [netlify.toml](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/netlify.toml) with `publish = "."` and zero build commands, deploying the root web application directly to [brandforge-inkloom.netlify.app](https://brandforge-inkloom.netlify.app/).
+
+2. **Prototype / Reference Scaffolding (`src/` & `package.json`):**
+   - The repository retains an experimental React 18 + TypeScript scaffold in `src/` (`App.tsx`, `main.tsx`, `components/`) explored during early design phases.
+   - Running `npm run build` executes `tsc && vite build`: `tsc` verifies strict TypeScript compilation across `src/`, and Vite validates root asset bundling into `dist/`.
+   - The active product runtime served on Netlify and evaluated for Round 2 is the robust zero-build vanilla web application at the repository root.
+
+### Complete Project File Structure
 
 ```
 Inkloom-AI-BrandForge/
-├── index.html                 # Semantic application structure & accessible layout
-├── styles.css                 # Responsive stylesheet (Plum, rose, & clay palette)
-├── app.js                     # Modular application logic & rules engine
-├── server.js                  # Optional zero-dependency local static server
-├── netlify.toml               # Zero-build Netlify deployment configuration
+├── index.html                 # Semantic application shell & accessible layout (Active runtime)
+├── styles.css                 # Responsive design system (Plum, rose, clay palette)
+├── app.js                     # Modular application logic, diff builder & rules engine
+├── server.js                  # Zero-dependency local Node.js static server (port 5173)
+├── netlify.toml               # Netlify configuration (publish = ".", command = "")
+├── package.json               # Scripts (test, start, dev, build) & prototype dependencies
+├── vite.config.ts             # Vite configuration for TypeScript validation
+├── src/                       # React / TypeScript prototype scaffold (Reference)
+├── tests/
+│   └── rulesEngine.test.js    # Automated unit test suite (20/20 passed)
 ├── README.md                  # Comprehensive setup, architecture, and guide
-├── ROUND2-SUBMISSION-NOTES.md # Submission checklist & honest feature status report
-├── ROUND2-PROJECT-SUMMARY.md  # 2–3 page summary formatted for PDF conversion
-├── TEST-REPORT.md             # Empirical test results from real checks executed
-└── tests/
-    └── rulesEngine.test.js    # Automated unit test suite (15/15 passed)
+├── ROUND2-AUDIT.md            # Detailed 33-point requirements & security audit
+├── TEST-REPORT.md             # Empirical test results from 20 unit & 16 manual checks
+├── ROUND2-PROJECT-SUMMARY.md  # 2–3 page summary formatted for Google Drive PDF conversion
+├── ROUND2-SUBMISSION-NOTES.md # Submission checklist & copy-paste form answers
+├── ROUND2-DEMO-SCRIPT.md      # Exact 2–3 minute timed judge walkthrough script
+└── ROUND2-ROUND3-ROADMAP.md   # Exactly three substantial Round 3 improvements
 ```
 
 ---
@@ -109,10 +124,12 @@ Inkloom-AI-BrandForge/
 BrandForge uses a transparent, deterministic rules engine:
 
 ### 1. Evaluation Functions
-- `validateInput(title, text)`: Ensures required content fields are present and non-empty.
-- `matchGuidelines(text, guidelines)`: Evaluates avoided words, verification claims, tone, and sentence length.
+- `validateInput(title, text)`: Enforces required fields, title bounds (1–120 chars), draft minimum length (>= 4 words), and character limits (<= 25,000 chars).
+- `matchGuidelines(text, guidelines)`: Evaluates avoided terminology, verification claims, aggressive hype, and sentence length with explicit `guidelineSection` attribution.
 - `calculateScore(findings)`: Calculates the heuristic compliance score.
-- `generateSuggestedRevision(text, findings, guidelines)`: Generates an editable draft replacing flagged terms.
+- `generateSuggestedRevision(text, findings, guidelines)`: Synthesizes an intent-preserving editable draft.
+- `buildDiffData(originalText, suggestedText, findings, guidelines)`: Builds side-by-side visual diff markup (`.diff-del`, `.diff-ins`).
+- `generateAuditJson(record)` & `generateAuditMarkdown(record)`: Formats exportable audit reports.
 
 ### 2. Scoring Formula
 The compliance score is a **heuristic indicator**, not a guarantee of legal or brand compliance:
@@ -130,15 +147,15 @@ Simply double-click `index.html` or open it directly in any modern browser (Goog
 
 ### Option 2: Local Static Server (Node.js)
 ```bash
-node server.js
+npm start
+# or: node server.js
 ```
 Open your browser at `http://localhost:5173/` or `http://127.0.0.1:5173/`.
 
-### Option 3: Python Static Server
+### Option 3: Vite Dev Server
 ```bash
-python -m http.server 5173
+npm run dev
 ```
-Open `http://localhost:5173/`.
 
 ---
 
@@ -146,7 +163,7 @@ Open `http://localhost:5173/`.
 
 ### Live Production Deployment
 - **Active URL:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
-- **Configuration:** Handled via [`netlify.toml`](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/netlify.toml) with `publish = "."` and zero build commands.
+- **Configuration:** Handled via [`netlify.toml`](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/netlify.toml) with `publish = "."` and zero build commands, deploying directly from GitHub `main`.
 
 ### Deploying to GitHub Pages
 1. Push this repository to GitHub:
@@ -162,9 +179,10 @@ Open `http://localhost:5173/`.
 
 ## 🧪 Testing Instructions & Results
 
-An automated unit test suite verifies the rules engine, scoring, and text utilities:
+An automated unit test suite verifies the rules engine, scoring, diff builder, rejection flow, and serializers:
 ```bash
-node tests/rulesEngine.test.js
+npm test
+# or: node tests/rulesEngine.test.js
 ```
 
 ### Actual Test Results (from `TEST-REPORT.md`):
@@ -183,8 +201,13 @@ node tests/rulesEngine.test.js
 - `TC-13`: Search filter accurately matches records by title or content type &rarr; **PASS**
 - `TC-14`: Workflow loop: Applying revision and re-running elevates score &rarr; **PASS**
 - `TC-15`: Aggregates rule frequencies, approval distribution, and high risk findings &rarr; **PASS**
+- `TC-16`: Validates input boundary conditions (title length, word count, character caps) &rarr; **PASS**
+- `TC-17`: Every finding contains an explicit guidelineSection attribution &rarr; **PASS**
+- `TC-18`: buildDiffData generates HTML diff markup with deletions and insertions &rarr; **PASS**
+- `TC-19`: Records explicit rejection (changes requested) with reviewer notes and status filtering &rarr; **PASS**
+- `TC-20`: Audit serializer outputs valid, structured JSON and formatted Markdown &rarr; **PASS**
 
-**Result: 15 / 15 Tests Passed (100% Pass Rate).** Full details are documented in [`TEST-REPORT.md`](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/TEST-REPORT.md).
+**Result: 20 / 20 Tests Passed (100% Pass Rate).** Full details are documented in [`TEST-REPORT.md`](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/TEST-REPORT.md).
 
 ---
 

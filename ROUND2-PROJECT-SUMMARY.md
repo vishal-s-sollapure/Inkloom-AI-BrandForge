@@ -145,17 +145,27 @@ To ensure absolute integrity and transparency during judging, features are class
 BrandForge was architected for zero-friction evaluation, instant client-side execution, and zero deployment overhead:
 
 ```
-[ Client Browser Runtime ]
+[ Active Deployed Runtime: Zero-Build Static Web App ]
   ├── index.html       Semantic HTML5 (Accessible landmarks, ARIA tablists, Modals)
   ├── styles.css       Custom Vanilla CSS3 (Plum, rose, & clay palette; Responsive grid)
   └── app.js           ES2022 JavaScript Engine (Modular architecture)
-         ├── Validation Module        (Input sanitation & length checks)
+         ├── Validation Module        (Input sanitation & length boundaries)
          ├── Rules & Matching Engine  (Dynamic regex boundary detection)
          ├── Scoring System           (Weighted severity deduction formula)
+         ├── Diff Comparison Engine  (Visual HTML side-by-side diff generator)
          ├── Revision Synthesizer     (Context-preserving term replacement)
          ├── Storage Controller       (Defensive localStorage + In-memory fallback)
-         └── Analytics Module         (Frequency ranking & metric aggregation)
+         └── Audit Serializer         (Versioned JSON & Markdown report export)
+
+[ Reference Scaffolding & Tooling (Repository Context) ]
+  ├── netlify.toml     Direct root publishing (publish = ".", command = "")
+  ├── package.json     Standard scripts (npm test, npm start, npm run build)
+  ├── server.js        Zero-dependency native Node.js static server
+  ├── src/             Experimental React 18 + TypeScript prototype scaffold (Reference)
+  └── tests/           Automated unit test suite (20 / 20 tests passed via npm test)
 ```
+
+> **Architecture Clarification:** The live production deployment on Netlify serves the zero-build Vanilla HTML5/CSS3/ES2022 application directly from the root (`index.html`, `styles.css`, `app.js`). The `src/` directory contains an experimental React/TypeScript scaffold explored during early prototyping. `npm run build` runs `tsc && vite build` and validates TypeScript compilation, but the active, tested, and deployed Round 2 product evaluated by judges is the zero-dependency vanilla application.
 
 ### Design System & Visual Aesthetics
 BrandForge avoids generic framework templates, implementing a bespoke, professional dark theme using a **plum, rose, and warm clay palette**:
@@ -222,6 +232,7 @@ The following three capabilities represent our planned roadmap for Round 3 (The 
 
 - **Live Deployed Application:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/) *(Hosted on Netlify, HTTP 200 OK)*
 - **Source Code Repository:** [https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge) *(Confirmed GitHub Origin)*
-- **Local Testing Server:** Static server available via `node server.js` on `http://127.0.0.1:5173/`.
-- **Test Suite Execution:** Run `node tests/rulesEngine.test.js` to execute all 15 automated verification checks.
+- **Local Testing Server:** Static server available via `node server.js` or `npm start` on `http://127.0.0.1:5173/`.
+- **Test Suite Execution:** Run `npm test` or `node tests/rulesEngine.test.js` to execute all 20 automated verification checks.
+
 

@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "start": "node server.js",
+    "test": "node tests/rulesEngine.test.js",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
