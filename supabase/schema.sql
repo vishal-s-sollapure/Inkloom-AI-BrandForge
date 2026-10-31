@@ -1,6 +1,7 @@
 -- ==============================================================================
 -- BrandForge Round 3: Supabase PostgreSQL Schema & Row Level Security (RLS)
 -- Participant: Vishal S Sollapure | Challenge: Inkloom AI Brand Governance
+-- Fully Idempotent Script: Safe to execute repeatedly without duplicate errors
 -- ==============================================================================
 
 -- 1. EXTENSIONS
@@ -111,7 +112,7 @@ CREATE TABLE IF NOT EXISTS public.campaign_revisions (
 CREATE TABLE IF NOT EXISTS public.review_comments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID NOT NULL REFERENCES public.campaigns(id) ON DELETE CASCADE,
-    revision_id UUID REFERENCES public.campaign_revisions(id) ON DELETE CASCADE,
+    revision_id UUID NOT NULL REFERENCES public.campaign_revisions(id) ON DELETE CASCADE,
     author_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     author_role user_role NOT NULL,
     selected_text TEXT,
@@ -177,23 +178,28 @@ ALTER TABLE public.review_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.compliance_seals ENABLE ROW LEVEL SECURITY;
 
--- 6. ROW LEVEL SECURITY POLICIES
+-- 6. ROW LEVEL SECURITY POLICIES (Idempotent: Drops existing policy before creating)
 
 -- 6.1 Organizations: Users can view their own organization
+DROP POLICY IF EXISTS "org_select_own" ON public.organizations;
 CREATE POLICY "org_select_own" ON public.organizations
     FOR SELECT USING (id = public.get_auth_org_id());
 
 -- 6.2 Profiles: Users can view profiles in their own organization; edit their own profile
+DROP POLICY IF EXISTS "profiles_select_org" ON public.profiles;
 CREATE POLICY "profiles_select_org" ON public.profiles
     FOR SELECT USING (organization_id = public.get_auth_org_id());
 
+DROP POLICY IF EXISTS "profiles_update_self" ON public.profiles;
 CREATE POLICY "profiles_update_self" ON public.profiles
     FOR UPDATE USING (id = auth.uid());
 
 -- 6.3 Brand Guidelines: Read-accessible to all org members; editable by Brand Custodians
+DROP POLICY IF EXISTS "guidelines_select_org" ON public.brand_guidelines;
 CREATE POLICY "guidelines_select_org" ON public.brand_guidelines
     FOR SELECT USING (organization_id = public.get_auth_org_id());
 
+DROP POLICY IF EXISTS "guidelines_modify_custodian" ON public.brand_guidelines;
 CREATE POLICY "guidelines_modify_custodian" ON public.brand_guidelines
     FOR ALL USING (
         organization_id = public.get_auth_org_id() 
@@ -202,10 +208,12 @@ CREATE POLICY "guidelines_modify_custodian" ON public.brand_guidelines
 
 -- 6.4 Campaigns:
 -- Members of the same organization can view campaigns
+DROP POLICY IF EXISTS "campaigns_select_org" ON public.campaigns;
 CREATE POLICY "campaigns_select_org" ON public.campaigns
     FOR SELECT USING (organization_id = public.get_auth_org_id());
 
 -- Creators can insert campaigns within their organization
+DROP POLICY IF EXISTS "campaigns_insert_creator" ON public.campaigns;
 CREATE POLICY "campaigns_insert_creator" ON public.campaigns
     FOR INSERT WITH CHECK (
         organization_id = public.get_auth_org_id() 
@@ -213,6 +221,7 @@ CREATE POLICY "campaigns_insert_creator" ON public.campaigns
     );
 
 -- Update permissions based on role and lifecycle status:
+DROP POLICY IF EXISTS "campaigns_update_role" ON public.campaigns;
 CREATE POLICY "campaigns_update_role" ON public.campaigns
     FOR UPDATE USING (
         organization_id = public.get_auth_org_id()
@@ -230,6 +239,7 @@ CREATE POLICY "campaigns_update_role" ON public.campaigns
 
 -- 6.5 Campaign Revisions:
 -- Read for org members
+DROP POLICY IF EXISTS "revisions_select_org" ON public.campaign_revisions;
 CREATE POLICY "revisions_select_org" ON public.campaign_revisions
     FOR SELECT USING (
         EXISTS (
@@ -240,6 +250,7 @@ CREATE POLICY "revisions_select_org" ON public.campaign_revisions
     );
 
 -- Insert permitted for org members working on campaign
+DROP POLICY IF EXISTS "revisions_insert_org" ON public.campaign_revisions;
 CREATE POLICY "revisions_insert_org" ON public.campaign_revisions
     FOR INSERT WITH CHECK (
         EXISTS (
@@ -250,6 +261,7 @@ CREATE POLICY "revisions_insert_org" ON public.campaign_revisions
     );
 
 -- 6.6 Review Comments:
+DROP POLICY IF EXISTS "comments_select_org" ON public.review_comments;
 CREATE POLICY "comments_select_org" ON public.review_comments
     FOR SELECT USING (
         EXISTS (
@@ -259,6 +271,7 @@ CREATE POLICY "comments_select_org" ON public.review_comments
         )
     );
 
+DROP POLICY IF EXISTS "comments_insert_org" ON public.review_comments;
 CREATE POLICY "comments_insert_org" ON public.review_comments
     FOR INSERT WITH CHECK (
         author_id = auth.uid()
@@ -269,6 +282,7 @@ CREATE POLICY "comments_insert_org" ON public.review_comments
         )
     );
 
+DROP POLICY IF EXISTS "comments_update_resolution" ON public.review_comments;
 CREATE POLICY "comments_update_resolution" ON public.review_comments
     FOR UPDATE USING (
         -- Author can resolve, or Custodian / Legal can resolve
@@ -281,9 +295,11 @@ CREATE POLICY "comments_update_resolution" ON public.review_comments
     );
 
 -- 6.7 Audit Events: APPEND-ONLY! Strictly no UPDATE or DELETE allowed.
+DROP POLICY IF EXISTS "audit_events_select_org" ON public.audit_events;
 CREATE POLICY "audit_events_select_org" ON public.audit_events
     FOR SELECT USING (organization_id = public.get_auth_org_id());
 
+DROP POLICY IF EXISTS "audit_events_insert_org" ON public.audit_events;
 CREATE POLICY "audit_events_insert_org" ON public.audit_events
     FOR INSERT WITH CHECK (
         organization_id = public.get_auth_org_id()
@@ -292,6 +308,7 @@ CREATE POLICY "audit_events_insert_org" ON public.audit_events
 
 -- 6.8 Compliance Seals:
 -- Viewable by anyone in the organization
+DROP POLICY IF EXISTS "seals_select_org" ON public.compliance_seals;
 CREATE POLICY "seals_select_org" ON public.compliance_seals
     FOR SELECT USING (
         EXISTS (
@@ -302,6 +319,7 @@ CREATE POLICY "seals_select_org" ON public.compliance_seals
     );
 
 -- Only Legal officers can record the final compliance seal upon legal clearance
+DROP POLICY IF EXISTS "seals_insert_legal" ON public.compliance_seals;
 CREATE POLICY "seals_insert_legal" ON public.compliance_seals
     FOR INSERT WITH CHECK (
         public.get_auth_role() = 'legal'
@@ -356,4 +374,3 @@ CREATE TRIGGER on_auth_user_created
 INSERT INTO public.organizations (name, slug)
 VALUES ('Inkloom Brand Studio', 'inkloom-workspace')
 ON CONFLICT (slug) DO NOTHING;
-
