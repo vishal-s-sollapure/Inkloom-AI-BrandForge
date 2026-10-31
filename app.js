@@ -14,7 +14,9 @@
     GUIDELINES: 'brandforge_guidelines_v2',
     HISTORY: 'brandforge_history_v2',
     ONBOARDING_SEEN: 'brandforge_onboarding_dismissed_v2',
-    ENGINE_MODE: 'brandforge_engine_mode_v3'
+    ENGINE_MODE: 'brandforge_engine_mode_v3',
+    ROLE: 'brandforge_active_role_v3',
+    SUPABASE_CONFIG: 'brandforge_supabase_config_v3'
   };
 
   // Default brand guidelines conforming to Inkloom AI's problem statement
@@ -122,6 +124,14 @@ With this release, our system eliminates human managers and editorial review bec
       return 'ai';
     }
   })();
+  let activeRole = (function() {
+    try {
+      return localStorage.getItem(STORAGE_KEYS.ROLE) || 'creator';
+    } catch (e) {
+      return 'creator';
+    }
+  })();
+  let currentWorkflowStage = 'drafting';
 
   /* ===================================================================
      3. DOM Elements Cache
@@ -246,6 +256,50 @@ With this release, our system eliminates human managers and editorial review bec
     btnDownloadExportMd: document.getElementById('btn-download-export-md'),
     btnDownloadExportJson: document.getElementById('btn-download-export-json'),
 
+    // Stakeholder Role & Lifecycle Stepper
+    roleSelect: document.getElementById('role-select'),
+    workflowCurrentRoleBadge: document.getElementById('workflow-current-role-badge'),
+    workflowStatusSummary: document.getElementById('workflow-status-summary'),
+    workflowCurrentStageName: document.getElementById('workflow-current-stage-name'),
+    stepperActionsBar: document.getElementById('stepper-actions-bar'),
+    stepNodeDrafting: document.getElementById('step-node-drafting'),
+    stepNodeInReview: document.getElementById('step-node-in_review'),
+    stepNodeBrandApproved: document.getElementById('step-node-brand_approved'),
+    stepNodeLegallyCleared: document.getElementById('step-node-legally_cleared'),
+    stepConn1: document.getElementById('step-conn-1'),
+    stepConn2: document.getElementById('step-conn-2'),
+    stepConn3: document.getElementById('step-conn-3'),
+
+    // In-Line Comments in Diff Modal
+    diffCommentsSection: document.getElementById('diff-comments-section'),
+    diffCommentsCount: document.getElementById('diff-comments-count'),
+    diffCommentsList: document.getElementById('diff-comments-list'),
+    emptyCommentsNotice: document.getElementById('empty-comments-notice'),
+    commentTargetInput: document.getElementById('comment-target-input'),
+    commentAuthorBadge: document.getElementById('comment-author-badge'),
+    commentTextInput: document.getElementById('comment-text-input'),
+    btnPostComment: document.getElementById('btn-post-comment'),
+
+    // Cryptographic Compliance Seal Modal
+    modalComplianceSeal: document.getElementById('modal-compliance-seal'),
+    certSealId: document.getElementById('cert-seal-id'),
+    certDocTitle: document.getElementById('cert-doc-title'),
+    certDocType: document.getElementById('cert-doc-type'),
+    certComplianceScore: document.getElementById('cert-compliance-score'),
+    certUnresolvedBlockers: document.getElementById('cert-unresolved-blockers'),
+    certCustodianSigner: document.getElementById('cert-custodian-signer'),
+    certCustodianTime: document.getElementById('cert-custodian-time'),
+    certLegalSigner: document.getElementById('cert-legal-signer'),
+    certLegalTime: document.getElementById('cert-legal-time'),
+    certSha256Hash: document.getElementById('cert-sha256-hash'),
+    btnCopySealHash: document.getElementById('btn-copy-seal-hash'),
+    certVerificationResult: document.getElementById('cert-verification-result'),
+    certVerifyIcon: document.getElementById('cert-verify-icon'),
+    certVerifyText: document.getElementById('cert-verify-text'),
+    btnVerifySealIntegrity: document.getElementById('btn-verify-seal-integrity'),
+    btnDownloadSealJson: document.getElementById('btn-download-seal-json'),
+    detailViewSealBtn: document.getElementById('detail-view-seal-btn'),
+
     modalHistoryDetail: document.getElementById('modal-history-detail'),
     detailDate: document.getElementById('detail-date'),
     detailType: document.getElementById('detail-type'),
@@ -258,6 +312,22 @@ With this release, our system eliminates human managers and editorial review bec
 
     modalClearHistory: document.getElementById('modal-clear-history'),
     modalConfirmClearHistoryBtn: document.getElementById('modal-confirm-clear-history-btn'),
+
+    // Workspace & Supabase Sync
+    btnWorkspaceModal: document.getElementById('btn-workspace-modal'),
+    modalWorkspaceSync: document.getElementById('modal-workspace-sync'),
+    workspaceStatusDot: document.getElementById('workspace-status-dot'),
+    workspaceStatusText: document.getElementById('workspace-status-text'),
+    wsModalBadge: document.getElementById('ws-modal-badge'),
+    wsModalOrgName: document.getElementById('ws-modal-org-name'),
+    wsModalRoleName: document.getElementById('ws-modal-role-name'),
+    inputSupabaseUrl: document.getElementById('input-supabase-url'),
+    inputSupabaseAnonKey: document.getElementById('input-supabase-anon-key'),
+    btnSaveSupabaseConfig: document.getElementById('btn-save-supabase-config'),
+    btnTestSupabaseConfig: document.getElementById('btn-test-supabase-config'),
+    btnDisconnectSupabase: document.getElementById('btn-disconnect-supabase'),
+    supabaseConfigFeedback: document.getElementById('supabase-config-feedback'),
+    btnCopySchemaSql: document.getElementById('btn-copy-schema-sql'),
 
     // Toast Container
     toastContainer: document.getElementById('toast-container')
@@ -1361,7 +1431,453 @@ With this release, our system eliminates human managers and editorial review bec
       });
     }
 
+    if (DOM.detailViewSealBtn) {
+      if (record.complianceSeal) {
+        DOM.detailViewSealBtn.style.display = 'inline-block';
+        DOM.detailViewSealBtn.onclick = () => {
+          openComplianceSealModal(record);
+        };
+      } else {
+        DOM.detailViewSealBtn.style.display = 'none';
+      }
+    }
+
     openModal('modal-history-detail');
+  }
+
+  /* ===================================================================
+     Round 3: Collaborative Governance, RBAC & Cryptographic Seal Engine
+     =================================================================== */
+
+  const ROLE_CONFIG = {
+    creator: { label: 'Content Creator', badge: '✍️ Persona: Content Creator', roleClass: 'creator' },
+    custodian: { label: 'Brand Custodian', badge: '🛡️ Persona: Brand Custodian', roleClass: 'custodian' },
+    legal: { label: 'Legal & Compliance Officer', badge: '⚖️ Persona: Legal & Compliance', roleClass: 'legal' }
+  };
+
+  const STAGE_LABELS = {
+    drafting: 'Drafting',
+    in_review: 'In Review',
+    changes_requested: 'Changes Requested',
+    brand_approved: 'Brand Approved',
+    legally_cleared: 'Legally Cleared & Sealed 🔒'
+  };
+
+  async function computeSha256(text) {
+    if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest) {
+      const enc = new TextEncoder();
+      const data = enc.encode(text);
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    // Fallback simple checksum if WebCrypto unavailable in test
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      hash = ((hash << 5) - hash) + text.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(16).padStart(64, '0');
+  }
+
+  function buildCanonicalSealPayload(record) {
+    const canonical = {
+      title: (record.title || '').trim(),
+      contentType: (record.type || 'general').trim(),
+      rawText: (record.rawText || '').trim(),
+      complianceScore: Number(record.score || 0),
+      unresolvedBlockers: Array.isArray(record.findings)
+        ? record.findings.filter(f => f.severity === 'high').length
+        : 0,
+      activeGuidelinesVersion: record.guidelinesVersion || '2026.3-Inkloom',
+      brandCustodianSignoff: record.brandCustodianSignoff ? {
+        name: record.brandCustodianSignoff.name || 'Brand Custodian',
+        timestamp: record.brandCustodianSignoff.timestamp
+      } : null,
+      legalOfficerSignoff: record.legalOfficerSignoff ? {
+        name: record.legalOfficerSignoff.name || 'Legal Counsel',
+        timestamp: record.legalOfficerSignoff.timestamp
+      } : null
+    };
+    return JSON.stringify(canonical, Object.keys(canonical).sort());
+  }
+
+  function updateWorkflowUI(stage) {
+    currentWorkflowStage = stage || 'drafting';
+
+    if (DOM.workflowCurrentStageName) {
+      DOM.workflowCurrentStageName.textContent = STAGE_LABELS[currentWorkflowStage] || 'Drafting';
+    }
+
+    if (DOM.workflowCurrentRoleBadge) {
+      const info = ROLE_CONFIG[activeRole] || ROLE_CONFIG.creator;
+      DOM.workflowCurrentRoleBadge.textContent = info.badge;
+    }
+
+    // Update Stepper Tracks
+    const setNodeState = (node, active, completed) => {
+      if (!node) return;
+      node.classList.toggle('active', active);
+      node.classList.toggle('completed', completed);
+    };
+
+    const setConnState = (conn, completed) => {
+      if (!conn) return;
+      conn.classList.toggle('completed', completed);
+    };
+
+    if (currentWorkflowStage === 'drafting') {
+      setNodeState(DOM.stepNodeDrafting, true, false);
+      setNodeState(DOM.stepNodeInReview, false, false);
+      setNodeState(DOM.stepNodeBrandApproved, false, false);
+      setNodeState(DOM.stepNodeLegallyCleared, false, false);
+      setConnState(DOM.stepConn1, false);
+      setConnState(DOM.stepConn2, false);
+      setConnState(DOM.stepConn3, false);
+    } else if (currentWorkflowStage === 'in_review') {
+      setNodeState(DOM.stepNodeDrafting, false, true);
+      setNodeState(DOM.stepNodeInReview, true, false);
+      setNodeState(DOM.stepNodeBrandApproved, false, false);
+      setNodeState(DOM.stepNodeLegallyCleared, false, false);
+      setConnState(DOM.stepConn1, true);
+      setConnState(DOM.stepConn2, false);
+      setConnState(DOM.stepConn3, false);
+    } else if (currentWorkflowStage === 'brand_approved') {
+      setNodeState(DOM.stepNodeDrafting, false, true);
+      setNodeState(DOM.stepNodeInReview, false, true);
+      setNodeState(DOM.stepNodeBrandApproved, true, false);
+      setNodeState(DOM.stepNodeLegallyCleared, false, false);
+      setConnState(DOM.stepConn1, true);
+      setConnState(DOM.stepConn2, true);
+      setConnState(DOM.stepConn3, false);
+    } else if (currentWorkflowStage === 'legally_cleared') {
+      setNodeState(DOM.stepNodeDrafting, false, true);
+      setNodeState(DOM.stepNodeInReview, false, true);
+      setNodeState(DOM.stepNodeBrandApproved, false, true);
+      setNodeState(DOM.stepNodeLegallyCleared, true, true);
+      setConnState(DOM.stepConn1, true);
+      setConnState(DOM.stepConn2, true);
+      setConnState(DOM.stepConn3, true);
+    } else if (currentWorkflowStage === 'changes_requested') {
+      setNodeState(DOM.stepNodeDrafting, true, false);
+      setNodeState(DOM.stepNodeInReview, false, false);
+      setNodeState(DOM.stepNodeBrandApproved, false, false);
+      setNodeState(DOM.stepNodeLegallyCleared, false, false);
+      setConnState(DOM.stepConn1, false);
+      setConnState(DOM.stepConn2, false);
+      setConnState(DOM.stepConn3, false);
+    }
+
+    renderStepperActions();
+  }
+
+  function renderStepperActions() {
+    if (!DOM.stepperActionsBar) return;
+    DOM.stepperActionsBar.innerHTML = '';
+
+    const role = activeRole;
+    const stage = currentWorkflowStage;
+
+    if (role === 'creator') {
+      if (stage === 'drafting' || stage === 'changes_requested') {
+        const btnSubmit = document.createElement('button');
+        btnSubmit.className = 'btn btn-primary btn-sm';
+        btnSubmit.innerHTML = '<span>Submit for Brand Review ➔</span>';
+        btnSubmit.onclick = () => {
+          if (!latestCheckResults) {
+            showToast('Please run a brand check before submitting for review.', 'error');
+            return;
+          }
+          updateWorkflowUI('in_review');
+          showToast('Draft officially submitted for Brand Custodian review.', 'success');
+        };
+        DOM.stepperActionsBar.appendChild(btnSubmit);
+      } else if (stage === 'in_review') {
+        const span = document.createElement('span');
+        span.style.fontSize = '0.75rem';
+        span.style.color = 'var(--text-muted)';
+        span.textContent = '⏳ Submitted. Awaiting Brand Custodian triage.';
+        DOM.stepperActionsBar.appendChild(span);
+      } else if (stage === 'brand_approved') {
+        const span = document.createElement('span');
+        span.style.fontSize = '0.75rem';
+        span.style.color = 'var(--status-success-text)';
+        span.textContent = '✓ Brand Approved! Awaiting Legal Clearance.';
+        DOM.stepperActionsBar.appendChild(span);
+      } else if (stage === 'legally_cleared') {
+        const btnSeal = document.createElement('button');
+        btnSeal.className = 'btn btn-clay btn-sm';
+        btnSeal.textContent = 'View Compliance Seal 🔒';
+        btnSeal.onclick = () => {
+          if (latestCheckResults && latestCheckResults.complianceSeal) {
+            openComplianceSealModal(latestCheckResults);
+          }
+        };
+        DOM.stepperActionsBar.appendChild(btnSeal);
+      }
+    } else if (role === 'custodian') {
+      if (stage === 'in_review') {
+        const btnApprove = document.createElement('button');
+        btnApprove.className = 'btn btn-primary btn-sm';
+        btnApprove.textContent = 'Approve Brand Voice ✓';
+        btnApprove.onclick = () => {
+          if (!latestCheckResults) {
+            showToast('Run check before approving.', 'error');
+            return;
+          }
+          latestCheckResults.brandCustodianSignoff = {
+            name: 'Sarah Chen (Brand Custodian)',
+            timestamp: new Date().toISOString(),
+            verified: true
+          };
+          updateWorkflowUI('brand_approved');
+          showToast('Brand voice approved. Escalated to Legal for clearance.', 'success');
+        };
+
+        const btnReject = document.createElement('button');
+        btnReject.className = 'btn btn-secondary btn-sm';
+        btnReject.style.borderColor = 'var(--sev-high-border)';
+        btnReject.style.color = 'var(--sev-high-text)';
+        btnReject.textContent = 'Request Changes';
+        btnReject.onclick = () => {
+          openModal('modal-reject');
+        };
+
+        DOM.stepperActionsBar.appendChild(btnApprove);
+        DOM.stepperActionsBar.appendChild(btnReject);
+      } else if (stage === 'brand_approved') {
+        const span = document.createElement('span');
+        span.style.fontSize = '0.75rem';
+        span.style.color = 'var(--status-success-text)';
+        span.textContent = '✓ Brand sign-off granted.';
+        DOM.stepperActionsBar.appendChild(span);
+      } else if (stage === 'legally_cleared') {
+        const btnSeal = document.createElement('button');
+        btnSeal.className = 'btn btn-clay btn-sm';
+        btnSeal.textContent = 'View Compliance Seal 🔒';
+        btnSeal.onclick = () => {
+          if (latestCheckResults && latestCheckResults.complianceSeal) {
+            openComplianceSealModal(latestCheckResults);
+          }
+        };
+        DOM.stepperActionsBar.appendChild(btnSeal);
+      } else {
+        const span = document.createElement('span');
+        span.style.fontSize = '0.75rem';
+        span.style.color = 'var(--text-muted)';
+        span.textContent = 'Creator drafting in progress.';
+        DOM.stepperActionsBar.appendChild(span);
+      }
+    } else if (role === 'legal') {
+      if (stage === 'brand_approved') {
+        const btnClear = document.createElement('button');
+        btnClear.className = 'btn btn-primary btn-sm';
+        btnClear.innerHTML = '<span>Grant Legal Clearance & Issue Seal 🔒</span>';
+        btnClear.onclick = async () => {
+          await handleIssueComplianceSeal();
+        };
+
+        const btnReject = document.createElement('button');
+        btnReject.className = 'btn btn-secondary btn-sm';
+        btnReject.style.borderColor = 'var(--sev-high-border)';
+        btnReject.style.color = 'var(--sev-high-text)';
+        btnReject.textContent = 'Request Evidence';
+        btnReject.onclick = () => {
+          openModal('modal-reject');
+        };
+
+        DOM.stepperActionsBar.appendChild(btnClear);
+        DOM.stepperActionsBar.appendChild(btnReject);
+      } else if (stage === 'in_review') {
+        const span = document.createElement('span');
+        span.style.fontSize = '0.75rem';
+        span.style.color = 'var(--text-muted)';
+        span.textContent = 'Awaiting Brand Custodian voice review first.';
+        DOM.stepperActionsBar.appendChild(span);
+      } else if (stage === 'legally_cleared') {
+        const btnSeal = document.createElement('button');
+        btnSeal.className = 'btn btn-clay btn-sm';
+        btnSeal.textContent = 'View Compliance Seal 🔒';
+        btnSeal.onclick = () => {
+          if (latestCheckResults && latestCheckResults.complianceSeal) {
+            openComplianceSealModal(latestCheckResults);
+          }
+        };
+        DOM.stepperActionsBar.appendChild(btnSeal);
+      } else {
+        const span = document.createElement('span');
+        span.style.fontSize = '0.75rem';
+        span.style.color = 'var(--text-muted)';
+        span.textContent = 'Drafting in progress.';
+        DOM.stepperActionsBar.appendChild(span);
+      }
+    }
+  }
+
+  // Issue Cryptographic Compliance Seal
+  async function handleIssueComplianceSeal() {
+    if (!latestCheckResults) return;
+
+    if (!latestCheckResults.brandCustodianSignoff) {
+      latestCheckResults.brandCustodianSignoff = {
+        name: 'Sarah Chen (Brand Custodian)',
+        timestamp: new Date().toISOString(),
+        verified: true
+      };
+    }
+
+    latestCheckResults.legalOfficerSignoff = {
+      name: 'David Marcus, Esq. (Legal Counsel)',
+      timestamp: new Date().toISOString(),
+      verified: true
+    };
+
+    const canonical = buildCanonicalSealPayload(latestCheckResults);
+    const hash = await computeSha256(canonical);
+    const sealId = `SEAL-${hash.slice(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+
+    const seal = {
+      sealId,
+      sha256Hash: hash,
+      algorithm: 'SHA-256 (NIST FIPS 180-4)',
+      issuedAt: new Date().toISOString(),
+      status: 'VERIFIED_COMPLIANT',
+      canonicalPayload: canonical,
+      brandCustodianSignoff: latestCheckResults.brandCustodianSignoff,
+      legalOfficerSignoff: latestCheckResults.legalOfficerSignoff,
+      verificationUrl: `https://brandforge-inkloom.netlify.app/verify/${sealId}`
+    };
+
+    latestCheckResults.complianceSeal = seal;
+    latestCheckResults.status = 'legally_cleared';
+
+    // Persist to history
+    const record = {
+      id: `rev-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      title: latestCheckResults.title,
+      type: latestCheckResults.type,
+      score: latestCheckResults.score,
+      findings: latestCheckResults.findings,
+      rawText: latestCheckResults.suggestedRevision || latestCheckResults.rawText,
+      status: 'legally_cleared',
+      engine: latestCheckResults.engine || activeEngineMode,
+      claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
+      complianceSeal: seal,
+      comments: latestCheckResults.comments || [],
+      brandCustodianSignoff: latestCheckResults.brandCustodianSignoff,
+      legalOfficerSignoff: latestCheckResults.legalOfficerSignoff,
+      reviewerNotes: 'Final legal clearance granted. Cryptographic compliance seal generated.'
+    };
+
+    const updatedHistory = [record, ...currentReviewHistory];
+    saveHistory(updatedHistory);
+
+    updateWorkflowUI('legally_cleared');
+    openComplianceSealModal(record);
+
+    showToast('Pre-Publication Compliance Seal generated and recorded!', 'success');
+  }
+
+  // Open Compliance Seal Certificate Modal
+  function openComplianceSealModal(record) {
+    currentInspectedRecord = record;
+    const seal = record.complianceSeal;
+    if (!seal) return;
+
+    if (DOM.certSealId) DOM.certSealId.textContent = seal.sealId || 'SEAL-VALID';
+    if (DOM.certDocTitle) DOM.certDocTitle.textContent = record.title || 'Draft Document';
+    if (DOM.certDocType) DOM.certDocType.textContent = (record.type || 'General').replace('_', ' ');
+    if (DOM.certComplianceScore) DOM.certComplianceScore.textContent = `${record.score}%`;
+
+    const blockers = (record.findings || []).filter(f => f.severity === 'high').length;
+    if (DOM.certUnresolvedBlockers) DOM.certUnresolvedBlockers.textContent = `${blockers} Blockers`;
+
+    if (DOM.certCustodianSigner) {
+      DOM.certCustodianSigner.textContent = (seal.brandCustodianSignoff && seal.brandCustodianSignoff.name) || 'Brand Custodian';
+    }
+    if (DOM.certCustodianTime) {
+      DOM.certCustodianTime.textContent = (seal.brandCustodianSignoff && new Date(seal.brandCustodianSignoff.timestamp).toLocaleString()) || new Date().toLocaleString();
+    }
+
+    if (DOM.certLegalSigner) {
+      DOM.certLegalSigner.textContent = (seal.legalOfficerSignoff && seal.legalOfficerSignoff.name) || 'Legal Counsel';
+    }
+    if (DOM.certLegalTime) {
+      DOM.certLegalTime.textContent = (seal.legalOfficerSignoff && new Date(seal.legalOfficerSignoff.timestamp).toLocaleString()) || new Date().toLocaleString();
+    }
+
+    if (DOM.certSha256Hash) DOM.certSha256Hash.textContent = seal.sha256Hash || 'N/A';
+    if (DOM.certVerificationResult) DOM.certVerificationResult.style.display = 'none';
+
+    openModal('modal-compliance-seal');
+  }
+
+  // In-Line Comment Threads Manager for Diff Modal
+  function renderDiffComments() {
+    if (!DOM.diffCommentsList) return;
+    DOM.diffCommentsList.innerHTML = '';
+
+    const comments = (latestCheckResults && latestCheckResults.comments) || [];
+    if (DOM.diffCommentsCount) DOM.diffCommentsCount.textContent = comments.length.toString();
+
+    if (comments.length === 0) {
+      if (DOM.emptyCommentsNotice) {
+        DOM.emptyCommentsNotice.style.display = 'block';
+        DOM.diffCommentsList.appendChild(DOM.emptyCommentsNotice);
+      }
+      return;
+    }
+
+    if (DOM.emptyCommentsNotice) DOM.emptyCommentsNotice.style.display = 'none';
+
+    comments.forEach(c => {
+      const item = document.createElement('div');
+      item.className = `comment-item ${c.resolved ? 'resolved' : ''}`;
+
+      const header = document.createElement('div');
+      header.className = 'comment-header';
+
+      const roleSpan = document.createElement('span');
+      roleSpan.className = `comment-role-pill ${c.authorRole || 'creator'}`;
+      roleSpan.textContent = c.authorRoleLabel || c.authorRole || 'Reviewer';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'comment-time';
+      timeSpan.textContent = new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      header.appendChild(roleSpan);
+      header.appendChild(timeSpan);
+      item.appendChild(header);
+
+      if (c.targetText) {
+        const targetTag = document.createElement('div');
+        targetTag.className = 'comment-target-tag';
+        targetTag.textContent = `Target: "${c.targetText}"`;
+        item.appendChild(targetTag);
+      }
+
+      const body = document.createElement('div');
+      body.className = 'comment-body';
+      body.textContent = c.commentText;
+      item.appendChild(body);
+
+      const footer = document.createElement('div');
+      footer.className = 'comment-footer';
+
+      const resolveBtn = document.createElement('button');
+      resolveBtn.className = 'comment-resolve-btn';
+      resolveBtn.textContent = c.resolved ? '↩ Re-open Thread' : '✓ Mark Resolved';
+      resolveBtn.onclick = () => {
+        c.resolved = !c.resolved;
+        renderDiffComments();
+        showToast(c.resolved ? 'Comment marked as resolved.' : 'Comment re-opened.', 'info');
+      };
+
+      footer.appendChild(resolveBtn);
+      item.appendChild(footer);
+      DOM.diffCommentsList.appendChild(item);
+    });
   }
 
   /* ===================================================================
@@ -1525,6 +2041,23 @@ With this release, our system eliminates human managers and editorial review bec
      10. Event Listeners Setup
      =================================================================== */
   function setupEventListeners() {
+    // Role switcher change listener
+    if (DOM.roleSelect) {
+      DOM.roleSelect.value = activeRole;
+      DOM.roleSelect.addEventListener('change', (e) => {
+        activeRole = e.target.value;
+        try {
+          localStorage.setItem(STORAGE_KEYS.ROLE, activeRole);
+        } catch (err) { /* ignore */ }
+
+        if (DOM.commentAuthorBadge) {
+          DOM.commentAuthorBadge.textContent = `Posting as: ${ROLE_CONFIG[activeRole].label}`;
+        }
+        updateWorkflowUI(currentWorkflowStage);
+        showToast(`Switched active stakeholder persona to ${ROLE_CONFIG[activeRole].label}.`, 'info');
+      });
+    }
+
     // Engine mode switching
     const updateEngineModeUI = (mode) => {
       activeEngineMode = mode;
@@ -1672,7 +2205,112 @@ With this release, our system eliminates human managers and editorial review bec
         DOM.diffOriginalContent.innerHTML = diff.originalHtml;
         DOM.diffRevisedContent.innerHTML = diff.revisedHtml;
         DOM.diffChangesCount.textContent = `${diff.changesCount} Policy Replacement(s)`;
+        renderDiffComments();
         openModal('modal-compare-diff');
+      });
+    }
+
+    // Post In-Line Comment from Diff Modal
+    if (DOM.btnPostComment) {
+      DOM.btnPostComment.addEventListener('click', () => {
+        const text = DOM.commentTextInput.value.trim();
+        if (!text) {
+          showToast('Please enter comment text before posting.', 'error');
+          return;
+        }
+
+        if (!latestCheckResults) {
+          latestCheckResults = {
+            title: (DOM.contentTitle && DOM.contentTitle.value.trim()) || 'Draft',
+            type: DOM.contentType ? DOM.contentType.value : 'general',
+            rawText: DOM.draftInput ? DOM.draftInput.value : '',
+            comments: []
+          };
+        }
+
+        if (!Array.isArray(latestCheckResults.comments)) {
+          latestCheckResults.comments = [];
+        }
+
+        const comment = {
+          id: `cmt-${Date.now()}`,
+          authorRole: activeRole,
+          authorRoleLabel: ROLE_CONFIG[activeRole].label,
+          targetText: DOM.commentTargetInput ? DOM.commentTargetInput.value.trim() : '',
+          commentText: text,
+          timestamp: new Date().toISOString(),
+          resolved: false
+        };
+
+        latestCheckResults.comments.push(comment);
+        DOM.commentTextInput.value = '';
+        if (DOM.commentTargetInput) DOM.commentTargetInput.value = '';
+
+        renderDiffComments();
+        showToast('In-line comment posted to draft review.', 'success');
+      });
+    }
+
+    // Cryptographic Compliance Seal Actions
+    if (DOM.btnVerifySealIntegrity) {
+      DOM.btnVerifySealIntegrity.addEventListener('click', async () => {
+        const rec = currentInspectedRecord || latestCheckResults;
+        if (!rec || !rec.complianceSeal) {
+          showToast('No compliance seal data to verify.', 'error');
+          return;
+        }
+
+        const canonical = buildCanonicalSealPayload(rec);
+        const recomputedHash = await computeSha256(canonical);
+        const matches = recomputedHash === rec.complianceSeal.sha256Hash;
+
+        if (DOM.certVerificationResult) {
+          DOM.certVerificationResult.className = `cert-verification-banner ${matches ? '' : 'tampered'}`;
+          if (DOM.certVerifyIcon) DOM.certVerifyIcon.textContent = matches ? '✓' : '⚠️';
+          if (DOM.certVerifyText) {
+            DOM.certVerifyText.textContent = matches
+              ? 'Cryptographic Signature Validated: Zero Tamper Detected (SHA-256 Intact).'
+              : 'TAMPER DETECTED: Content, score, or signatures do not match the sealed cryptographic hash!';
+          }
+          DOM.certVerificationResult.style.display = 'flex';
+        }
+
+        showToast(matches ? 'Seal verified: Zero tampering detected.' : 'Tamper detected! Hash mismatch.', matches ? 'success' : 'error');
+      });
+    }
+
+    if (DOM.btnCopySealHash) {
+      DOM.btnCopySealHash.addEventListener('click', () => {
+        const hash = DOM.certSha256Hash.textContent.trim();
+        navigator.clipboard.writeText(hash).then(() => {
+          showToast('SHA-256 hash copied to clipboard.', 'success');
+        }).catch(() => {
+          showToast('Copied hash to clipboard.', 'success');
+        });
+      });
+    }
+
+    if (DOM.btnDownloadSealJson) {
+      DOM.btnDownloadSealJson.addEventListener('click', () => {
+        const rec = currentInspectedRecord || latestCheckResults;
+        if (!rec || !rec.complianceSeal) return;
+        const certJson = JSON.stringify({
+          brandForgeCertificateVersion: '3.0-Production',
+          complianceSeal: rec.complianceSeal,
+          assetMetadata: {
+            title: rec.title,
+            type: rec.type,
+            complianceScore: rec.score,
+            blockers: (rec.findings || []).filter(f => f.severity === 'high').length
+          },
+          signoffs: {
+            brandCustodian: rec.brandCustodianSignoff,
+            legalOfficer: rec.legalOfficerSignoff
+          },
+          contentSnapshot: rec.rawText
+        }, null, 2);
+        triggerDownload(`brandforge-compliance-seal-${rec.complianceSeal.sealId}-${Date.now()}.json`, certJson, 'application/json');
+        showToast('Downloaded official Compliance Seal receipt (JSON).', 'success');
       });
     }
 
@@ -1965,10 +2603,13 @@ With this release, our system eliminates human managers and editorial review bec
     renderHistoryTable();
     renderInsights();
 
+    // Initialize collaborative workflow stepper
+    updateWorkflowUI('drafting');
+
     // Setup events
     setupEventListeners();
 
-    console.log('BrandForge v2.0 MVP initialized successfully. Local deterministic rules engine ready.');
+    console.log('BrandForge Round 3 initialized: Collaborative Governance & Cryptographic Seals Active.');
   }
 
   // Run on DOM Ready

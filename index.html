@@ -53,8 +53,22 @@
         </button>
       </nav>
 
-      <!-- Governance Engine Status Indicator -->
+      <!-- Governance Engine & Role Persona Controls -->
       <div class="header-meta">
+        <button class="btn-workspace-pill" id="btn-workspace-modal" aria-label="Team Workspace and Supabase Sync">
+          <span class="workspace-dot" id="workspace-status-dot"></span>
+          <span id="workspace-status-text">Workspace: Local Sandbox</span>
+        </button>
+
+        <div class="role-selector-wrap" title="Switch stakeholder persona to test multi-role governance workflows">
+          <label for="role-select" class="role-label">Persona:</label>
+          <select id="role-select" class="role-select" aria-label="Select Active Stakeholder Role">
+            <option value="creator" selected>✍️ Content Creator</option>
+            <option value="custodian">🛡️ Brand Custodian</option>
+            <option value="legal">⚖️ Legal & Compliance</option>
+          </select>
+        </div>
+
         <span class="demo-pill" id="header-engine-pill" title="Hybrid Governance Architecture (Serverless Gemini AI + Local Deterministic Engine)">
           <span class="demo-dot"></span>
           <span id="header-engine-label">Evidence-Backed AI & Deterministic Engine</span>
@@ -107,6 +121,41 @@
          TAB 1: BRAND CHECKER
          =================================================================== -->
     <main class="tab-view active" id="view-checker" role="tabpanel" aria-labelledby="tab-btn-checker">
+      <!-- Multi-Stage Collaborative Governance Lifecycle Bar -->
+      <section class="workflow-stepper-card" aria-label="Governance Review Lifecycle Pipeline">
+        <div class="stepper-header-row">
+          <div class="stepper-info">
+            <span class="stepper-badge" id="workflow-current-role-badge">✍️ Persona: Content Creator</span>
+            <span class="stepper-status-text" id="workflow-status-summary">Current Workflow Stage: <strong id="workflow-current-stage-name">Drafting</strong></span>
+          </div>
+          <div class="stepper-actions" id="stepper-actions-bar">
+            <!-- Role-governed action buttons will be rendered dynamically here -->
+          </div>
+        </div>
+
+        <div class="workflow-steps" id="workflow-steps-track">
+          <div class="step-item active" id="step-node-drafting" data-step="drafting">
+            <div class="step-circle">1</div>
+            <div class="step-label">Drafting</div>
+          </div>
+          <div class="step-connector" id="step-conn-1"></div>
+          <div class="step-item" id="step-node-in_review" data-step="in_review">
+            <div class="step-circle">2</div>
+            <div class="step-label">In Review</div>
+          </div>
+          <div class="step-connector" id="step-conn-2"></div>
+          <div class="step-item" id="step-node-brand_approved" data-step="brand_approved">
+            <div class="step-circle">3</div>
+            <div class="step-label">Brand Approved</div>
+          </div>
+          <div class="step-connector" id="step-conn-3"></div>
+          <div class="step-item" id="step-node-legally_cleared" data-step="legally_cleared">
+            <div class="step-circle">4</div>
+            <div class="step-label">Legally Cleared & Sealed 🔒</div>
+          </div>
+        </div>
+      </section>
+
       <div class="checker-grid">
 
         <!-- Left Column: Content Input & Editor -->
@@ -660,6 +709,36 @@
             <div id="diff-revised-content" class="diff-content-box"></div>
           </div>
         </div>
+
+        <!-- In-Line Contextual Comment Threads Section -->
+        <div class="diff-comments-section" id="diff-comments-section">
+          <div class="comments-section-header">
+            <h4>💬 In-Line Reviewer Comments & Feedback (<span id="diff-comments-count">0</span>)</h4>
+            <span class="comments-section-subtext">Annotate text spans with contextual policy guidance</span>
+          </div>
+
+          <!-- Existing Comment Threads -->
+          <div class="comments-list" id="diff-comments-list">
+            <div class="empty-comments-notice" id="empty-comments-notice">
+              No in-line comments yet on this draft comparison. Add the first comment below.
+            </div>
+          </div>
+
+          <!-- Add Comment Form -->
+          <div class="comment-add-box">
+            <div class="comment-form-row">
+              <input type="text" id="comment-target-input" class="form-input comment-target-field" placeholder="Target text span or phrase (optional)...">
+              <span class="comment-author-badge" id="comment-author-badge">Posting as: Content Creator</span>
+            </div>
+            <textarea id="comment-text-input" class="form-textarea comment-input-area" rows="2" placeholder="Write contextual review feedback, revision suggestions, or compliance notes..."></textarea>
+            <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+              <button type="button" class="btn btn-clay btn-sm" id="btn-post-comment">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Post In-Line Comment
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-close="modal-compare-diff">Close</button>
@@ -691,6 +770,94 @@
     </div>
   </div>
 
+  <!-- Modal: Cryptographic SHA-256 Pre-Publication Compliance Seal Certificate -->
+  <div class="modal-overlay" id="modal-compliance-seal" role="dialog" aria-modal="true" aria-labelledby="modal-seal-title">
+    <div class="modal-container" style="max-width: 720px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h3 id="modal-seal-title">🔒 Pre-Publication Compliance Seal & Certificate</h3>
+          <span class="badge" style="background: rgba(224, 168, 153, 0.2); color: var(--accent-clay); border: 1px solid var(--accent-clay-border);">SHA-256 Verified</span>
+        </div>
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-close="modal-compliance-seal" aria-label="Close dialog">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="compliance-certificate-wrap" id="compliance-certificate-card">
+          <div class="certificate-header">
+            <div class="certificate-mark">🛡️</div>
+            <div class="certificate-titles">
+              <h4>OFFICIAL PRE-PUBLICATION COMPLIANCE RECEIPT</h4>
+              <p>Inkloom AI Brand Governance Platform • Round 3 Authenticated Audit</p>
+            </div>
+            <div class="certificate-seal-id" id="cert-seal-id">SEAL-XXXXXXXX</div>
+          </div>
+
+          <div class="certificate-meta-grid">
+            <div class="cert-meta-item">
+              <label>Asset Title:</label>
+              <span id="cert-doc-title">Document Title</span>
+            </div>
+            <div class="cert-meta-item">
+              <label>Format / Channel:</label>
+              <span id="cert-doc-type">Press Release</span>
+            </div>
+            <div class="cert-meta-item">
+              <label>Compliance Score:</label>
+              <span id="cert-compliance-score" style="color: var(--status-success-text); font-weight: 700;">100%</span>
+            </div>
+            <div class="cert-meta-item">
+              <label>Unresolved Blockers:</label>
+              <span id="cert-unresolved-blockers" style="color: var(--status-success-text);">0 Blockers</span>
+            </div>
+          </div>
+
+          <!-- Dual Sign-Off Credentials -->
+          <div class="cert-signatures-section">
+            <div class="cert-signature-box">
+              <div class="cert-signature-title">🛡️ Brand Custodian Sign-Off</div>
+              <div class="cert-signer-name" id="cert-custodian-signer">Verified Brand Custodian</div>
+              <div class="cert-signer-time" id="cert-custodian-time">2026-11-01 02:00:00</div>
+              <div class="cert-verified-stamp">✓ BRAND VOICE APPROVED</div>
+            </div>
+            <div class="cert-signature-box">
+              <div class="cert-signature-title">⚖️ Legal & Compliance Clearance</div>
+              <div class="cert-signer-name" id="cert-legal-signer">Verified Legal Officer</div>
+              <div class="cert-signer-time" id="cert-legal-time">2026-11-01 02:05:00</div>
+              <div class="cert-verified-stamp">✓ LEGALLY CLEARED FOR PUBLICATION</div>
+            </div>
+          </div>
+
+          <!-- Cryptographic SHA-256 Hash Digest -->
+          <div class="cert-hash-section">
+            <div class="cert-hash-label-row">
+              <label>Immutable Cryptographic Hash Digest (NIST FIPS 180-4 SHA-256):</label>
+              <button class="btn btn-secondary btn-sm" id="btn-copy-seal-hash" style="padding: 2px 8px; font-size: 0.7rem;">Copy Hash</button>
+            </div>
+            <div class="cert-hash-box" id="cert-sha256-hash">
+              ----------------------------------------------------------------
+            </div>
+            <div class="cert-hash-subtext">
+              This cryptographic hash binds the exact draft content, active guideline version, timestamps, and dual stakeholder authorizations. Modifying even one character invalidates this seal.
+            </div>
+          </div>
+
+          <!-- Live Tamper-Evident Verification Banner -->
+          <div class="cert-verification-banner" id="cert-verification-result" style="display: none;">
+            <span class="cert-verify-icon" id="cert-verify-icon">✓</span>
+            <span class="cert-verify-text" id="cert-verify-text">Cryptographic Signature Validated: Zero Tamper Detected</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-verify-seal-integrity">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          Verify Seal Integrity
+        </button>
+        <button class="btn btn-clay" id="btn-download-seal-json">Download Compliance Seal (JSON)</button>
+        <button class="btn btn-secondary" data-close="modal-compliance-seal">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Inspect History Record -->
   <div class="modal-overlay" id="modal-history-detail" role="dialog" aria-modal="true" aria-labelledby="modal-detail-title">
     <div class="modal-container">
@@ -715,6 +882,7 @@
         </div>
       </div>
       <div class="modal-footer">
+        <button class="btn btn-clay" id="detail-view-seal-btn" style="display: none;">View Compliance Seal 🔒</button>
         <button class="btn btn-secondary" id="btn-export-single-record">Export This Record (JSON)</button>
         <button class="btn btn-secondary" data-close="modal-history-detail">Close</button>
       </div>
@@ -738,8 +906,84 @@
     </div>
   </div>
 
+  <!-- Modal: Supabase Team Workspace & Cloud Sync -->
+  <div class="modal-overlay" id="modal-workspace-sync" role="dialog" aria-modal="true" aria-labelledby="modal-workspace-title">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div class="brand-mark" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: rgba(217, 119, 143, 0.15); border-radius: 6px; border: 1px solid rgba(217, 119, 143, 0.3);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div>
+            <h3 id="modal-workspace-title" style="margin: 0; font-size: 1.1rem;">Team Workspace & Supabase Sync</h3>
+            <p style="margin: 2px 0 0; font-size: 0.75rem; color: var(--text-muted);">Multi-role governance backed by PostgreSQL with Row Level Security</p>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-close="modal-workspace-sync" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Live Connection Status Card -->
+        <div class="workspace-status-card" id="workspace-status-card">
+          <div class="ws-card-header">
+            <span class="ws-status-badge" id="ws-modal-badge">Local Sandbox Mode</span>
+            <span class="ws-security-tag">🔒 RLS Enforced</span>
+          </div>
+          <div class="ws-meta-grid">
+            <div class="ws-meta-item">
+              <span class="ws-meta-label">Active Organization:</span>
+              <strong id="ws-modal-org-name">Inkloom Brand Studio</strong>
+            </div>
+            <div class="ws-meta-item">
+              <span class="ws-meta-label">Active Persona:</span>
+              <strong id="ws-modal-role-name">Content Creator (creator@brandforge.ai)</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connection Configuration Form -->
+        <div class="workspace-config-form">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">Supabase Cloud Settings</h4>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="input-supabase-url" style="font-size: 0.8rem; font-weight: 600;">Supabase Project URL</label>
+            <input type="url" id="input-supabase-url" class="form-input" placeholder="https://your-project.supabase.co" autocomplete="off" spellcheck="false" style="font-size: 0.85rem;">
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="input-supabase-anon-key" style="font-size: 0.8rem; font-weight: 600;">Supabase Anon Public Key</label>
+            <input type="password" id="input-supabase-anon-key" class="form-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off" spellcheck="false" style="font-size: 0.85rem;">
+          </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" id="btn-save-supabase-config">Connect & Sync</button>
+            <button class="btn btn-secondary btn-sm" id="btn-test-supabase-config">Test Ping</button>
+            <button class="btn btn-secondary btn-sm" id="btn-disconnect-supabase">Use Local Sandbox</button>
+          </div>
+          <div id="supabase-config-feedback" style="margin-top: 8px; font-size: 0.75rem;"></div>
+        </div>
+
+        <!-- Quick DDL Copy for Supabase Setup -->
+        <div class="schema-helper-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span style="font-size: 0.775rem; font-weight: 600; color: var(--text-secondary);">PostgreSQL Schema (8 Tables + RLS)</span>
+            <button class="btn btn-secondary btn-sm" id="btn-copy-schema-sql" style="padding: 2px 8px; font-size: 0.7rem;">Copy SQL Script</button>
+          </div>
+          <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0;">Execute <code>supabase/schema.sql</code> in your Supabase SQL Editor to provision tables, triggers, and RLS policies.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: flex-end;">
+        <button class="btn btn-secondary" data-close="modal-workspace-sync">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- Optional Supabase Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Vanilla Application Logic -->
   <script src="app.js"></script>
