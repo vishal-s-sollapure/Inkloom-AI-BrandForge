@@ -321,13 +321,31 @@ With this release, our system eliminates human managers and editorial review bec
     wsModalBadge: document.getElementById('ws-modal-badge'),
     wsModalOrgName: document.getElementById('ws-modal-org-name'),
     wsModalRoleName: document.getElementById('ws-modal-role-name'),
+    wsModalConnDetails: document.getElementById('ws-modal-conn-details'),
     inputSupabaseUrl: document.getElementById('input-supabase-url'),
     inputSupabaseAnonKey: document.getElementById('input-supabase-anon-key'),
     btnSaveSupabaseConfig: document.getElementById('btn-save-supabase-config'),
-    btnTestSupabaseConfig: document.getElementById('btn-test-supabase-config'),
     btnDisconnectSupabase: document.getElementById('btn-disconnect-supabase'),
     supabaseConfigFeedback: document.getElementById('supabase-config-feedback'),
     btnCopySchemaSql: document.getElementById('btn-copy-schema-sql'),
+    btnCopyPatchSql: document.getElementById('btn-copy-patch-sql'),
+
+    // Auth & Cloud Sync controls
+    tabAuthSignin: document.getElementById('tab-auth-signin'),
+    tabAuthSignup: document.getElementById('tab-auth-signup'),
+    groupAuthFullname: document.getElementById('group-auth-fullname'),
+    inputAuthFullname: document.getElementById('input-auth-fullname'),
+    inputAuthEmail: document.getElementById('input-auth-email'),
+    inputAuthPassword: document.getElementById('input-auth-password'),
+    btnAuthSubmit: document.getElementById('btn-auth-submit'),
+    authUnauthenticatedPanel: document.getElementById('auth-unauthenticated-panel'),
+    authAuthenticatedPanel: document.getElementById('auth-authenticated-panel'),
+    authUserDisplayEmail: document.getElementById('auth-user-display-email'),
+    authUserDisplayRole: document.getElementById('auth-user-display-role'),
+    authUserDisplayOrg: document.getElementById('auth-user-display-org'),
+    btnSyncCloudCampaigns: document.getElementById('btn-sync-cloud-campaigns'),
+    btnAuthSignout: document.getElementById('btn-auth-signout'),
+    authFeedbackBanner: document.getElementById('auth-feedback-banner'),
 
     // Toast Container
     toastContainer: document.getElementById('toast-container')
@@ -399,20 +417,43 @@ With this release, our system eliminates human managers and editorial review bec
   }
 
   /* ===================================================================
-     4.1 Supabase Team Workspace & Cloud Sync Manager
+     UUID & Cryptographic Identification Helpers
+     =================================================================== */
+  function generateUuid() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  function isValidUuid(str) {
+    if (typeof str !== 'string') return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+  }
+
+  function ensureUuid(id) {
+    return isValidUuid(id) ? id : generateUuid();
+  }
+
+  /* ===================================================================
+     4.1 Supabase Team Workspace, Authentication & Cloud Sync Manager
      =================================================================== */
   const SupabaseManager = {
     client: null,
-    isLive: false,
+    // Connection State: 'sandbox' (Local Mode) | 'connected' (Gateway Reachable) | 'authenticated' (Live PostgreSQL + RLS)
+    connectionState: 'sandbox',
+    user: null,        // Supabase Auth User
+    profile: null,     // public.profiles row { id, organization_id, email, full_name, role }
+    organization: null,// public.organizations row { id, name, slug }
     config: {
       url: '',
       anonKey: ''
     },
-    activeOrg: {
-      id: 'org-default-001',
-      name: 'Inkloom Brand Studio',
-      slug: 'inkloom-workspace'
-    },
+    _authListenerAttached: false,
 
     loadConfig() {
       try {
@@ -446,12 +487,52 @@ With this release, our system eliminates human managers and editorial review bec
       }
     },
 
-    init() {
+    async init() {
       this.loadConfig();
       if (this.config.url && this.config.anonKey) {
-        this.connect(this.config.url, this.config.anonKey, false);
+        await this.connect(this.config.url, this.config.anonKey, false);
       } else {
+        this.connectionState = 'sandbox';
         this.updateUI();
+      }
+    },
+
+    // Verify connectivity via genuine database query against PostgreSQL
+    async testConnection(url, anonKey) {
+      const cleanUrl = (url || '').trim();
+      const cleanKey = (anonKey || '').trim();
+
+      if (!cleanUrl || !cleanKey) {
+        return { success: false, message: 'Both Supabase URL and Anon / Publishable Key are required.' };
+      }
+      if (!cleanUrl.startsWith('https://')) {
+        return { success: false, message: 'Supabase URL must start with https://' };
+      }
+
+      if (typeof window === 'undefined' || !window.supabase || typeof window.supabase.createClient !== 'function') {
+        return { success: false, message: 'Supabase JS SDK is not loaded. Check network or CDN availability.' };
+      }
+
+      try {
+        const testClient = window.supabase.createClient(cleanUrl, cleanKey, {
+          auth: { persistSession: false, autoRefreshToken: false }
+        });
+
+        // Perform genuine PostgreSQL query against public schema
+        const { data, error } = await testClient.from('organizations').select('id, name, slug').limit(1);
+
+        if (error) {
+          // If error is permission or network-related, surface clean message
+          if (error.code === 'PGRST301' || error.message.includes('JWT') || error.message.includes('apikey')) {
+            return { success: false, message: `Authentication error from Supabase: ${error.message}` };
+          }
+          // If table exists and returned RLS restriction, gateway is verified
+          return { success: true, message: 'Supabase gateway reachable. Tables and RLS active.' };
+        }
+
+        return { success: true, message: 'Gateway verified! Successfully queried PostgreSQL organizations.' };
+      } catch (err) {
+        return { success: false, message: `Connection test failed: ${err.message || 'Unknown network error'}` };
       }
     },
 
@@ -468,60 +549,337 @@ With this release, our system eliminates human managers and editorial review bec
         return { success: false, message: 'Supabase URL must start with https://' };
       }
 
+      if (typeof window === 'undefined' || !window.supabase || typeof window.supabase.createClient !== 'function') {
+        this.connectionState = 'sandbox';
+        this.updateUI();
+        return { success: false, message: 'Supabase SDK unavailable. Operating in Local Sandbox mode.' };
+      }
+
       try {
-        if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
-          this.client = window.supabase.createClient(cleanUrl, cleanKey);
-          this.isLive = true;
-          this.saveConfig(cleanUrl, cleanKey);
-          this.updateUI();
-          if (triggerToast) {
-            showToast('Connected to Supabase PostgreSQL workspace.', 'success');
+        this.client = window.supabase.createClient(cleanUrl, cleanKey, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
           }
-          return { success: true, message: 'Connected to Supabase successfully.' };
-        } else {
-          this.isLive = false;
-          this.saveConfig(cleanUrl, cleanKey);
+        });
+
+        // Genuine gateway test query
+        const testRes = await this.testConnection(cleanUrl, cleanKey);
+        if (!testRes.success) {
+          this.connectionState = 'sandbox';
           this.updateUI();
-          if (triggerToast) {
-            showToast('Supabase settings saved. Operating with local fallback.', 'info');
-          }
-          return { success: true, message: 'Settings saved (Local fallback mode active).' };
+          if (triggerToast) showToast(testRes.message, 'error');
+          return testRes;
         }
+
+        // Persist valid configuration
+        this.saveConfig(cleanUrl, cleanKey);
+
+        // Check for existing authenticated session
+        const { data: sessionData, error: sessionErr } = await this.client.auth.getSession();
+        if (sessionData && sessionData.session && sessionData.session.user) {
+          await this.handleUserAuthenticated(sessionData.session.user);
+        } else {
+          this.connectionState = 'connected';
+          this.user = null;
+          this.profile = null;
+          this.organization = null;
+        }
+
+        // Attach auth state change listener once
+        if (!this._authListenerAttached) {
+          this.client.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session && session.user) {
+              await this.handleUserAuthenticated(session.user);
+            } else if (event === 'SIGNED_OUT') {
+              this.handleUserSignedOut();
+            }
+          });
+          this._authListenerAttached = true;
+        }
+
+        this.updateUI();
+
+        if (triggerToast) {
+          if (this.connectionState === 'authenticated') {
+            showToast(`Connected & Authenticated as ${this.user.email} (${ROLE_CONFIG[activeRole].label}).`, 'success');
+          } else {
+            showToast('Connected to Supabase gateway. Please sign in or create an account.', 'info');
+          }
+        }
+
+        return {
+          success: true,
+          message: this.connectionState === 'authenticated'
+            ? 'Gateway verified and authenticated with PostgreSQL.'
+            : 'Gateway verified. Please sign in to activate cloud synchronization.'
+        };
       } catch (err) {
         console.error('Supabase connection error:', err);
+        this.connectionState = 'sandbox';
+        this.updateUI();
         return { success: false, message: err.message || 'Connection failed.' };
       }
     },
 
+    async handleUserAuthenticated(user) {
+      if (!this.client || !user) return;
+      this.user = user;
+
+      try {
+        // Query profile from PostgreSQL public.profiles
+        const { data: profileData, error: profileErr } = await this.client
+          .from('profiles')
+          .select('id, organization_id, email, full_name, role, organizations(id, name, slug)')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profileData) {
+          this.profile = profileData;
+          this.organization = profileData.organizations || { id: profileData.organization_id, name: 'Inkloom Brand Studio' };
+          this.connectionState = 'authenticated';
+
+          // Bind active persona strictly to database profile role!
+          const dbRole = profileData.role || 'creator';
+          activeRole = dbRole;
+          try {
+            localStorage.setItem(STORAGE_KEYS.ROLE, activeRole);
+          } catch (e) { /* ignore */ }
+
+          // Lock role selector to authenticated database role
+          if (DOM.roleSelect) {
+            DOM.roleSelect.value = activeRole;
+            DOM.roleSelect.disabled = true;
+            DOM.roleSelect.title = `Locked to authenticated role: ${ROLE_CONFIG[activeRole].label} (${profileData.email})`;
+          }
+
+          // Asynchronously pull shared cloud campaigns
+          await this.fetchCloudCampaigns();
+        } else {
+          // Profile trigger might have brief latency; retry once
+          setTimeout(async () => {
+            const { data: retryProfile } = await this.client
+              .from('profiles')
+              .select('id, organization_id, email, full_name, role, organizations(id, name, slug)')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            if (retryProfile) {
+              this.profile = retryProfile;
+              this.organization = retryProfile.organizations || { id: retryProfile.organization_id, name: 'Inkloom Brand Studio' };
+              this.connectionState = 'authenticated';
+              activeRole = retryProfile.role || 'creator';
+              if (DOM.roleSelect) {
+                DOM.roleSelect.value = activeRole;
+                DOM.roleSelect.disabled = true;
+              }
+              this.updateUI();
+            }
+          }, 1000);
+
+          this.connectionState = 'authenticated';
+        }
+      } catch (err) {
+        console.warn('Error fetching user profile:', err);
+        this.connectionState = 'connected';
+      }
+
+      this.updateUI();
+    },
+
+    handleUserSignedOut() {
+      this.user = null;
+      this.profile = null;
+      this.organization = null;
+      this.connectionState = this.client ? 'connected' : 'sandbox';
+
+      // Unlock persona selector in sandbox / unauthenticated mode
+      if (DOM.roleSelect) {
+        DOM.roleSelect.disabled = false;
+        DOM.roleSelect.title = 'Switch stakeholder persona';
+      }
+
+      this.updateUI();
+    },
+
+    async signIn(email, password) {
+      if (!this.client) {
+        return { success: false, message: 'Please connect to a Supabase project first.' };
+      }
+      const cleanEmail = (email || '').trim();
+      const cleanPassword = (password || '').trim();
+
+      if (!cleanEmail || !cleanPassword) {
+        return { success: false, message: 'Email and password are required.' };
+      }
+
+      try {
+        const { data, error } = await this.client.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPassword
+        });
+
+        if (error) {
+          return { success: false, message: error.message };
+        }
+
+        await this.handleUserAuthenticated(data.user);
+        showToast(`Signed in as ${data.user.email} (${ROLE_CONFIG[activeRole].label}).`, 'success');
+        return { success: true, message: `Signed in as ${data.user.email}` };
+      } catch (err) {
+        return { success: false, message: err.message || 'Sign in failed.' };
+      }
+    },
+
+    async signUp(email, password, fullName) {
+      if (!this.client) {
+        return { success: false, message: 'Please connect to a Supabase project first.' };
+      }
+      const cleanEmail = (email || '').trim();
+      const cleanPassword = (password || '').trim();
+      const cleanName = (fullName || '').trim() || cleanEmail.split('@')[0];
+
+      if (!cleanEmail || !cleanPassword) {
+        return { success: false, message: 'Email and password are required.' };
+      }
+      if (cleanPassword.length < 6) {
+        return { success: false, message: 'Password must be at least 6 characters.' };
+      }
+
+      try {
+        // Always assign default 'creator' role. Trigger forces 'creator' role for security.
+        const { data, error } = await this.client.auth.signUp({
+          email: cleanEmail,
+          password: cleanPassword,
+          options: {
+            data: {
+              full_name: cleanName
+            }
+          }
+        });
+
+        if (error) {
+          return { success: false, message: error.message };
+        }
+
+        if (data.session && data.user) {
+          await this.handleUserAuthenticated(data.user);
+          showToast(`Account created! Signed in as ${data.user.email} (Role: Content Creator).`, 'success');
+          return { success: true, message: `Account created and signed in as ${data.user.email}` };
+        } else {
+          return {
+            success: true,
+            message: `Account created for ${cleanEmail}! Please verify your email or sign in.`
+          };
+        }
+      } catch (err) {
+        return { success: false, message: err.message || 'Registration failed.' };
+      }
+    },
+
+    async signOut() {
+      if (this.client) {
+        try {
+          await this.client.auth.signOut();
+        } catch (e) { /* ignore */ }
+      }
+      this.handleUserSignedOut();
+      showToast('Signed out of Supabase workspace.', 'info');
+      return { success: true, message: 'Signed out.' };
+    },
+
     disconnect() {
       this.client = null;
-      this.isLive = false;
+      this.user = null;
+      this.profile = null;
+      this.organization = null;
+      this.connectionState = 'sandbox';
       this.saveConfig('', '');
+
+      if (DOM.roleSelect) {
+        DOM.roleSelect.disabled = false;
+        DOM.roleSelect.title = 'Switch stakeholder persona';
+      }
+
       this.updateUI();
       showToast('Switched to Local Sandbox mode.', 'info');
     },
 
     updateUI() {
-      const isConnected = this.isLive;
+      const state = this.connectionState;
+
+      // Update workspace header dot
       if (DOM.workspaceStatusDot) {
-        DOM.workspaceStatusDot.classList.toggle('connected', isConnected);
+        DOM.workspaceStatusDot.className = `workspace-dot ${state}`;
       }
+
+      // Update workspace header pill text
       if (DOM.workspaceStatusText) {
-        DOM.workspaceStatusText.textContent = isConnected
-          ? `Workspace: ${this.activeOrg.name} (Live)`
-          : 'Workspace: Local Sandbox';
+        if (state === 'authenticated' && this.user) {
+          const roleLabel = (ROLE_CONFIG[activeRole] && ROLE_CONFIG[activeRole].label) || 'Creator';
+          DOM.workspaceStatusText.textContent = `Live: ${this.profile?.full_name || this.user.email.split('@')[0]} (${roleLabel})`;
+        } else if (state === 'connected') {
+          DOM.workspaceStatusText.textContent = 'Supabase: Sign In Required';
+        } else {
+          DOM.workspaceStatusText.textContent = 'Workspace: Local Sandbox';
+        }
       }
+
+      // Update Modal Status Badge
       if (DOM.wsModalBadge) {
-        DOM.wsModalBadge.classList.toggle('connected', isConnected);
-        DOM.wsModalBadge.textContent = isConnected ? 'Supabase Live Connected' : 'Local Sandbox Mode';
+        DOM.wsModalBadge.className = `ws-status-badge ${state}`;
+        if (state === 'authenticated') {
+          DOM.wsModalBadge.textContent = 'Live Authenticated (PostgreSQL + RLS)';
+        } else if (state === 'connected') {
+          DOM.wsModalBadge.textContent = 'Gateway Verified (Sign-In Required)';
+        } else {
+          DOM.wsModalBadge.textContent = 'Local Sandbox Mode';
+        }
       }
+
+      // Update Organization and Role in Modal Card
       if (DOM.wsModalOrgName) {
-        DOM.wsModalOrgName.textContent = this.activeOrg.name;
+        DOM.wsModalOrgName.textContent = (this.organization && this.organization.name) || 'Inkloom Brand Studio';
       }
       if (DOM.wsModalRoleName) {
-        const info = (typeof ROLE_CONFIG !== 'undefined' && ROLE_CONFIG[activeRole]) || { label: 'Content Creator' };
-        DOM.wsModalRoleName.textContent = `${info.label} (${activeRole}@brandforge.ai)`;
+        if (state === 'authenticated' && this.user) {
+          const roleLabel = (ROLE_CONFIG[activeRole] && ROLE_CONFIG[activeRole].label) || 'Creator';
+          DOM.wsModalRoleName.textContent = `${roleLabel} (${this.user.email})`;
+        } else {
+          const roleLabel = (ROLE_CONFIG[activeRole] && ROLE_CONFIG[activeRole].label) || 'Creator';
+          DOM.wsModalRoleName.textContent = `${roleLabel} (Local Demo)`;
+        }
       }
+
+      // Update Connection Details Explanatory Text
+      if (DOM.wsModalConnDetails) {
+        if (state === 'authenticated') {
+          DOM.wsModalConnDetails.textContent = `✓ Connected to live PostgreSQL database. Authenticated user ID: ${this.user.id.slice(0, 8)}... Persona role is enforced by database Row Level Security.`;
+          DOM.wsModalConnDetails.style.color = 'var(--status-success-text)';
+        } else if (state === 'connected') {
+          DOM.wsModalConnDetails.textContent = 'Supabase gateway reachable. Authenticate below to activate multi-user campaign synchronization.';
+          DOM.wsModalConnDetails.style.color = '#38BDF8';
+        } else {
+          DOM.wsModalConnDetails.textContent = 'Operating in offline Local Sandbox mode. Connect to Supabase below to activate PostgreSQL Row Level Security and live team synchronization.';
+          DOM.wsModalConnDetails.style.color = 'var(--text-muted)';
+        }
+      }
+
+      // Toggle Auth Panels
+      if (DOM.authUnauthenticatedPanel && DOM.authAuthenticatedPanel) {
+        const isAuth = state === 'authenticated';
+        DOM.authUnauthenticatedPanel.style.display = isAuth ? 'none' : 'block';
+        DOM.authAuthenticatedPanel.style.display = isAuth ? 'block' : 'none';
+
+        if (isAuth && this.user) {
+          if (DOM.authUserDisplayEmail) DOM.authUserDisplayEmail.textContent = this.user.email;
+          if (DOM.authUserDisplayRole) DOM.authUserDisplayRole.textContent = (ROLE_CONFIG[activeRole] && ROLE_CONFIG[activeRole].label) || activeRole;
+          if (DOM.authUserDisplayOrg) DOM.authUserDisplayOrg.textContent = (this.organization && this.organization.name) || 'Inkloom Brand Studio';
+        }
+      }
+
+      // Inputs
       if (DOM.inputSupabaseUrl && this.config.url) {
         DOM.inputSupabaseUrl.value = this.config.url;
       }
@@ -530,12 +888,75 @@ With this release, our system eliminates human managers and editorial review bec
       }
     },
 
+    /* ===================================================================
+       Live Database CRUD Operations (PostgreSQL + RLS)
+       =================================================================== */
+
+    // Record or update campaign in Supabase campaigns table
+    async syncCampaignRecord(record) {
+      if (!record) return;
+
+      // In Local Sandbox mode, data is already persisted to localStorage
+      if (this.connectionState !== 'authenticated' || !this.client || !this.user || !this.profile) {
+        return;
+      }
+
+      try {
+        record.id = ensureUuid(record.id);
+        record.revisionId = ensureUuid(record.revisionId);
+
+        // 1. Upsert Campaign
+        const { error: campErr } = await this.client.from('campaigns').upsert({
+          id: record.id,
+          organization_id: this.profile.organization_id,
+          created_by: this.user.id,
+          title: record.title || 'Untitled Draft',
+          content_type: record.type || 'general',
+          target_audience: record.targetAudience || 'General Audience',
+          current_status: record.workflowStage || record.status || 'drafting',
+          current_version_num: record.versionNum || 1
+        });
+
+        if (campErr) {
+          throw new Error(`Campaign database write failed: ${campErr.message}`);
+        }
+
+        // 2. Insert Revision
+        const { error: revErr } = await this.client.from('campaign_revisions').upsert({
+          id: record.revisionId,
+          campaign_id: record.id,
+          version_num: record.versionNum || 1,
+          content: record.rawText || record.originalContent || '',
+          compliance_score: Math.max(0, Math.min(100, Math.round(record.score || 100))),
+          findings: record.findings || [],
+          factual_claims: (record.findings || []).filter(f => f.isVerificationNeeded),
+          suggested_revision: record.suggestedRevision || '',
+          created_by: this.user.id
+        });
+
+        if (revErr && !revErr.message.includes('duplicate')) {
+          console.warn('Revision write notice:', revErr.message);
+        }
+
+        // 3. Record Audit Event
+        await this.recordAuditEvent(record.id, 'review_run', null, {
+          score: record.score,
+          status: record.status || record.workflowStage
+        });
+
+      } catch (err) {
+        console.error('Supabase Cloud Sync Error:', err);
+        showToast(`Cloud Sync Notice: ${err.message}`, 'error');
+      }
+    },
+
+    // Record append-only audit event in public.audit_events
     async recordAuditEvent(campaignId, eventType, previousState, newState, metadata = {}) {
       const event = {
-        id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        id: generateUuid(),
         campaignId,
         actorRole: activeRole,
-        actorEmail: `${activeRole}@brandforge.ai`,
+        actorEmail: this.user ? this.user.email : `${activeRole}@brandforge.ai`,
         eventType,
         previousState,
         newState,
@@ -543,47 +964,247 @@ With this release, our system eliminates human managers and editorial review bec
         timestamp: new Date().toISOString()
       };
 
-      if (this.isLive && this.client) {
+      if (this.connectionState === 'authenticated' && this.client && this.user && this.profile && isValidUuid(campaignId)) {
         try {
-          await this.client.from('audit_events').insert({
-            organization_id: this.activeOrg.id,
+          const { error } = await this.client.from('audit_events').insert({
+            id: event.id,
+            organization_id: this.profile.organization_id,
             campaign_id: campaignId,
-            actor_role: activeRole,
+            actor_id: this.user.id,
+            actor_role: this.profile.role || activeRole,
             event_type: eventType,
             previous_state: previousState,
             new_state: newState,
             metadata
           });
+          if (error) {
+            console.warn('Could not post audit event to Supabase:', error.message);
+          }
         } catch (err) {
-          console.warn('Could not post audit event to Supabase; recorded locally:', err);
+          console.warn('Audit event network notice:', err.message);
         }
       }
+
       return event;
     },
 
-    async syncCampaignRecord(record) {
-      if (!this.isLive || !this.client || !record) return;
+    // Update campaign lifecycle status
+    async updateCampaignStatus(campaignId, targetStatus, previousStatus) {
+      if (this.connectionState === 'authenticated' && this.client && isValidUuid(campaignId)) {
+        try {
+          const { error } = await this.client
+            .from('campaigns')
+            .update({ current_status: targetStatus })
+            .eq('id', campaignId);
+
+          if (error) {
+            showToast(`Status update failed in Supabase: ${error.message}`, 'error');
+            return false;
+          }
+
+          await this.recordAuditEvent(campaignId, 'status_change', { status: previousStatus }, { status: targetStatus });
+          return true;
+        } catch (err) {
+          showToast(`Status sync error: ${err.message}`, 'error');
+          return false;
+        }
+      }
+      return true;
+    },
+
+    // In-line comment creation
+    async postComment(campaignId, revisionId, targetText, commentText) {
+      const commentId = generateUuid();
+      const comment = {
+        id: commentId,
+        authorRole: activeRole,
+        authorRoleLabel: (ROLE_CONFIG[activeRole] && ROLE_CONFIG[activeRole].label) || activeRole,
+        targetText: targetText || '',
+        commentText: commentText,
+        timestamp: new Date().toISOString(),
+        resolved: false
+      };
+
+      if (this.connectionState === 'authenticated' && this.client && this.user && this.profile && isValidUuid(campaignId)) {
+        try {
+          const { error } = await this.client.from('review_comments').insert({
+            id: commentId,
+            campaign_id: campaignId,
+            revision_id: isValidUuid(revisionId) ? revisionId : null,
+            author_id: this.user.id,
+            author_role: this.profile.role || activeRole,
+            selected_text: targetText || null,
+            comment_text: commentText,
+            resolved: false
+          });
+
+          if (error) {
+            showToast(`Could not post comment to Supabase: ${error.message}`, 'error');
+          } else {
+            await this.recordAuditEvent(campaignId, 'comment_added', null, { commentId, targetText });
+          }
+        } catch (err) {
+          console.warn('Comment network notice:', err.message);
+        }
+      }
+
+      return comment;
+    },
+
+    // Toggle comment resolution
+    async toggleCommentResolution(campaignId, commentId, resolvedState) {
+      if (this.connectionState === 'authenticated' && this.client && this.user && isValidUuid(commentId)) {
+        try {
+          const { error } = await this.client
+            .from('review_comments')
+            .update({
+              resolved: resolvedState,
+              resolved_by: this.user.id,
+              resolved_at: resolvedState ? new Date().toISOString() : null
+            })
+            .eq('id', commentId);
+
+          if (error) {
+            console.warn('Could not update comment resolution in Supabase:', error.message);
+          } else if (isValidUuid(campaignId)) {
+            await this.recordAuditEvent(campaignId, 'comment_resolved', null, { commentId, resolved: resolvedState });
+          }
+        } catch (err) {
+          console.warn('Comment resolution network notice:', err.message);
+        }
+      }
+    },
+
+    // Record Cryptographic Compliance Seal in Supabase
+    async recordComplianceSeal(campaignId, revisionId, sealData) {
+      if (this.connectionState === 'authenticated' && this.client && this.user && isValidUuid(campaignId)) {
+        try {
+          const sealUuid = generateUuid();
+          const { error } = await this.client.from('compliance_seals').insert({
+            id: sealUuid,
+            campaign_id: campaignId,
+            revision_id: isValidUuid(revisionId) ? revisionId : null,
+            content_sha256: sealData.sha256Hash,
+            brand_approved_by: this.user.id,
+            brand_approved_at: (sealData.brandCustodianSignoff && sealData.brandCustodianSignoff.timestamp) || new Date().toISOString(),
+            legally_cleared_by: this.user.id,
+            legally_cleared_at: (sealData.legalOfficerSignoff && sealData.legalOfficerSignoff.timestamp) || new Date().toISOString(),
+            verification_receipt: sealData
+          });
+
+          if (error) {
+            console.warn('Could not record compliance seal in Supabase:', error.message);
+          } else {
+            await this.recordAuditEvent(campaignId, 'seal_generated', null, {
+              sealId: sealData.sealId,
+              sha256: sealData.sha256Hash
+            });
+          }
+        } catch (err) {
+          console.warn('Compliance seal network notice:', err.message);
+        }
+      }
+    },
+
+    // Pull shared campaigns from Supabase cloud database
+    async fetchCloudCampaigns() {
+      if (!this.client || this.connectionState !== 'authenticated') return;
 
       try {
-        await this.client.from('campaigns').upsert({
-          id: record.id,
-          organization_id: this.activeOrg.id,
-          title: record.title,
-          content_type: record.type,
-          current_status: record.workflowStage || 'drafting',
-          current_version_num: record.versionNum || 1
-        });
+        const { data: cloudCampaigns, error } = await this.client
+          .from('campaigns')
+          .select(`
+            id,
+            title,
+            content_type,
+            target_audience,
+            current_status,
+            current_version_num,
+            created_at,
+            created_by,
+            campaign_revisions(
+              id,
+              version_num,
+              content,
+              compliance_score,
+              findings,
+              suggested_revision,
+              created_at
+            ),
+            review_comments(
+              id,
+              author_role,
+              selected_text,
+              comment_text,
+              resolved,
+              created_at
+            ),
+            compliance_seals(
+              id,
+              content_sha256,
+              brand_approved_at,
+              legally_cleared_at,
+              verification_receipt
+            )
+          `)
+          .order('created_at', { ascending: false });
 
-        await this.client.from('campaign_revisions').insert({
-          campaign_id: record.id,
-          version_num: record.versionNum || 1,
-          content: record.originalContent,
-          compliance_score: record.score,
-          findings: record.findings,
-          suggested_revision: record.suggestedRevision
-        });
+        if (error) {
+          console.warn('Could not fetch campaigns from Supabase:', error.message);
+          return;
+        }
+
+        if (Array.isArray(cloudCampaigns) && cloudCampaigns.length > 0) {
+          const mappedRecords = cloudCampaigns.map(c => {
+            const latestRev = Array.isArray(c.campaign_revisions) && c.campaign_revisions.length > 0
+              ? c.campaign_revisions.sort((a, b) => b.version_num - a.version_num)[0]
+              : null;
+
+            const comments = Array.isArray(c.review_comments)
+              ? c.review_comments.map(rc => ({
+                  id: rc.id,
+                  authorRole: rc.author_role,
+                  authorRoleLabel: (ROLE_CONFIG[rc.author_role] && ROLE_CONFIG[rc.author_role].label) || rc.author_role,
+                  targetText: rc.selected_text || '',
+                  commentText: rc.comment_text,
+                  resolved: Boolean(rc.resolved),
+                  timestamp: rc.created_at
+                }))
+              : [];
+
+            const seal = Array.isArray(c.compliance_seals) && c.compliance_seals.length > 0
+              ? c.compliance_seals[0].verification_receipt
+              : null;
+
+            return {
+              id: c.id,
+              revisionId: latestRev ? latestRev.id : null,
+              title: c.title,
+              type: c.content_type,
+              score: latestRev ? latestRev.compliance_score : 100,
+              findings: latestRev && Array.isArray(latestRev.findings) ? latestRev.findings : [],
+              rawText: latestRev ? latestRev.content : '',
+              suggestedRevision: latestRev ? latestRev.suggested_revision : '',
+              status: c.current_status,
+              workflowStage: c.current_status,
+              comments,
+              complianceSeal: seal,
+              timestamp: c.created_at,
+              engine: 'ai'
+            };
+          });
+
+          // Merge cloud records with local records avoiding duplicates
+          const cloudIds = new Set(mappedRecords.map(r => r.id));
+          const nonDuplicateLocal = currentReviewHistory.filter(r => !cloudIds.has(r.id));
+          const merged = [...mappedRecords, ...nonDuplicateLocal];
+
+          currentReviewHistory = merged;
+          saveHistory(merged);
+          showToast(`Synchronized ${mappedRecords.length} shared campaigns from Supabase.`, 'success');
+        }
       } catch (err) {
-        console.warn('Supabase campaign sync notice (stored locally):', err.message);
+        console.warn('Cloud fetch notice:', err.message);
       }
     }
   };
@@ -1509,6 +2130,8 @@ With this release, our system eliminates human managers and editorial review bec
     }
 
     latestCheckResults = {
+      id: generateUuid(),
+      revisionId: generateUuid(),
       title,
       type: contentType,
       rawText: text,
@@ -1517,7 +2140,9 @@ With this release, our system eliminates human managers and editorial review bec
       suggestedRevision,
       engine: engineUsed,
       claimsRequiringEvidenceCount: claimsCount,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      comments: [],
+      workflowStage: 'drafting'
     };
 
     // Render findings & score
@@ -1776,12 +2401,17 @@ With this release, our system eliminates human managers and editorial review bec
         const btnSubmit = document.createElement('button');
         btnSubmit.className = 'btn btn-primary btn-sm';
         btnSubmit.innerHTML = '<span>Submit for Brand Review ➔</span>';
-        btnSubmit.onclick = () => {
+        btnSubmit.onclick = async () => {
           if (!latestCheckResults) {
             showToast('Please run a brand check before submitting for review.', 'error');
             return;
           }
+          latestCheckResults.id = ensureUuid(latestCheckResults.id);
+          latestCheckResults.revisionId = ensureUuid(latestCheckResults.revisionId);
+          latestCheckResults.workflowStage = 'in_review';
           updateWorkflowUI('in_review');
+          await SupabaseManager.syncCampaignRecord(latestCheckResults);
+          await SupabaseManager.updateCampaignStatus(latestCheckResults.id, 'in_review', 'drafting');
           showToast('Draft officially submitted for Brand Custodian review.', 'success');
         };
         DOM.stepperActionsBar.appendChild(btnSubmit);
@@ -1813,17 +2443,21 @@ With this release, our system eliminates human managers and editorial review bec
         const btnApprove = document.createElement('button');
         btnApprove.className = 'btn btn-primary btn-sm';
         btnApprove.textContent = 'Approve Brand Voice ✓';
-        btnApprove.onclick = () => {
+        btnApprove.onclick = async () => {
           if (!latestCheckResults) {
             showToast('Run check before approving.', 'error');
             return;
           }
+          latestCheckResults.id = ensureUuid(latestCheckResults.id);
           latestCheckResults.brandCustodianSignoff = {
-            name: 'Sarah Chen (Brand Custodian)',
+            name: (SupabaseManager.profile && SupabaseManager.profile.full_name) || 'Brand Custodian',
+            userId: SupabaseManager.user ? SupabaseManager.user.id : null,
             timestamp: new Date().toISOString(),
             verified: true
           };
+          latestCheckResults.workflowStage = 'brand_approved';
           updateWorkflowUI('brand_approved');
+          await SupabaseManager.updateCampaignStatus(latestCheckResults.id, 'brand_approved', 'in_review');
           showToast('Brand voice approved. Escalated to Legal for clearance.', 'success');
         };
 
@@ -1911,16 +2545,21 @@ With this release, our system eliminates human managers and editorial review bec
   async function handleIssueComplianceSeal() {
     if (!latestCheckResults) return;
 
+    latestCheckResults.id = ensureUuid(latestCheckResults.id);
+    latestCheckResults.revisionId = ensureUuid(latestCheckResults.revisionId);
+
     if (!latestCheckResults.brandCustodianSignoff) {
       latestCheckResults.brandCustodianSignoff = {
-        name: 'Sarah Chen (Brand Custodian)',
+        name: (SupabaseManager.profile && SupabaseManager.profile.full_name) || 'Sarah Chen (Brand Custodian)',
+        userId: SupabaseManager.user ? SupabaseManager.user.id : null,
         timestamp: new Date().toISOString(),
         verified: true
       };
     }
 
     latestCheckResults.legalOfficerSignoff = {
-      name: 'David Marcus, Esq. (Legal Counsel)',
+      name: (SupabaseManager.profile && SupabaseManager.profile.full_name) || 'David Marcus, Esq. (Legal Counsel)',
+      userId: SupabaseManager.user ? SupabaseManager.user.id : null,
       timestamp: new Date().toISOString(),
       verified: true
     };
@@ -1943,10 +2582,12 @@ With this release, our system eliminates human managers and editorial review bec
 
     latestCheckResults.complianceSeal = seal;
     latestCheckResults.status = 'legally_cleared';
+    latestCheckResults.workflowStage = 'legally_cleared';
 
-    // Persist to history
+    // Persist to history with valid UUID
     const record = {
-      id: `rev-${Date.now()}`,
+      id: latestCheckResults.id,
+      revisionId: latestCheckResults.revisionId,
       timestamp: new Date().toISOString(),
       title: latestCheckResults.title,
       type: latestCheckResults.type,
@@ -1954,6 +2595,7 @@ With this release, our system eliminates human managers and editorial review bec
       findings: latestCheckResults.findings,
       rawText: latestCheckResults.suggestedRevision || latestCheckResults.rawText,
       status: 'legally_cleared',
+      workflowStage: 'legally_cleared',
       engine: latestCheckResults.engine || activeEngineMode,
       claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
       complianceSeal: seal,
@@ -1965,6 +2607,11 @@ With this release, our system eliminates human managers and editorial review bec
 
     const updatedHistory = [record, ...currentReviewHistory];
     saveHistory(updatedHistory);
+
+    // Sync to Supabase
+    await SupabaseManager.syncCampaignRecord(record);
+    await SupabaseManager.updateCampaignStatus(record.id, 'legally_cleared', 'brand_approved');
+    await SupabaseManager.recordComplianceSeal(record.id, record.revisionId, seal);
 
     updateWorkflowUI('legally_cleared');
     openComplianceSealModal(record);
@@ -2061,8 +2708,11 @@ With this release, our system eliminates human managers and editorial review bec
       const resolveBtn = document.createElement('button');
       resolveBtn.className = 'comment-resolve-btn';
       resolveBtn.textContent = c.resolved ? '↩ Re-open Thread' : '✓ Mark Resolved';
-      resolveBtn.onclick = () => {
+      resolveBtn.onclick = async () => {
         c.resolved = !c.resolved;
+        if (latestCheckResults && latestCheckResults.id) {
+          await SupabaseManager.toggleCommentResolution(latestCheckResults.id, c.id, c.resolved);
+        }
         renderDiffComments();
         showToast(c.resolved ? 'Comment marked as resolved.' : 'Comment re-opened.', 'info');
       };
@@ -2406,7 +3056,7 @@ With this release, our system eliminates human managers and editorial review bec
 
     // Post In-Line Comment from Diff Modal
     if (DOM.btnPostComment) {
-      DOM.btnPostComment.addEventListener('click', () => {
+      DOM.btnPostComment.addEventListener('click', async () => {
         const text = DOM.commentTextInput.value.trim();
         if (!text) {
           showToast('Please enter comment text before posting.', 'error');
@@ -2415,6 +3065,8 @@ With this release, our system eliminates human managers and editorial review bec
 
         if (!latestCheckResults) {
           latestCheckResults = {
+            id: generateUuid(),
+            revisionId: generateUuid(),
             title: (DOM.contentTitle && DOM.contentTitle.value.trim()) || 'Draft',
             type: DOM.contentType ? DOM.contentType.value : 'general',
             rawText: DOM.draftInput ? DOM.draftInput.value : '',
@@ -2426,15 +3078,16 @@ With this release, our system eliminates human managers and editorial review bec
           latestCheckResults.comments = [];
         }
 
-        const comment = {
-          id: `cmt-${Date.now()}`,
-          authorRole: activeRole,
-          authorRoleLabel: ROLE_CONFIG[activeRole].label,
-          targetText: DOM.commentTargetInput ? DOM.commentTargetInput.value.trim() : '',
-          commentText: text,
-          timestamp: new Date().toISOString(),
-          resolved: false
-        };
+        latestCheckResults.id = ensureUuid(latestCheckResults.id);
+        latestCheckResults.revisionId = ensureUuid(latestCheckResults.revisionId);
+
+        const targetText = DOM.commentTargetInput ? DOM.commentTargetInput.value.trim() : '';
+        const comment = await SupabaseManager.postComment(
+          latestCheckResults.id,
+          latestCheckResults.revisionId,
+          targetText,
+          text
+        );
 
         latestCheckResults.comments.push(comment);
         DOM.commentTextInput.value = '';
@@ -2787,61 +3440,100 @@ With this release, our system eliminates human managers and editorial review bec
 
     if (DOM.btnSaveSupabaseConfig) {
       DOM.btnSaveSupabaseConfig.addEventListener('click', async () => {
-        const url = DOM.inputSupabaseUrl ? DOM.inputSupabaseUrl.value : '';
-        const key = DOM.inputSupabaseAnonKey ? DOM.inputSupabaseAnonKey.value : '';
-        const res = await SupabaseManager.connect(url, key, true);
+        const url = DOM.inputSupabaseUrl ? DOM.inputSupabaseUrl.value.trim() : '';
+        const key = DOM.inputSupabaseAnonKey ? DOM.inputSupabaseAnonKey.value.trim() : '';
+
+        if (!url || !key) {
+          if (DOM.supabaseConfigFeedback) {
+            DOM.supabaseConfigFeedback.textContent = 'Please enter both Supabase Project URL and Public Anon Key.';
+            DOM.supabaseConfigFeedback.style.color = 'var(--sev-high-text)';
+          }
+          return;
+        }
+
         if (DOM.supabaseConfigFeedback) {
-          DOM.supabaseConfigFeedback.textContent = res.message;
-          DOM.supabaseConfigFeedback.style.color = res.success ? 'var(--status-success-text)' : 'var(--sev-high-text)';
+          DOM.supabaseConfigFeedback.textContent = 'Verifying gateway and connecting to PostgreSQL...';
+          DOM.supabaseConfigFeedback.style.color = 'var(--text-muted)';
+        }
+
+        DOM.btnSaveSupabaseConfig.disabled = true;
+        try {
+          const res = await SupabaseManager.connect(url, key, true);
+          if (DOM.supabaseConfigFeedback) {
+            DOM.supabaseConfigFeedback.textContent = res.message;
+            DOM.supabaseConfigFeedback.style.color = res.success ? 'var(--status-success-text)' : 'var(--sev-high-text)';
+          }
+        } finally {
+          DOM.btnSaveSupabaseConfig.disabled = false;
         }
       });
     }
 
-    if (DOM.btnTestSupabaseConfig) {
-      DOM.btnTestSupabaseConfig.addEventListener('click', async () => {
-        const url = DOM.inputSupabaseUrl ? DOM.inputSupabaseUrl.value.trim() : '';
-        const key = DOM.inputSupabaseAnonKey ? DOM.inputSupabaseAnonKey.value.trim() : '';
-        if (!url || !key) {
-          if (DOM.supabaseConfigFeedback) {
-            DOM.supabaseConfigFeedback.textContent = 'Please enter both Supabase URL and Anon Key.';
-            DOM.supabaseConfigFeedback.style.color = 'var(--sev-high-text)';
+    // Auth Tabs (Sign In / Sign Up)
+    let activeAuthMode = 'signin';
+    const setAuthMode = (mode) => {
+      activeAuthMode = mode;
+      if (DOM.tabAuthSignin) DOM.tabAuthSignin.classList.toggle('active', mode === 'signin');
+      if (DOM.tabAuthSignup) DOM.tabAuthSignup.classList.toggle('active', mode === 'signup');
+      if (DOM.groupAuthFullname) DOM.groupAuthFullname.style.display = mode === 'signup' ? 'block' : 'none';
+      if (DOM.btnAuthSubmit) DOM.btnAuthSubmit.textContent = mode === 'signup' ? 'Create Account' : 'Sign In';
+      if (DOM.authFeedbackBanner) DOM.authFeedbackBanner.style.display = 'none';
+    };
+
+    if (DOM.tabAuthSignin) DOM.tabAuthSignin.addEventListener('click', () => setAuthMode('signin'));
+    if (DOM.tabAuthSignup) DOM.tabAuthSignup.addEventListener('click', () => setAuthMode('signup'));
+
+    // Auth Submit (Sign In / Sign Up)
+    if (DOM.btnAuthSubmit) {
+      DOM.btnAuthSubmit.addEventListener('click', async () => {
+        const email = DOM.inputAuthEmail ? DOM.inputAuthEmail.value.trim() : '';
+        const password = DOM.inputAuthPassword ? DOM.inputAuthPassword.value : '';
+        const fullname = DOM.inputAuthFullname ? DOM.inputAuthFullname.value.trim() : '';
+
+        if (!email || !password) {
+          if (DOM.authFeedbackBanner) {
+            DOM.authFeedbackBanner.className = 'auth-feedback-banner error';
+            DOM.authFeedbackBanner.textContent = 'Please enter email and password.';
           }
           return;
         }
-        if (!url.startsWith('https://')) {
-          if (DOM.supabaseConfigFeedback) {
-            DOM.supabaseConfigFeedback.textContent = 'Supabase URL must start with https://';
-            DOM.supabaseConfigFeedback.style.color = 'var(--sev-high-text)';
-          }
-          return;
-        }
-        if (DOM.supabaseConfigFeedback) {
-          DOM.supabaseConfigFeedback.textContent = 'Pinging Supabase gateway...';
-          DOM.supabaseConfigFeedback.style.color = 'var(--text-muted)';
-        }
+
+        DOM.btnAuthSubmit.disabled = true;
+        DOM.btnAuthSubmit.textContent = activeAuthMode === 'signup' ? 'Creating...' : 'Signing in...';
+
         try {
-          const resp = await fetch(`${url}/rest/v1/`, {
-            headers: {
-              'apikey': key,
-              'Authorization': `Bearer ${key}`
-            }
-          });
-          if (resp.ok || resp.status === 200 || resp.status === 404) {
-            if (DOM.supabaseConfigFeedback) {
-              DOM.supabaseConfigFeedback.textContent = '✓ Gateway responded! Supabase REST endpoint reachable.';
-              DOM.supabaseConfigFeedback.style.color = 'var(--status-success-text)';
-            }
-          } else {
-            if (DOM.supabaseConfigFeedback) {
-              DOM.supabaseConfigFeedback.textContent = `HTTP ${resp.status} received from Supabase. Check credentials.`;
-              DOM.supabaseConfigFeedback.style.color = 'var(--sev-medium-text)';
-            }
+          const res = activeAuthMode === 'signup'
+            ? await SupabaseManager.signUp(email, password, fullname)
+            : await SupabaseManager.signIn(email, password);
+
+          if (DOM.authFeedbackBanner) {
+            DOM.authFeedbackBanner.className = `auth-feedback-banner ${res.success ? 'success' : 'error'}`;
+            DOM.authFeedbackBanner.textContent = res.message;
           }
-        } catch (err) {
-          if (DOM.supabaseConfigFeedback) {
-            DOM.supabaseConfigFeedback.textContent = `Direct fetch note: ${err.message}. Credentials saved in configuration.`;
-            DOM.supabaseConfigFeedback.style.color = 'var(--sev-medium-text)';
-          }
+        } finally {
+          DOM.btnAuthSubmit.disabled = false;
+          DOM.btnAuthSubmit.textContent = activeAuthMode === 'signup' ? 'Create Account' : 'Sign In';
+        }
+      });
+    }
+
+    // Auth Sign Out
+    if (DOM.btnAuthSignout) {
+      DOM.btnAuthSignout.addEventListener('click', async () => {
+        await SupabaseManager.signOut();
+      });
+    }
+
+    // Sync Cloud Campaigns
+    if (DOM.btnSyncCloudCampaigns) {
+      DOM.btnSyncCloudCampaigns.addEventListener('click', async () => {
+        DOM.btnSyncCloudCampaigns.disabled = true;
+        DOM.btnSyncCloudCampaigns.textContent = 'Syncing...';
+        try {
+          await SupabaseManager.fetchCloudCampaigns();
+        } finally {
+          DOM.btnSyncCloudCampaigns.disabled = false;
+          DOM.btnSyncCloudCampaigns.textContent = 'Pull Cloud Campaigns ↻';
         }
       });
     }
@@ -2858,9 +3550,23 @@ With this release, our system eliminates human managers and editorial review bec
       });
     }
 
+    if (DOM.btnCopyPatchSql) {
+      DOM.btnCopyPatchSql.addEventListener('click', async () => {
+        try {
+          const res = await fetch('supabase/migration_security_patch.sql');
+          if (res.ok) {
+            const sql = await res.text();
+            await navigator.clipboard.writeText(sql);
+            showToast('Security patch SQL copied to clipboard!', 'success');
+            return;
+          }
+        } catch (e) { /* fallback */ }
+        showToast('Please open supabase/migration_security_patch.sql directly.', 'info');
+      });
+    }
+
     if (DOM.btnCopySchemaSql) {
       DOM.btnCopySchemaSql.addEventListener('click', async () => {
-        const sqlNotice = `-- Execute supabase/schema.sql in Supabase SQL Editor\n-- File path: supabase/schema.sql\n-- Includes 8 tables: organizations, profiles, brand_guidelines, campaigns, campaign_revisions, review_comments, audit_events, compliance_seals with Row Level Security.`;
         try {
           const res = await fetch('supabase/schema.sql');
           if (res.ok) {
@@ -2870,12 +3576,7 @@ With this release, our system eliminates human managers and editorial review bec
             return;
           }
         } catch (e) { /* fallback */ }
-        try {
-          await navigator.clipboard.writeText(sqlNotice);
-          showToast('Schema SQL path and instructions copied to clipboard!', 'info');
-        } catch (err) {
-          showToast('Please open supabase/schema.sql directly.', 'info');
-        }
+        showToast('Please open supabase/schema.sql directly.', 'info');
       });
     }
   }

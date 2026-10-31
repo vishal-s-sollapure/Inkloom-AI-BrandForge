@@ -160,13 +160,13 @@ CREATE TABLE IF NOT EXISTS public.compliance_seals (
 CREATE OR REPLACE FUNCTION public.get_auth_org_id()
 RETURNS UUID AS $$
     SELECT organization_id FROM public.profiles WHERE id = auth.uid() LIMIT 1;
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- Get current authenticated user's role
 CREATE OR REPLACE FUNCTION public.get_auth_role()
 RETURNS user_role AS $$
     SELECT role FROM public.profiles WHERE id = auth.uid() LIMIT 1;
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 5. ENABLE ROW LEVEL SECURITY ON ALL TABLES
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
@@ -331,7 +331,9 @@ CREATE POLICY "seals_insert_legal" ON public.compliance_seals
         )
     );
 
--- 7. NEW USER TRIGGER (Auto-create profile and assign default organization)
+-- 7. PROFILE SECURITY & TRIGGERS
+
+-- 7.1 Auto-create profile on signup (Default 'creator' role, never trust metadata)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -346,11 +348,8 @@ BEGIN
         RETURNING id INTO default_org_id;
     END IF;
 
-    -- Extract role from metadata if provided, otherwise default to 'creator'
-    user_initial_role := COALESCE(
-        (NEW.raw_user_meta_data->>'role')::user_role,
-        'creator'::user_role
-    );
+    -- Security fix: Always assign default 'creator' role. Never trust client-supplied user metadata.
+    user_initial_role := 'creator'::user_role;
 
     INSERT INTO public.profiles (id, organization_id, email, full_name, role)
     VALUES (
@@ -359,16 +358,42 @@ BEGIN
         NEW.email,
         COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
         user_initial_role
-    );
+    )
+    ON CONFLICT (id) DO NOTHING;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- Drop if already exists to ensure idempotent re-runs
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 7.2 Prevent role and organization escalation on profile updates
+CREATE OR REPLACE FUNCTION public.prevent_profile_escalation()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Block client-side authenticated users from modifying their own role or organization
+    IF auth.uid() IS NOT NULL AND auth.role() = 'authenticated' THEN
+        IF NEW.role <> OLD.role THEN
+            RAISE EXCEPTION 'Modifying profile role directly is forbidden. Roles must be assigned by workspace administrator.';
+        END IF;
+
+        IF NEW.organization_id <> OLD.organization_id THEN
+            RAISE EXCEPTION 'Modifying profile organization directly is forbidden.';
+        END IF;
+    END IF;
+
+    NEW.updated_at := timezone('utc'::text, now());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
+
+DROP TRIGGER IF EXISTS trg_prevent_profile_escalation ON public.profiles;
+CREATE TRIGGER trg_prevent_profile_escalation
+    BEFORE UPDATE ON public.profiles
+    FOR EACH ROW EXECUTE FUNCTION public.prevent_profile_escalation();
 
 -- 8. DEFAULT SEED DATA
 INSERT INTO public.organizations (name, slug)

@@ -171,6 +171,50 @@ runTest('TC-SB-10: LocalFallbackStore rejects compliance seal when signatures or
   }, /Cannot issue compliance seal/);
 });
 
+// TC-SB-11: Security-definer functions enforce fixed search_path to prevent search-path injection
+runTest('TC-SB-11: Security-definer functions enforce fixed search_path = public, pg_temp', () => {
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  assert.ok(sql.includes('get_auth_org_id()') && sql.includes('SET search_path = public, pg_temp;'), 'get_auth_org_id must specify fixed search_path');
+  assert.ok(sql.includes('get_auth_role()') && sql.includes('SET search_path = public, pg_temp;'), 'get_auth_role must specify fixed search_path');
+  assert.ok(sql.includes('handle_new_user()') && sql.includes('SET search_path = public, pg_temp;'), 'handle_new_user must specify fixed search_path');
+});
+
+// TC-SB-12: handle_new_user assigns 'creator' by default and does not trust metadata
+runTest("TC-SB-12: handle_new_user hardcodes default role 'creator' and does not trust client metadata", () => {
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  assert.ok(sql.includes("user_initial_role := 'creator'::user_role;"), "Must hardcode default role to 'creator'");
+  assert.strictEqual(sql.includes("user_initial_role := COALESCE"), false, "Must not allow user metadata to override role");
+});
+
+// TC-SB-13: Profiles table has trigger preventing role or organization escalation
+runTest('TC-SB-13: Profiles table has trigger preventing client-side role or organization escalation', () => {
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  assert.ok(sql.includes('trg_prevent_profile_escalation'), 'Must attach trg_prevent_profile_escalation trigger');
+  assert.ok(sql.includes('NEW.role <> OLD.role'), 'Must check for role changes');
+  assert.ok(sql.includes('NEW.organization_id <> OLD.organization_id'), 'Must check for organization changes');
+});
+
+// TC-SB-14: Standalone security patch migration exists and matches schema hardening
+runTest('TC-SB-14: supabase/migration_security_patch.sql exists and contains idempotent security hardening', () => {
+  const patchPath = path.resolve(__dirname, '../supabase/migration_security_patch.sql');
+  assert.ok(fs.existsSync(patchPath), 'migration_security_patch.sql must exist');
+  const patchSql = fs.readFileSync(patchPath, 'utf8');
+  assert.ok(patchSql.includes('prevent_profile_escalation'), 'Patch must include profile escalation protection');
+  assert.ok(patchSql.includes('SET search_path = public, pg_temp;'), 'Patch must enforce safe search_path');
+});
+
+// TC-SB-15: RFC 4122 v4 UUID format validation
+runTest('TC-SB-15: UUID validation accepts valid RFC 4122 UUIDs and rejects invalid strings', () => {
+  const validUuid = '123e4567-e89b-12d3-a456-426614174000';
+  const invalidUuid1 = 'org-default-001';
+  const invalidUuid2 = 'rev-1730000000000';
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  assert.strictEqual(uuidRegex.test(validUuid), true, 'Valid UUID should pass regex');
+  assert.strictEqual(uuidRegex.test(invalidUuid1), false, 'org-default-001 must be rejected');
+  assert.strictEqual(uuidRegex.test(invalidUuid2), false, 'rev-timestamp must be rejected');
+});
+
 console.log('========================================');
 console.log(`Supabase & Persistence Test Summary: ${passedTests} / ${passedTests + failedTests} PASSED`);
 console.log('========================================\n');

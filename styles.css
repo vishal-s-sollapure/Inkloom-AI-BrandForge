@@ -2066,14 +2066,19 @@ code, .font-mono {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--sev-medium-border);
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+  background: #F59E0B;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
   transition: background 0.2s, box-shadow 0.2s;
 }
 
 .workspace-dot.connected {
-  background: var(--status-success-border);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  background: #38BDF8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+.workspace-dot.authenticated {
+  background: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
 }
 
 .workspace-status-card {
@@ -2101,9 +2106,71 @@ code, .font-mono {
 }
 
 .ws-status-badge.connected {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.ws-status-badge.authenticated {
   background: rgba(16, 185, 129, 0.15);
   color: #34D399;
   border-color: rgba(16, 185, 129, 0.35);
+}
+
+.auth-tabs-nav {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+}
+
+.auth-tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.auth-tab-btn.active {
+  background: rgba(217, 119, 143, 0.15);
+  color: var(--accent-rose);
+  border: 1px solid var(--accent-rose-border);
+}
+
+.auth-feedback-banner {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.775rem;
+  font-weight: 500;
+  display: none;
+}
+
+.auth-feedback-banner.success {
+  background: var(--status-success-bg);
+  border: 1px solid var(--status-success-border);
+  color: var(--status-success-text);
+  display: block;
+}
+
+.auth-feedback-banner.error {
+  background: var(--sev-high-bg);
+  border: 1px solid var(--sev-high-border);
+  color: var(--sev-high-text);
+  display: block;
+}
+
+.auth-feedback-banner.info {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38BDF8;
+  display: block;
 }
 
 .ws-security-tag {

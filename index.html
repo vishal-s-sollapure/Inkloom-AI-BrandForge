@@ -928,7 +928,7 @@
         <!-- Live Connection Status Card -->
         <div class="workspace-status-card" id="workspace-status-card">
           <div class="ws-card-header">
-            <span class="ws-status-badge" id="ws-modal-badge">Local Sandbox Mode</span>
+            <span class="ws-status-badge sandbox" id="ws-modal-badge">Local Sandbox Mode</span>
             <span class="ws-security-tag">🔒 RLS Enforced</span>
           </div>
           <div class="ws-meta-grid">
@@ -938,38 +938,86 @@
             </div>
             <div class="ws-meta-item">
               <span class="ws-meta-label">Active Persona:</span>
-              <strong id="ws-modal-role-name">Content Creator (creator@brandforge.ai)</strong>
+              <strong id="ws-modal-role-name">Content Creator (Local Demo)</strong>
             </div>
+          </div>
+          <div id="ws-modal-conn-details" style="margin-top: 8px; font-size: 0.725rem; color: var(--text-muted); line-height: 1.4;">
+            Operating in offline Local Sandbox mode. Connect to Supabase below to activate PostgreSQL Row Level Security and live team synchronization.
           </div>
         </div>
 
         <!-- Connection Configuration Form -->
         <div class="workspace-config-form">
-          <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">Supabase Cloud Settings</h4>
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">1. Supabase Gateway Settings</h4>
           <div class="form-group" style="margin-bottom: 10px;">
             <label for="input-supabase-url" style="font-size: 0.8rem; font-weight: 600;">Supabase Project URL</label>
             <input type="url" id="input-supabase-url" class="form-input" placeholder="https://your-project.supabase.co" autocomplete="off" spellcheck="false" style="font-size: 0.85rem;">
           </div>
           <div class="form-group" style="margin-bottom: 12px;">
-            <label for="input-supabase-anon-key" style="font-size: 0.8rem; font-weight: 600;">Supabase Anon Public Key</label>
+            <label for="input-supabase-anon-key" style="font-size: 0.8rem; font-weight: 600;">Supabase Anon / Publishable Public Key</label>
             <input type="password" id="input-supabase-anon-key" class="form-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off" spellcheck="false" style="font-size: 0.85rem;">
           </div>
 
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn btn-primary btn-sm" id="btn-save-supabase-config">Connect & Sync</button>
-            <button class="btn btn-secondary btn-sm" id="btn-test-supabase-config">Test Ping</button>
+            <button class="btn btn-primary btn-sm" id="btn-save-supabase-config">Connect & Verify Gateway</button>
             <button class="btn btn-secondary btn-sm" id="btn-disconnect-supabase">Use Local Sandbox</button>
           </div>
           <div id="supabase-config-feedback" style="margin-top: 8px; font-size: 0.75rem;"></div>
         </div>
 
+        <!-- Authentication Section -->
+        <div class="workspace-config-form" id="workspace-auth-section">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">2. Supabase Auth & Team Persona</h4>
+          
+          <!-- Unauthenticated Panel -->
+          <div id="auth-unauthenticated-panel">
+            <div class="auth-tabs-nav">
+              <button type="button" class="auth-tab-btn active" id="tab-auth-signin">Sign In</button>
+              <button type="button" class="auth-tab-btn" id="tab-auth-signup">Create Account</button>
+            </div>
+            <div class="form-group" id="group-auth-fullname" style="display: none; margin-bottom: 8px;">
+              <label for="input-auth-fullname" style="font-size: 0.8rem; font-weight: 600;">Full Name</label>
+              <input type="text" id="input-auth-fullname" class="form-input" placeholder="e.g. Alex Morgan" style="font-size: 0.85rem;">
+            </div>
+            <div class="form-group" style="margin-bottom: 8px;">
+              <label for="input-auth-email" style="font-size: 0.8rem; font-weight: 600;">Email</label>
+              <input type="email" id="input-auth-email" class="form-input" placeholder="your-email@example.com" style="font-size: 0.85rem;">
+            </div>
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label for="input-auth-password" style="font-size: 0.8rem; font-weight: 600;">Password</label>
+              <input type="password" id="input-auth-password" class="form-input" placeholder="••••••••" style="font-size: 0.85rem;">
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-primary btn-sm" id="btn-auth-submit">Sign In</button>
+            </div>
+          </div>
+
+          <!-- Authenticated Panel -->
+          <div id="auth-authenticated-panel" style="display: none;">
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 10px;">
+              <div style="font-size: 0.85rem; font-weight: 600; color: #34D399;" id="auth-user-display-email">user@example.com</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                Role: <strong id="auth-user-display-role" style="color: var(--text-primary);">Content Creator</strong> • Workspace: <strong id="auth-user-display-org" style="color: var(--text-primary);">Inkloom Brand Studio</strong>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-sync-cloud-campaigns">Pull Cloud Campaigns ↻</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-auth-signout" style="color: var(--sev-high-text); border-color: var(--sev-high-border);">Sign Out</button>
+            </div>
+          </div>
+          <div id="auth-feedback-banner" class="auth-feedback-banner"></div>
+        </div>
+
         <!-- Quick DDL Copy for Supabase Setup -->
         <div class="schema-helper-box">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <span style="font-size: 0.775rem; font-weight: 600; color: var(--text-secondary);">PostgreSQL Schema (8 Tables + RLS)</span>
-            <button class="btn btn-secondary btn-sm" id="btn-copy-schema-sql" style="padding: 2px 8px; font-size: 0.7rem;">Copy SQL Script</button>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 0.775rem; font-weight: 600; color: var(--text-secondary);">PostgreSQL Schema & Security Patches</span>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-sm" id="btn-copy-patch-sql" style="padding: 2px 8px; font-size: 0.7rem;">Copy Security Patch SQL</button>
+              <button class="btn btn-secondary btn-sm" id="btn-copy-schema-sql" style="padding: 2px 8px; font-size: 0.7rem;">Copy Full Schema SQL</button>
+            </div>
           </div>
-          <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0;">Execute <code>supabase/schema.sql</code> in your Supabase SQL Editor to provision tables, triggers, and RLS policies.</p>
+          <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0;">Execute <code>supabase/migration_security_patch.sql</code> in your Supabase SQL Editor to enforce fixed search_path, prevent profile escalation, and harden new-user registration.</p>
         </div>
       </div>
 
