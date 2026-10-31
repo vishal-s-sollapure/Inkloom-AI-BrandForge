@@ -21,7 +21,7 @@
         </div>
         <div class="brand-title-wrap">
           <div class="brand-title">
-            BrandForge <span class="brand-tag">ROUND 2 MVP</span>
+            BrandForge <span class="brand-tag">ROUND 3 — THE FINISH</span>
           </div>
           <div class="brand-subtitle">
             Inkloom AI Brand Governance • Participant: Vishal S Sollapure
@@ -53,11 +53,11 @@
         </button>
       </nav>
 
-      <!-- Local Demo Disclosure -->
+      <!-- Governance Engine Status Indicator -->
       <div class="header-meta">
-        <span class="demo-pill" title="Demo runs 100% in browser memory and localStorage. No external server used.">
+        <span class="demo-pill" id="header-engine-pill" title="Hybrid Governance Architecture (Serverless Gemini AI + Local Deterministic Engine)">
           <span class="demo-dot"></span>
-          Local Demo Mode (Browser Only)
+          <span id="header-engine-label">Evidence-Backed AI & Deterministic Engine</span>
         </span>
       </div>
     </header>
@@ -114,7 +114,7 @@
           <div class="card-header">
             <div class="card-title-group">
               <h2>Content Draft Input</h2>
-              <p>Enter marketing copy or load a realistic scenario for deterministic brand linting</p>
+              <p>Enter marketing copy or load a realistic scenario for evidence-backed brand governance</p>
             </div>
             <div style="display: flex; gap: 8px;">
               <button class="btn btn-secondary btn-sm" id="btn-load-sample" title="Loads realistic marketing copy with known brand issues">
@@ -123,6 +123,19 @@
               </button>
               <button class="btn btn-secondary btn-sm" id="btn-clear-draft" title="Clear title and content">
                 Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Engine Mode Selector -->
+          <div class="engine-mode-bar" role="toolbar" aria-label="Review Engine Mode">
+            <span class="engine-mode-label">Review Engine:</span>
+            <div class="engine-mode-toggle" role="radiogroup" aria-label="Audit Engine Choice">
+              <button type="button" class="engine-toggle-btn active" id="btn-engine-ai" data-engine="ai" role="radio" aria-checked="true" title="Evidence-Backed AI Review powered by Gemini with Structured Policy Grounding">
+                <span class="engine-icon">✨</span> AI Evidence-Backed (Gemini)
+              </button>
+              <button type="button" class="engine-toggle-btn" id="btn-engine-det" data-engine="deterministic" role="radio" aria-checked="false" title="Fast Local Deterministic Rules Engine (Zero Network / Offline)">
+                <span class="engine-icon">⚡</span> Local Deterministic
               </button>
             </div>
           </div>
@@ -163,8 +176,9 @@
                 <span>Words: <strong id="editor-word-count">0</strong></span> • 
                 <span>Characters: <strong id="editor-char-count">0</strong></span>
               </div>
-              <div style="display: flex; align-items: center; gap: 4px;">
-                <span>Deterministic rules engine active</span>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="engine-indicator-dot" id="engine-status-dot"></span>
+                <span id="engine-status-text">AI Evidence-Backed Engine Active</span>
               </div>
             </div>
           </div>
@@ -213,6 +227,12 @@
             </div>
           </div>
 
+          <!-- AI Engine Status & Grounding Banner -->
+          <div id="ai-engine-banner" class="ai-banner" style="display: none;" role="status">
+            <span class="ai-banner-icon" id="ai-banner-icon">✨</span>
+            <span id="ai-banner-text">Audited via Gemini 1.5 Flash • Policy Grounded</span>
+          </div>
+
           <!-- Findings List Container -->
           <div class="findings-list" id="findings-list">
             <!-- Empty initial state -->
@@ -229,7 +249,7 @@
           <div class="suggested-revision-box" id="suggested-revision-section" style="display: none;">
             <div class="revision-header">
               <h4>Suggested Brand-Aligned Revision</h4>
-              <span class="revision-disclaimer">Deterministic draft • Requires human author review</span>
+              <span class="revision-disclaimer" id="revision-disclaimer-badge">Context-Preserving Revision • Requires Human Author Review</span>
             </div>
 
             <textarea 

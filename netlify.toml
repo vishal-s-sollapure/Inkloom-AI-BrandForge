@@ -1,10 +1,18 @@
-# Netlify Configuration for BrandForge (Zero-Build Static MVP)
+# Netlify Configuration for BrandForge (Round 3)
 
 [build]
   # Publish the root directory where index.html, styles.css, and app.js live
   publish = "."
-  # No build command needed for Vanilla HTML5/CSS/JS
+  # Functions directory for secure serverless API endpoints
+  functions = "netlify/functions"
+  # No frontend build command needed for Vanilla HTML5/CSS/JS runtime
   command = ""
+
+# API route rewrites to Netlify serverless functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
 [[headers]]
   for = "/*"

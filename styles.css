@@ -1334,6 +1334,192 @@ code, .font-mono {
   color: var(--status-success-text);
 }
 
+/* ===================================================================
+   Round 3 Improvement 1: Evidence-Backed AI Review Styles
+   =================================================================== */
+
+.engine-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.engine-mode-label {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.engine-mode-toggle {
+  display: flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 2px;
+  gap: 2px;
+}
+
+.engine-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+}
+
+.engine-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.engine-toggle-btn.active {
+  background: linear-gradient(135deg, var(--accent-rose), #9E3A56);
+  color: #FFF;
+  box-shadow: 0 2px 6px rgba(217, 119, 143, 0.35);
+}
+
+.engine-toggle-btn .engine-icon {
+  font-size: 0.85rem;
+}
+
+.engine-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-rose);
+  box-shadow: 0 0 6px var(--accent-rose);
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.ai-banner {
+  background: linear-gradient(135deg, rgba(217, 119, 143, 0.12), rgba(110, 51, 88, 0.18));
+  border: 1px solid var(--accent-rose-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-xs);
+}
+
+.ai-banner.fallback {
+  background: rgba(212, 138, 67, 0.12);
+  border-color: var(--sev-med-border);
+  color: var(--sev-med-text);
+}
+
+.ai-banner-icon {
+  font-size: 1rem;
+}
+
+/* Confidence pill */
+.confidence-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(224, 168, 153, 0.14);
+  color: var(--accent-clay);
+  border: 1px solid var(--accent-clay-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.confidence-pill.high {
+  background: rgba(110, 51, 88, 0.28);
+  color: #F7EFF5;
+  border-color: var(--accent-rose-border);
+}
+
+/* Section dividers for claims vs violations */
+.findings-section-heading {
+  font-size: 0.775rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 6px 0;
+  color: var(--accent-clay);
+  border-bottom: 1px dashed var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.findings-section-heading .section-count {
+  font-size: 0.7rem;
+  background: var(--bg-surface);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Claim Verification Cards */
+.finding-item.is-claim-verification {
+  border-left-color: #E8A367;
+  background: linear-gradient(180deg, rgba(212, 138, 67, 0.08), var(--bg-surface));
+}
+
+.claim-verification-prompt {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: rgba(20, 11, 23, 0.7);
+  border: 1px dashed var(--sev-med-border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.claim-verification-prompt label {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: var(--sev-med-text);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.claim-evidence-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  padding: 5px 8px;
+  width: 100%;
+}
+
+.claim-evidence-input:focus {
+  outline: none;
+  border-color: var(--accent-rose);
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

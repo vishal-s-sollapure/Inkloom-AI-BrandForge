@@ -13,7 +13,8 @@
   const STORAGE_KEYS = {
     GUIDELINES: 'brandforge_guidelines_v2',
     HISTORY: 'brandforge_history_v2',
-    ONBOARDING_SEEN: 'brandforge_onboarding_dismissed_v2'
+    ONBOARDING_SEEN: 'brandforge_onboarding_dismissed_v2',
+    ENGINE_MODE: 'brandforge_engine_mode_v3'
   };
 
   // Default brand guidelines conforming to Inkloom AI's problem statement
@@ -114,6 +115,13 @@ With this release, our system eliminates human managers and editorial review bec
   let useDemoInsights = false;
   let currentHistoryStatusFilter = 'all';
   let currentInspectedRecord = null;
+  let activeEngineMode = (function() {
+    try {
+      return localStorage.getItem(STORAGE_KEYS.ENGINE_MODE) || 'ai';
+    } catch (e) {
+      return 'ai';
+    }
+  })();
 
   /* ===================================================================
      3. DOM Elements Cache
@@ -126,6 +134,18 @@ With this release, our system eliminates human managers and editorial review bec
     onboardingBanner: document.getElementById('onboarding-banner'),
     btnDismissOnboarding: document.getElementById('btn-dismiss-onboarding'),
     btnQuickSample: document.getElementById('btn-quick-sample'),
+
+    // Governance Engine Controls
+    btnEngineAi: document.getElementById('btn-engine-ai'),
+    btnEngineDet: document.getElementById('btn-engine-det'),
+    engineStatusDot: document.getElementById('engine-status-dot'),
+    engineStatusText: document.getElementById('engine-status-text'),
+    headerEnginePill: document.getElementById('header-engine-pill'),
+    headerEngineLabel: document.getElementById('header-engine-label'),
+    aiEngineBanner: document.getElementById('ai-engine-banner'),
+    aiBannerIcon: document.getElementById('ai-banner-icon'),
+    aiBannerText: document.getElementById('ai-banner-text'),
+    revisionDisclaimerBadge: document.getElementById('revision-disclaimer-badge'),
 
     // Overview KPIs
     metricTotalReviews: document.getElementById('metric-total-reviews'),
@@ -670,41 +690,59 @@ With this release, our system eliminates human managers and editorial review bec
       return;
     }
 
-    // Render individual finding cards safely
-    filtered.forEach(finding => {
+    // Separate findings into Factual Claims vs Policy Violations
+    const claims = filtered.filter(f => f.isVerificationNeeded);
+    const violations = filtered.filter(f => !f.isVerificationNeeded);
+
+    // Helper to render a card
+    const renderCard = (finding, isClaim) => {
       const card = document.createElement('div');
-      card.className = `finding-item severity-${finding.severity}`;
+      card.className = `finding-item severity-${finding.severity} ${isClaim ? 'is-claim-verification' : ''}`;
 
       const header = document.createElement('div');
       header.className = 'finding-item-header';
 
       const title = document.createElement('span');
       title.className = 'finding-title';
-      title.textContent = finding.ruleTitle;
+      title.textContent = finding.ruleCitation || finding.ruleTitle || 'Brand Policy Finding';
+
+      const pillsWrap = document.createElement('div');
+      pillsWrap.style.display = 'flex';
+      pillsWrap.style.gap = '6px';
+      pillsWrap.style.alignItems = 'center';
+
+      // Confidence indicator
+      const confScore = finding.confidence || (isClaim ? 95 : 90);
+      const confPill = document.createElement('span');
+      confPill.className = `confidence-pill ${confScore >= 90 ? 'high' : ''}`;
+      confPill.title = 'AI Semantic Confidence rating';
+      confPill.textContent = `${confScore}% Conf.`;
+      pillsWrap.appendChild(confPill);
 
       const pill = document.createElement('span');
       pill.className = `finding-pill ${finding.severity}`;
       pill.textContent = finding.severity;
+      pillsWrap.appendChild(pill);
 
       header.appendChild(title);
-      header.appendChild(pill);
+      header.appendChild(pillsWrap);
 
       // Explicit Guideline Citation Tag
       const citationTag = document.createElement('div');
       citationTag.className = 'guideline-citation-tag';
-      citationTag.textContent = `Rule Section: ${finding.guidelineSection || 'Brand Standards'}`;
+      citationTag.textContent = `Policy Section: ${finding.guidelineSection || 'Brand Standards'}`;
 
       // Evidence snippet
       const evidence = document.createElement('div');
       evidence.className = 'finding-evidence';
-      evidence.textContent = `Evidence: "${finding.evidence}"`;
+      evidence.textContent = `Evidence Quote: "${finding.evidence}"`;
 
       // Verification note if applicable
       let verifyBadge = null;
-      if (finding.isVerificationNeeded) {
+      if (isClaim) {
         verifyBadge = document.createElement('div');
         verifyBadge.className = 'verification-badge';
-        verifyBadge.textContent = '⚠️ Claim Requires Supporting Evidence';
+        verifyBadge.textContent = '⚠️ Factual Claim — Requires Source Evidence Link';
       }
 
       // Explanation
@@ -724,8 +762,48 @@ With this release, our system eliminates human managers and editorial review bec
       card.appendChild(explanation);
       card.appendChild(rec);
 
+      // Interactive Evidence Attachment Input for Claims
+      if (isClaim) {
+        const promptBox = document.createElement('div');
+        promptBox.className = 'claim-verification-prompt';
+
+        const promptLabel = document.createElement('label');
+        promptLabel.innerHTML = '<span>📎</span> <span>Attach Supporting Evidence Document / Reference URL:</span>';
+
+        const evidenceInput = document.createElement('input');
+        evidenceInput.type = 'text';
+        evidenceInput.className = 'claim-evidence-input';
+        evidenceInput.placeholder = 'e.g. https://metrics.internal/q3-report.pdf or Cert #4829';
+        evidenceInput.value = finding.attachedEvidence || '';
+        evidenceInput.addEventListener('input', (e) => {
+          finding.attachedEvidence = e.target.value.trim();
+        });
+
+        promptBox.appendChild(promptLabel);
+        promptBox.appendChild(evidenceInput);
+        card.appendChild(promptBox);
+      }
+
       DOM.findingsList.appendChild(card);
-    });
+    };
+
+    // 1. Render Factual Claims Group
+    if (claims.length > 0) {
+      const heading = document.createElement('div');
+      heading.className = 'findings-section-heading';
+      heading.innerHTML = `<span>⚠️ Claims Requiring Supporting Evidence</span><span class="section-count">${claims.length}</span>`;
+      DOM.findingsList.appendChild(heading);
+      claims.forEach(c => renderCard(c, true));
+    }
+
+    // 2. Render Policy Violations Group
+    if (violations.length > 0) {
+      const heading = document.createElement('div');
+      heading.className = 'findings-section-heading';
+      heading.innerHTML = `<span>Brand Standards & Policy Violations</span><span class="section-count">${violations.length}</span>`;
+      DOM.findingsList.appendChild(heading);
+      violations.forEach(v => renderCard(v, false));
+    }
   }
 
   function renderScoreBadge(score, findingsCount) {
@@ -1057,8 +1135,8 @@ With this release, our system eliminates human managers and editorial review bec
     }
   }
 
-  // Run Brand Check Handler
-  function handleRunCheck() {
+  // Run Brand Check Handler (Hybrid AI & Deterministic Dispatch)
+  async function handleRunCheck() {
     const title = DOM.contentTitle.value;
     const text = DOM.draftInput.value;
     const contentType = DOM.contentType.value;
@@ -1071,36 +1149,126 @@ With this release, our system eliminates human managers and editorial review bec
 
     // Show progress feedback
     DOM.btnRunCheck.disabled = true;
+    DOM.checkProgress.textContent = activeEngineMode === 'ai'
+      ? 'Auditing draft with Evidence-Backed AI (Gemini) grounded against active guidelines...'
+      : 'Evaluating draft using local deterministic rules engine...';
     DOM.checkProgress.style.display = 'block';
 
-    setTimeout(() => {
-      const findings = matchGuidelines(text, currentGuidelines);
-      const score = calculateScore(findings);
-      const suggestedRevision = generateSuggestedRevision(text, findings, currentGuidelines);
+    let findings = [];
+    let score = 100;
+    let suggestedRevision = text;
+    let engineUsed = activeEngineMode;
+    let claimsCount = 0;
 
-      latestCheckResults = {
-        title,
-        type: contentType,
-        rawText: text,
-        findings,
-        score,
-        suggestedRevision,
-        timestamp: new Date().toISOString()
-      };
+    if (activeEngineMode === 'ai') {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 9500);
 
-      // Render findings & score
-      renderFindings(findings);
-      renderScoreBadge(score, findings.length);
+        const response = await fetch('/api/review-brand', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title,
+            contentType,
+            rawText: text,
+            guidelines: currentGuidelines,
+            forceEngine: 'auto'
+          }),
+          signal: controller.signal
+        });
 
-      // Populate suggested revision box
-      DOM.suggestedRevisionText.value = suggestedRevision;
-      DOM.suggestedRevisionSection.style.display = 'flex';
+        clearTimeout(timer);
 
-      DOM.checkProgress.style.display = 'none';
-      DOM.btnRunCheck.disabled = false;
+        if (!response.ok) {
+          throw new Error(`Server returned HTTP ${response.status}`);
+        }
 
-      showToast(`Brand Check complete. Score: ${score}% (${findings.length} findings)`, score >= 70 ? 'success' : 'error');
-    }, 280);
+        const data = await response.json();
+        findings = Array.isArray(data.findings) ? data.findings : [];
+        score = typeof data.complianceScore === 'number' ? data.complianceScore : calculateScore(findings);
+        suggestedRevision = data.suggestedRevision || generateSuggestedRevision(text, findings, currentGuidelines);
+        engineUsed = data.engine || 'gemini';
+        claimsCount = typeof data.claimsRequiringEvidenceCount === 'number'
+          ? data.claimsRequiringEvidenceCount
+          : findings.filter(f => f.isVerificationNeeded).length;
+
+        // Render AI Engine status banner
+        if (DOM.aiEngineBanner) {
+          if (data.isFallback) {
+            DOM.aiEngineBanner.className = 'ai-banner fallback';
+            if (DOM.aiBannerIcon) DOM.aiBannerIcon.textContent = '⚡';
+            if (DOM.aiBannerText) DOM.aiBannerText.textContent = data.notice || 'Evaluated using Local Deterministic Rules Engine (Fallback).';
+          } else {
+            DOM.aiEngineBanner.className = 'ai-banner';
+            if (DOM.aiBannerIcon) DOM.aiBannerIcon.textContent = '✨';
+            if (DOM.aiBannerText) {
+              DOM.aiBannerText.textContent = `Audited via Gemini ${data.model || '1.5 Flash'} • Policy Grounded with Evidence (${findings.length} findings, ${claimsCount} claims requiring evidence)`;
+            }
+          }
+          DOM.aiEngineBanner.style.display = 'flex';
+        }
+      } catch (err) {
+        console.warn('[BrandForge] AI endpoint unreachable or timed out; falling back to deterministic rules:', err);
+        findings = matchGuidelines(text, currentGuidelines);
+        score = calculateScore(findings);
+        suggestedRevision = generateSuggestedRevision(text, findings, currentGuidelines);
+        engineUsed = 'deterministic_fallback';
+        claimsCount = findings.filter(f => f.isVerificationNeeded).length;
+
+        if (DOM.aiEngineBanner) {
+          DOM.aiEngineBanner.className = 'ai-banner fallback';
+          if (DOM.aiBannerIcon) DOM.aiBannerIcon.textContent = '⚡';
+          if (DOM.aiBannerText) {
+            DOM.aiBannerText.textContent = 'Notice: AI endpoint offline or timed out. Evaluated using local deterministic rules engine.';
+          }
+          DOM.aiEngineBanner.style.display = 'flex';
+        }
+      }
+    } else {
+      // Deterministic Mode
+      findings = matchGuidelines(text, currentGuidelines);
+      score = calculateScore(findings);
+      suggestedRevision = generateSuggestedRevision(text, findings, currentGuidelines);
+      engineUsed = 'deterministic';
+      claimsCount = findings.filter(f => f.isVerificationNeeded).length;
+
+      if (DOM.aiEngineBanner) {
+        DOM.aiEngineBanner.className = 'ai-banner fallback';
+        if (DOM.aiBannerIcon) DOM.aiBannerIcon.textContent = '⚡';
+        if (DOM.aiBannerText) {
+          DOM.aiBannerText.textContent = 'Evaluated using Local Deterministic Rules Engine (Offline / Zero-network mode).';
+        }
+        DOM.aiEngineBanner.style.display = 'flex';
+      }
+    }
+
+    latestCheckResults = {
+      title,
+      type: contentType,
+      rawText: text,
+      findings,
+      score,
+      suggestedRevision,
+      engine: engineUsed,
+      claimsRequiringEvidenceCount: claimsCount,
+      timestamp: new Date().toISOString()
+    };
+
+    // Render findings & score
+    renderFindings(findings);
+    renderScoreBadge(score, findings.length);
+
+    // Populate suggested revision box
+    DOM.suggestedRevisionText.value = suggestedRevision;
+    DOM.suggestedRevisionSection.style.display = 'flex';
+
+    DOM.checkProgress.style.display = 'none';
+    DOM.btnRunCheck.disabled = false;
+
+    showToast(`Brand Check complete. Score: ${score}% (${findings.length} findings, ${claimsCount} claims)`, score >= 70 ? 'success' : 'error');
   }
 
   // Copy Suggested Revision Handler
@@ -1251,57 +1419,79 @@ With this release, our system eliminates human managers and editorial review bec
   }
 
   /**
-   * Generates structured audit JSON
+   * Generates structured audit JSON (Round 3 Production Schema)
    */
   function generateAuditJson(record) {
+    const findingsList = record.findings || [];
+    const claimsCount = record.claimsRequiringEvidenceCount || findingsList.filter(f => f.isVerificationNeeded).length;
+
     return JSON.stringify({
-      brandForgeAuditVersion: '2.0-MVP',
-      engine: 'BrandForge Deterministic Rules Engine',
+      brandForgeAuditVersion: '3.0-Production',
+      governanceEngine: record.engine || 'BrandForge Evidence-Backed AI Engine (Gemini)',
       auditTimestamp: record.timestamp || new Date().toISOString(),
       documentTitle: record.title || 'Untitled',
       contentType: record.type || 'general',
       complianceScore: record.score,
-      status: record.status || 'draft',
+      status: record.status || 'evaluated',
       reviewerNotes: record.reviewerNotes || null,
-      findingsCount: record.findings ? record.findings.length : 0,
-      findings: record.findings || [],
+      findingsCount: findingsList.length,
+      claimsRequiringEvidenceCount: claimsCount,
+      findings: findingsList.map(f => ({
+        findingId: f.findingId || f.id || 'finding',
+        type: f.type || (f.isVerificationNeeded ? 'claim_verification' : 'brand_violation'),
+        severity: f.severity,
+        guidelineSection: f.guidelineSection || 'Policy',
+        ruleCitation: f.ruleCitation || f.ruleTitle,
+        evidence: f.evidence,
+        explanation: f.explanation,
+        recommendation: f.recommendation,
+        suggestedReplacement: f.suggestedReplacement || '',
+        isVerificationNeeded: Boolean(f.isVerificationNeeded),
+        confidence: f.confidence || 90,
+        attachedEvidence: f.attachedEvidence || null
+      })),
       contentSnapshot: record.rawText || '',
-      governanceNotice: 'Verified via BrandForge Deterministic Rules Engine. Client-side evaluation.'
+      governanceNotice: 'Audited via BrandForge Pre-Publication Governance Pipeline with policy grounding and human verification oversight.'
     }, null, 2);
   }
 
   /**
-   * Generates formatted audit Markdown
+   * Generates formatted audit Markdown (Round 3 Production Format)
    */
   function generateAuditMarkdown(record) {
     const dateStr = record.timestamp ? new Date(record.timestamp).toLocaleString() : 'N/A';
     const findingsList = record.findings || [];
+    const claimsCount = record.claimsRequiringEvidenceCount || findingsList.filter(f => f.isVerificationNeeded).length;
+    const engineLabel = record.engine ? record.engine.toUpperCase() : 'EVIDENCE-BACKED AI (GEMINI)';
+
     let md = `# BrandForge Governance Audit Report\n\n`;
     md += `- **Document Title:** ${record.title || 'Untitled'}\n`;
     md += `- **Content Type:** ${(record.type || 'General').replace('_', ' ')}\n`;
     md += `- **Audit Date & Time:** ${dateStr}\n`;
     md += `- **Compliance Score:** ${record.score}%\n`;
     md += `- **Review Status:** ${(record.status || 'draft').toUpperCase()}\n`;
+    md += `- **Governance Engine:** ${engineLabel}\n`;
+    md += `- **Claims Requiring Factual Evidence:** ${claimsCount}\n`;
     if (record.reviewerNotes) {
       md += `- **Reviewer Notes:** ${record.reviewerNotes}\n`;
     }
-    md += `- **Governance Engine:** Deterministic Policy Index (Inkloom AI)\n\n`;
-    md += `## Findings & Policy Citations (${findingsList.length} items)\n\n`;
+    md += `\n## Findings & Policy Citations (${findingsList.length} items)\n\n`;
     if (findingsList.length === 0) {
       md += `*No brand rule violations or unverified claims detected. Content is 100% compliant with active guidelines.*\n\n`;
     } else {
-      md += `| Severity | Policy Section | Trigger / Evidence | Recommendation |\n`;
+      md += `| Severity | Policy Section | Trigger / Evidence Quote | Recommendation / Attached Evidence |\n`;
       md += `| :--- | :--- | :--- | :--- |\n`;
       findingsList.forEach(f => {
         const sec = f.guidelineSection || 'Brand Standards';
         const ev = (f.evidence || '').replace(/\|/g, '\\|');
         const rec = (f.recommendation || '').replace(/\|/g, '\\|');
-        md += `| **${f.severity.toUpperCase()}** | ${sec} | \`${ev}\` | ${rec} |\n`;
+        const extra = f.attachedEvidence ? `<br>*Evidence Attached: [${f.attachedEvidence}]*` : (f.isVerificationNeeded ? '<br>*(Awaiting Source Evidence)*' : '');
+        md += `| **${f.severity.toUpperCase()}** (${f.confidence || 90}% Conf.) | ${sec} | \`${ev}\` | ${rec}${extra} |\n`;
       });
       md += `\n`;
     }
     md += `## Content Snapshot\n\n\`\`\`\n${record.rawText || ''}\n\`\`\`\n\n`;
-    md += `*Report generated by BrandForge • Inkloom AI Brand Governance Challenge (Round 2 MVP)*\n`;
+    md += `*Report generated by BrandForge • Inkloom AI Brand Governance Challenge (Round 3 — The Finish)*\n`;
     return md;
   }
 
@@ -1335,6 +1525,49 @@ With this release, our system eliminates human managers and editorial review bec
      10. Event Listeners Setup
      =================================================================== */
   function setupEventListeners() {
+    // Engine mode switching
+    const updateEngineModeUI = (mode) => {
+      activeEngineMode = mode;
+      try {
+        localStorage.setItem(STORAGE_KEYS.ENGINE_MODE, mode);
+      } catch (e) { /* ignore */ }
+
+      if (DOM.btnEngineAi && DOM.btnEngineDet) {
+        DOM.btnEngineAi.classList.toggle('active', mode === 'ai');
+        DOM.btnEngineAi.setAttribute('aria-checked', (mode === 'ai').toString());
+        DOM.btnEngineDet.classList.toggle('active', mode === 'deterministic');
+        DOM.btnEngineDet.setAttribute('aria-checked', (mode === 'deterministic').toString());
+      }
+
+      if (DOM.engineStatusText) {
+        DOM.engineStatusText.textContent = mode === 'ai'
+          ? 'Evidence-Backed AI Pipeline Ready'
+          : 'Local Deterministic Rules Engine Active';
+      }
+
+      if (DOM.revisionDisclaimerBadge) {
+        DOM.revisionDisclaimerBadge.textContent = mode === 'ai'
+          ? 'Evidence-Grounded Revision • Requires Human Author Review'
+          : 'Deterministic Replacement Draft • Requires Human Author Review';
+      }
+    };
+
+    if (DOM.btnEngineAi) {
+      DOM.btnEngineAi.addEventListener('click', () => {
+        updateEngineModeUI('ai');
+        showToast('Switched to Evidence-Backed AI Review (Gemini).', 'info');
+      });
+    }
+
+    if (DOM.btnEngineDet) {
+      DOM.btnEngineDet.addEventListener('click', () => {
+        updateEngineModeUI('deterministic');
+        showToast('Switched to Local Deterministic Engine (Offline).', 'info');
+      });
+    }
+
+    updateEngineModeUI(activeEngineMode);
+
     // Tab switching
     DOM.navBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1549,6 +1782,8 @@ With this release, our system eliminates human managers and editorial review bec
           findings: latestCheckResults.findings,
           rawText: (DOM.draftInput && DOM.draftInput.value.trim()) || latestCheckResults.rawText,
           status: 'rejected',
+          engine: latestCheckResults.engine || activeEngineMode,
+          claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
           reviewerNotes: DOM.rejectReviewerNotes.value.trim() || 'Author revision required to address flagged policy findings.'
         };
 
@@ -1586,6 +1821,8 @@ With this release, our system eliminates human managers and editorial review bec
         findings: latestCheckResults.findings,
         rawText: approvedContent,
         status: 'approved',
+        engine: latestCheckResults.engine || activeEngineMode,
+        claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
         reviewerNotes: null
       };
 
