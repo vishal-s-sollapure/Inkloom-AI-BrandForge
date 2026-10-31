@@ -388,12 +388,205 @@ With this release, our system eliminates human managers and editorial review bec
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
       }
+      if (history && history.length > 0) {
+        SupabaseManager.syncCampaignRecord(history[0]);
+      }
       return true;
     } catch (e) {
       console.warn('localStorage is unavailable; review history preserved in-memory for this session.', e);
       return true;
     }
   }
+
+  /* ===================================================================
+     4.1 Supabase Team Workspace & Cloud Sync Manager
+     =================================================================== */
+  const SupabaseManager = {
+    client: null,
+    isLive: false,
+    config: {
+      url: '',
+      anonKey: ''
+    },
+    activeOrg: {
+      id: 'org-default-001',
+      name: 'Inkloom Brand Studio',
+      slug: 'inkloom-workspace'
+    },
+
+    loadConfig() {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const stored = localStorage.getItem(STORAGE_KEYS.SUPABASE_CONFIG);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed && parsed.url && parsed.anonKey) {
+              this.config = parsed;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Could not read Supabase config from storage:', e);
+      }
+      return this.config;
+    },
+
+    saveConfig(url, anonKey) {
+      this.config = { url: (url || '').trim(), anonKey: (anonKey || '').trim() };
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          if (this.config.url && this.config.anonKey) {
+            localStorage.setItem(STORAGE_KEYS.SUPABASE_CONFIG, JSON.stringify(this.config));
+          } else {
+            localStorage.removeItem(STORAGE_KEYS.SUPABASE_CONFIG);
+          }
+        }
+      } catch (e) {
+        console.warn('Could not persist Supabase config:', e);
+      }
+    },
+
+    init() {
+      this.loadConfig();
+      if (this.config.url && this.config.anonKey) {
+        this.connect(this.config.url, this.config.anonKey, false);
+      } else {
+        this.updateUI();
+      }
+    },
+
+    async connect(url, anonKey, triggerToast = true) {
+      const cleanUrl = (url || '').trim();
+      const cleanKey = (anonKey || '').trim();
+
+      if (!cleanUrl || !cleanKey) {
+        this.disconnect();
+        return { success: false, message: 'URL and Anon Key are required.' };
+      }
+
+      if (!cleanUrl.startsWith('https://')) {
+        return { success: false, message: 'Supabase URL must start with https://' };
+      }
+
+      try {
+        if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
+          this.client = window.supabase.createClient(cleanUrl, cleanKey);
+          this.isLive = true;
+          this.saveConfig(cleanUrl, cleanKey);
+          this.updateUI();
+          if (triggerToast) {
+            showToast('Connected to Supabase PostgreSQL workspace.', 'success');
+          }
+          return { success: true, message: 'Connected to Supabase successfully.' };
+        } else {
+          this.isLive = false;
+          this.saveConfig(cleanUrl, cleanKey);
+          this.updateUI();
+          if (triggerToast) {
+            showToast('Supabase settings saved. Operating with local fallback.', 'info');
+          }
+          return { success: true, message: 'Settings saved (Local fallback mode active).' };
+        }
+      } catch (err) {
+        console.error('Supabase connection error:', err);
+        return { success: false, message: err.message || 'Connection failed.' };
+      }
+    },
+
+    disconnect() {
+      this.client = null;
+      this.isLive = false;
+      this.saveConfig('', '');
+      this.updateUI();
+      showToast('Switched to Local Sandbox mode.', 'info');
+    },
+
+    updateUI() {
+      const isConnected = this.isLive;
+      if (DOM.workspaceStatusDot) {
+        DOM.workspaceStatusDot.classList.toggle('connected', isConnected);
+      }
+      if (DOM.workspaceStatusText) {
+        DOM.workspaceStatusText.textContent = isConnected
+          ? `Workspace: ${this.activeOrg.name} (Live)`
+          : 'Workspace: Local Sandbox';
+      }
+      if (DOM.wsModalBadge) {
+        DOM.wsModalBadge.classList.toggle('connected', isConnected);
+        DOM.wsModalBadge.textContent = isConnected ? 'Supabase Live Connected' : 'Local Sandbox Mode';
+      }
+      if (DOM.wsModalOrgName) {
+        DOM.wsModalOrgName.textContent = this.activeOrg.name;
+      }
+      if (DOM.wsModalRoleName) {
+        const info = (typeof ROLE_CONFIG !== 'undefined' && ROLE_CONFIG[activeRole]) || { label: 'Content Creator' };
+        DOM.wsModalRoleName.textContent = `${info.label} (${activeRole}@brandforge.ai)`;
+      }
+      if (DOM.inputSupabaseUrl && this.config.url) {
+        DOM.inputSupabaseUrl.value = this.config.url;
+      }
+      if (DOM.inputSupabaseAnonKey && this.config.anonKey) {
+        DOM.inputSupabaseAnonKey.value = this.config.anonKey;
+      }
+    },
+
+    async recordAuditEvent(campaignId, eventType, previousState, newState, metadata = {}) {
+      const event = {
+        id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        campaignId,
+        actorRole: activeRole,
+        actorEmail: `${activeRole}@brandforge.ai`,
+        eventType,
+        previousState,
+        newState,
+        metadata,
+        timestamp: new Date().toISOString()
+      };
+
+      if (this.isLive && this.client) {
+        try {
+          await this.client.from('audit_events').insert({
+            organization_id: this.activeOrg.id,
+            campaign_id: campaignId,
+            actor_role: activeRole,
+            event_type: eventType,
+            previous_state: previousState,
+            new_state: newState,
+            metadata
+          });
+        } catch (err) {
+          console.warn('Could not post audit event to Supabase; recorded locally:', err);
+        }
+      }
+      return event;
+    },
+
+    async syncCampaignRecord(record) {
+      if (!this.isLive || !this.client || !record) return;
+
+      try {
+        await this.client.from('campaigns').upsert({
+          id: record.id,
+          organization_id: this.activeOrg.id,
+          title: record.title,
+          content_type: record.type,
+          current_status: record.workflowStage || 'drafting',
+          current_version_num: record.versionNum || 1
+        });
+
+        await this.client.from('campaign_revisions').insert({
+          campaign_id: record.id,
+          version_num: record.versionNum || 1,
+          content: record.originalContent,
+          compliance_score: record.score,
+          findings: record.findings,
+          suggested_revision: record.suggestedRevision
+        });
+      } catch (err) {
+        console.warn('Supabase campaign sync notice (stored locally):', err.message);
+      }
+    }
+  };
 
   /* ===================================================================
      5. Toast Notification System (DOM-safe, accessible)
@@ -2054,6 +2247,7 @@ With this release, our system eliminates human managers and editorial review bec
           DOM.commentAuthorBadge.textContent = `Posting as: ${ROLE_CONFIG[activeRole].label}`;
         }
         updateWorkflowUI(currentWorkflowStage);
+        SupabaseManager.updateUI();
         showToast(`Switched active stakeholder persona to ${ROLE_CONFIG[activeRole].label}.`, 'info');
       });
     }
@@ -2582,6 +2776,108 @@ With this release, our system eliminates human managers and editorial review bec
         });
       }
     });
+
+    // Workspace & Supabase Controls
+    if (DOM.btnWorkspaceModal) {
+      DOM.btnWorkspaceModal.addEventListener('click', () => {
+        SupabaseManager.updateUI();
+        openModal('modal-workspace-sync');
+      });
+    }
+
+    if (DOM.btnSaveSupabaseConfig) {
+      DOM.btnSaveSupabaseConfig.addEventListener('click', async () => {
+        const url = DOM.inputSupabaseUrl ? DOM.inputSupabaseUrl.value : '';
+        const key = DOM.inputSupabaseAnonKey ? DOM.inputSupabaseAnonKey.value : '';
+        const res = await SupabaseManager.connect(url, key, true);
+        if (DOM.supabaseConfigFeedback) {
+          DOM.supabaseConfigFeedback.textContent = res.message;
+          DOM.supabaseConfigFeedback.style.color = res.success ? 'var(--status-success-text)' : 'var(--sev-high-text)';
+        }
+      });
+    }
+
+    if (DOM.btnTestSupabaseConfig) {
+      DOM.btnTestSupabaseConfig.addEventListener('click', async () => {
+        const url = DOM.inputSupabaseUrl ? DOM.inputSupabaseUrl.value.trim() : '';
+        const key = DOM.inputSupabaseAnonKey ? DOM.inputSupabaseAnonKey.value.trim() : '';
+        if (!url || !key) {
+          if (DOM.supabaseConfigFeedback) {
+            DOM.supabaseConfigFeedback.textContent = 'Please enter both Supabase URL and Anon Key.';
+            DOM.supabaseConfigFeedback.style.color = 'var(--sev-high-text)';
+          }
+          return;
+        }
+        if (!url.startsWith('https://')) {
+          if (DOM.supabaseConfigFeedback) {
+            DOM.supabaseConfigFeedback.textContent = 'Supabase URL must start with https://';
+            DOM.supabaseConfigFeedback.style.color = 'var(--sev-high-text)';
+          }
+          return;
+        }
+        if (DOM.supabaseConfigFeedback) {
+          DOM.supabaseConfigFeedback.textContent = 'Pinging Supabase gateway...';
+          DOM.supabaseConfigFeedback.style.color = 'var(--text-muted)';
+        }
+        try {
+          const resp = await fetch(`${url}/rest/v1/`, {
+            headers: {
+              'apikey': key,
+              'Authorization': `Bearer ${key}`
+            }
+          });
+          if (resp.ok || resp.status === 200 || resp.status === 404) {
+            if (DOM.supabaseConfigFeedback) {
+              DOM.supabaseConfigFeedback.textContent = '✓ Gateway responded! Supabase REST endpoint reachable.';
+              DOM.supabaseConfigFeedback.style.color = 'var(--status-success-text)';
+            }
+          } else {
+            if (DOM.supabaseConfigFeedback) {
+              DOM.supabaseConfigFeedback.textContent = `HTTP ${resp.status} received from Supabase. Check credentials.`;
+              DOM.supabaseConfigFeedback.style.color = 'var(--sev-medium-text)';
+            }
+          }
+        } catch (err) {
+          if (DOM.supabaseConfigFeedback) {
+            DOM.supabaseConfigFeedback.textContent = `Direct fetch note: ${err.message}. Credentials saved in configuration.`;
+            DOM.supabaseConfigFeedback.style.color = 'var(--sev-medium-text)';
+          }
+        }
+      });
+    }
+
+    if (DOM.btnDisconnectSupabase) {
+      DOM.btnDisconnectSupabase.addEventListener('click', () => {
+        if (DOM.inputSupabaseUrl) DOM.inputSupabaseUrl.value = '';
+        if (DOM.inputSupabaseAnonKey) DOM.inputSupabaseAnonKey.value = '';
+        SupabaseManager.disconnect();
+        if (DOM.supabaseConfigFeedback) {
+          DOM.supabaseConfigFeedback.textContent = 'Switched to Local Sandbox mode.';
+          DOM.supabaseConfigFeedback.style.color = 'var(--text-muted)';
+        }
+      });
+    }
+
+    if (DOM.btnCopySchemaSql) {
+      DOM.btnCopySchemaSql.addEventListener('click', async () => {
+        const sqlNotice = `-- Execute supabase/schema.sql in Supabase SQL Editor\n-- File path: supabase/schema.sql\n-- Includes 8 tables: organizations, profiles, brand_guidelines, campaigns, campaign_revisions, review_comments, audit_events, compliance_seals with Row Level Security.`;
+        try {
+          const res = await fetch('supabase/schema.sql');
+          if (res.ok) {
+            const fullSql = await res.text();
+            await navigator.clipboard.writeText(fullSql);
+            showToast('Full supabase/schema.sql copied to clipboard!', 'success');
+            return;
+          }
+        } catch (e) { /* fallback */ }
+        try {
+          await navigator.clipboard.writeText(sqlNotice);
+          showToast('Schema SQL path and instructions copied to clipboard!', 'info');
+        } catch (err) {
+          showToast('Please open supabase/schema.sql directly.', 'info');
+        }
+      });
+    }
   }
 
   /* ===================================================================
@@ -2605,6 +2901,9 @@ With this release, our system eliminates human managers and editorial review bec
 
     // Initialize collaborative workflow stepper
     updateWorkflowUI('drafting');
+
+    // Initialize Supabase Manager
+    SupabaseManager.init();
 
     // Setup events
     setupEventListeners();

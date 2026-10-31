@@ -356,3 +356,4 @@ CREATE TRIGGER on_auth_user_created
 INSERT INTO public.organizations (name, slug)
 VALUES ('Inkloom Brand Studio', 'inkloom-workspace')
 ON CONFLICT (slug) DO NOTHING;
+
