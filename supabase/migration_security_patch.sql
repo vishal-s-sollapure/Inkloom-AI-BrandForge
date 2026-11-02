@@ -80,3 +80,57 @@ CREATE TRIGGER trg_prevent_profile_escalation
 -- 4. RE-ASSERT STRICT APPEND-ONLY SECURITY FOR AUDIT EVENTS
 REVOKE UPDATE, DELETE ON public.audit_events FROM authenticated, anon, public;
 
+-- 5. PROFILES SELECT SELF-RECOVERY (Ensures users can always load their own profile)
+DROP POLICY IF EXISTS "profiles_select_org" ON public.profiles;
+CREATE POLICY "profiles_select_org" ON public.profiles
+    FOR SELECT USING (id = auth.uid() OR organization_id = public.get_auth_org_id());
+
+-- 6. CAMPAIGNS UPDATE WITH CHECK (Permits valid state-machine lifecycle transitions)
+DROP POLICY IF EXISTS "campaigns_update_role" ON public.campaigns;
+CREATE POLICY "campaigns_update_role" ON public.campaigns
+    FOR UPDATE USING (
+        organization_id = public.get_auth_org_id()
+        AND (
+            -- Creators can update when drafting or changes requested
+            (public.get_auth_role() = 'creator' AND current_status IN ('drafting', 'changes_requested'))
+            OR
+            -- Custodians can update when in_review or changes_requested
+            (public.get_auth_role() = 'custodian' AND current_status IN ('in_review', 'changes_requested'))
+            OR
+            -- Legal officers can update when brand_approved or in_review
+            (public.get_auth_role() = 'legal' AND current_status IN ('brand_approved', 'in_review'))
+        )
+    )
+    WITH CHECK (
+        organization_id = public.get_auth_org_id()
+        AND (
+            -- Creators can keep in drafting or submit to in_review
+            (public.get_auth_role() = 'creator' AND current_status IN ('drafting', 'in_review'))
+            OR
+            -- Custodians can transition to in_review, changes_requested, or brand_approved
+            (public.get_auth_role() = 'custodian' AND current_status IN ('in_review', 'changes_requested', 'brand_approved'))
+            OR
+            -- Legal officers can transition to brand_approved, changes_requested, or legally_cleared
+            (public.get_auth_role() = 'legal' AND current_status IN ('brand_approved', 'changes_requested', 'legally_cleared'))
+        )
+    );
+
+-- 7. CAMPAIGN REVISIONS UPDATE PERMISSION (Enables upserts and revisions updates)
+DROP POLICY IF EXISTS "revisions_update_org" ON public.campaign_revisions;
+CREATE POLICY "revisions_update_org" ON public.campaign_revisions
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM public.campaigns c 
+            WHERE c.id = campaign_revisions.campaign_id 
+            AND c.organization_id = public.get_auth_org_id()
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.campaigns c 
+            WHERE c.id = campaign_revisions.campaign_id 
+            AND c.organization_id = public.get_auth_org_id()
+        )
+    );
+
+

@@ -439,6 +439,16 @@ With this release, our system eliminates human managers and editorial review bec
     return isValidUuid(id) ? id : generateUuid();
   }
 
+  function normalizeCampaignStatus(status) {
+    if (!status) return 'drafting';
+    const s = String(status).toLowerCase().trim();
+    if (s === 'in_review' || s === 'review' || s === 'submitted') return 'in_review';
+    if (s === 'changes_requested' || s === 'rejected') return 'changes_requested';
+    if (s === 'brand_approved' || s === 'approved') return 'brand_approved';
+    if (s === 'legally_cleared' || s === 'cleared') return 'legally_cleared';
+    return 'drafting';
+  }
+
   /* ===================================================================
      4.1 Supabase Team Workspace, Authentication & Cloud Sync Manager
      =================================================================== */
@@ -628,16 +638,36 @@ With this release, our system eliminates human managers and editorial review bec
       this.user = user;
 
       try {
-        // Query profile from PostgreSQL public.profiles
+        // Query profile from PostgreSQL public.profiles cleanly without embedding joins
         const { data: profileData, error: profileErr } = await this.client
           .from('profiles')
-          .select('id, organization_id, email, full_name, role, organizations(id, name, slug)')
+          .select('id, organization_id, email, full_name, role')
           .eq('id', user.id)
           .maybeSingle();
 
-        if (profileData) {
+        if (profileErr) {
+          console.error('[BrandForge] Profile query error:', profileErr);
+          showToast(`Profile error: ${profileErr.message}`, 'error');
+          this.connectionState = 'connected';
+          this.updateUI();
+          return;
+        }
+
+        if (profileData && profileData.organization_id) {
           this.profile = profileData;
-          this.organization = profileData.organizations || { id: profileData.organization_id, name: 'Inkloom Brand Studio' };
+
+          // Fetch organization name defensively
+          try {
+            const { data: orgData } = await this.client
+              .from('organizations')
+              .select('id, name, slug')
+              .eq('id', profileData.organization_id)
+              .maybeSingle();
+            this.organization = orgData || { id: profileData.organization_id, name: 'Inkloom Brand Studio' };
+          } catch (e) {
+            this.organization = { id: profileData.organization_id, name: 'Inkloom Brand Studio' };
+          }
+
           this.connectionState = 'authenticated';
 
           // Bind active persona strictly to database profile role!
@@ -657,31 +687,16 @@ With this release, our system eliminates human managers and editorial review bec
           // Asynchronously pull shared cloud campaigns
           await this.fetchCloudCampaigns();
         } else {
-          // Profile trigger might have brief latency; retry once
-          setTimeout(async () => {
-            const { data: retryProfile } = await this.client
-              .from('profiles')
-              .select('id, organization_id, email, full_name, role, organizations(id, name, slug)')
-              .eq('id', user.id)
-              .maybeSingle();
-
-            if (retryProfile) {
-              this.profile = retryProfile;
-              this.organization = retryProfile.organizations || { id: retryProfile.organization_id, name: 'Inkloom Brand Studio' };
-              this.connectionState = 'authenticated';
-              activeRole = retryProfile.role || 'creator';
-              if (DOM.roleSelect) {
-                DOM.roleSelect.value = activeRole;
-                DOM.roleSelect.disabled = true;
-              }
-              this.updateUI();
-            }
-          }, 1000);
-
-          this.connectionState = 'authenticated';
+          // Profile row does not exist in public.profiles
+          console.warn('[BrandForge] No public.profiles row found for user:', user.id);
+          this.profile = null;
+          this.organization = null;
+          this.connectionState = 'connected';
+          showToast(`Authentication notice: No profile record found in public.profiles for ${user.email}. Please execute the profile provisioning SQL in Supabase.`, 'error');
         }
       } catch (err) {
         console.warn('Error fetching user profile:', err);
+        this.profile = null;
         this.connectionState = 'connected';
       }
 
@@ -894,59 +909,113 @@ With this release, our system eliminates human managers and editorial review bec
 
     // Record or update campaign in Supabase campaigns table
     async syncCampaignRecord(record) {
-      if (!record) return;
+      if (!record) return { success: false, message: 'No record provided.' };
 
-      // In Local Sandbox mode, data is already persisted to localStorage
-      if (this.connectionState !== 'authenticated' || !this.client || !this.user || !this.profile) {
-        return;
+      // In Local Sandbox mode, data is preserved in localStorage
+      if (this.connectionState !== 'authenticated' || !this.client || !this.user) {
+        return { success: true, message: 'Operated in Local Sandbox mode.' };
+      }
+      if (!this.profile || !this.profile.organization_id) {
+        const msg = 'User profile or organization_id is missing. Please ensure your account profile is provisioned.';
+        showToast(msg, 'error');
+        return { success: false, message: msg };
       }
 
       try {
         record.id = ensureUuid(record.id);
         record.revisionId = ensureUuid(record.revisionId);
 
-        // 1. Upsert Campaign
-        const { error: campErr } = await this.client.from('campaigns').upsert({
-          id: record.id,
-          organization_id: this.profile.organization_id,
-          created_by: this.user.id,
-          title: record.title || 'Untitled Draft',
-          content_type: record.type || 'general',
-          target_audience: record.targetAudience || 'General Audience',
-          current_status: record.workflowStage || record.status || 'drafting',
-          current_version_num: record.versionNum || 1
-        });
+        // Normalize status strictly to valid PostgreSQL campaign_status enum values
+        const currentStatus = normalizeCampaignStatus(record.workflowStage || record.status);
 
-        if (campErr) {
-          throw new Error(`Campaign database write failed: ${campErr.message}`);
+        // 1. Check if campaign row already exists
+        const { data: existingCamp, error: checkErr } = await this.client
+          .from('campaigns')
+          .select('id, current_status')
+          .eq('id', record.id)
+          .maybeSingle();
+
+        if (checkErr) {
+          throw new Error(`Failed to query campaign: ${checkErr.message}`);
         }
 
-        // 2. Insert Revision
-        const { error: revErr } = await this.client.from('campaign_revisions').upsert({
-          id: record.revisionId,
-          campaign_id: record.id,
-          version_num: record.versionNum || 1,
-          content: record.rawText || record.originalContent || '',
-          compliance_score: Math.max(0, Math.min(100, Math.round(record.score || 100))),
-          findings: record.findings || [],
-          factual_claims: (record.findings || []).filter(f => f.isVerificationNeeded),
-          suggested_revision: record.suggestedRevision || '',
-          created_by: this.user.id
-        });
+        let campResult;
+        if (!existingCamp) {
+          // INSERT new campaign (evaluated against campaigns_insert_creator RLS policy)
+          campResult = await this.client.from('campaigns').insert({
+            id: record.id,
+            organization_id: this.profile.organization_id,
+            created_by: this.user.id,
+            title: record.title || 'Untitled Draft',
+            content_type: record.type || 'general',
+            target_audience: record.targetAudience || 'General Audience',
+            current_status: currentStatus,
+            current_version_num: record.versionNum || 1
+          }).select().single();
+        } else {
+          // UPDATE existing campaign (evaluated against campaigns_update_role RLS policy)
+          campResult = await this.client.from('campaigns').update({
+            title: record.title || 'Untitled Draft',
+            content_type: record.type || 'general',
+            target_audience: record.targetAudience || 'General Audience',
+            current_status: currentStatus,
+            current_version_num: record.versionNum || 1,
+            updated_at: new Date().toISOString()
+          }).eq('id', record.id).select().single();
+        }
+
+        if (campResult.error) {
+          const detail = campResult.error.details || campResult.error.hint || '';
+          throw new Error(`Campaign database write failed: ${campResult.error.message} ${detail ? '(' + detail + ')' : ''}`);
+        }
+
+        // 2. Insert or update revision
+        const { data: existingRev } = await this.client
+          .from('campaign_revisions')
+          .select('id')
+          .eq('id', record.revisionId)
+          .maybeSingle();
+
+        let revErr = null;
+        if (!existingRev) {
+          const revRes = await this.client.from('campaign_revisions').insert({
+            id: record.revisionId,
+            campaign_id: record.id,
+            version_num: record.versionNum || 1,
+            content: record.rawText || record.originalContent || '',
+            compliance_score: Math.max(0, Math.min(100, Math.round(record.score || 100))),
+            findings: record.findings || [],
+            factual_claims: (record.findings || []).filter(f => f.isVerificationNeeded),
+            suggested_revision: record.suggestedRevision || '',
+            created_by: this.user.id
+          });
+          revErr = revRes.error;
+        } else {
+          const revRes = await this.client.from('campaign_revisions').update({
+            content: record.rawText || record.originalContent || '',
+            compliance_score: Math.max(0, Math.min(100, Math.round(record.score || 100))),
+            findings: record.findings || [],
+            factual_claims: (record.findings || []).filter(f => f.isVerificationNeeded),
+            suggested_revision: record.suggestedRevision || ''
+          }).eq('id', record.revisionId);
+          revErr = revRes.error;
+        }
 
         if (revErr && !revErr.message.includes('duplicate')) {
-          console.warn('Revision write notice:', revErr.message);
+          console.warn('[BrandForge] Revision write notice:', revErr.message);
         }
 
         // 3. Record Audit Event
         await this.recordAuditEvent(record.id, 'review_run', null, {
           score: record.score,
-          status: record.status || record.workflowStage
+          status: currentStatus
         });
 
+        return { success: true, campaign: campResult.data || record };
       } catch (err) {
-        console.error('Supabase Cloud Sync Error:', err);
-        showToast(`Cloud Sync Notice: ${err.message}`, 'error');
+        console.error('[BrandForge] Supabase Cloud Write Error:', err);
+        showToast(`Database Write Failed: ${err.message}`, 'error');
+        return { success: false, message: err.message };
       }
     },
 
@@ -978,10 +1047,10 @@ With this release, our system eliminates human managers and editorial review bec
             metadata
           });
           if (error) {
-            console.warn('Could not post audit event to Supabase:', error.message);
+            console.warn('[BrandForge] Could not post audit event to Supabase:', error.message);
           }
         } catch (err) {
-          console.warn('Audit event network notice:', err.message);
+          console.warn('[BrandForge] Audit event network notice:', err.message);
         }
       }
 
@@ -990,26 +1059,27 @@ With this release, our system eliminates human managers and editorial review bec
 
     // Update campaign lifecycle status
     async updateCampaignStatus(campaignId, targetStatus, previousStatus) {
+      const normalizedTarget = normalizeCampaignStatus(targetStatus);
       if (this.connectionState === 'authenticated' && this.client && isValidUuid(campaignId)) {
         try {
           const { error } = await this.client
             .from('campaigns')
-            .update({ current_status: targetStatus })
+            .update({ current_status: normalizedTarget, updated_at: new Date().toISOString() })
             .eq('id', campaignId);
 
           if (error) {
             showToast(`Status update failed in Supabase: ${error.message}`, 'error');
-            return false;
+            return { success: false, message: error.message };
           }
 
-          await this.recordAuditEvent(campaignId, 'status_change', { status: previousStatus }, { status: targetStatus });
-          return true;
+          await this.recordAuditEvent(campaignId, 'status_change', { status: previousStatus }, { status: normalizedTarget });
+          return { success: true };
         } catch (err) {
           showToast(`Status sync error: ${err.message}`, 'error');
-          return false;
+          return { success: false, message: err.message };
         }
       }
-      return true;
+      return { success: true };
     },
 
     // In-line comment creation
@@ -2156,6 +2226,20 @@ With this release, our system eliminates human managers and editorial review bec
     DOM.checkProgress.style.display = 'none';
     DOM.btnRunCheck.disabled = false;
 
+    // Update workflow stepper to drafting and prepare submission action
+    updateWorkflowUI('drafting');
+
+    // Automatically sync initial draft to Supabase database if authenticated
+    if (SupabaseManager.connectionState === 'authenticated') {
+      SupabaseManager.syncCampaignRecord(latestCheckResults).then(syncRes => {
+        if (syncRes && syncRes.success) {
+          console.log('[BrandForge] Draft campaign persisted to Supabase campaigns table:', latestCheckResults.id);
+        } else if (syncRes && !syncRes.success) {
+          console.warn('[BrandForge] Initial draft cloud sync notice:', syncRes.message);
+        }
+      });
+    }
+
     showToast(`Brand Check complete. Score: ${score}% (${findings.length} findings, ${claimsCount} claims)`, score >= 70 ? 'success' : 'error');
   }
 
@@ -2406,13 +2490,28 @@ With this release, our system eliminates human managers and editorial review bec
             showToast('Please run a brand check before submitting for review.', 'error');
             return;
           }
+          btnSubmit.disabled = true;
+          btnSubmit.innerHTML = '<span>Saving to Cloud... ⏳</span>';
+
           latestCheckResults.id = ensureUuid(latestCheckResults.id);
           latestCheckResults.revisionId = ensureUuid(latestCheckResults.revisionId);
           latestCheckResults.workflowStage = 'in_review';
+
+          const syncRes = await SupabaseManager.syncCampaignRecord(latestCheckResults);
+          if (!syncRes.success && SupabaseManager.connectionState === 'authenticated') {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<span>Submit for Brand Review ➔</span>';
+            showToast(`Submission failed: ${syncRes.message}`, 'error');
+            return;
+          }
+
           updateWorkflowUI('in_review');
-          await SupabaseManager.syncCampaignRecord(latestCheckResults);
-          await SupabaseManager.updateCampaignStatus(latestCheckResults.id, 'in_review', 'drafting');
-          showToast('Draft officially submitted for Brand Custodian review.', 'success');
+
+          // Persist to local state and update review table
+          const updatedHistory = [latestCheckResults, ...currentReviewHistory.filter(r => r.id !== latestCheckResults.id)];
+          saveHistory(updatedHistory);
+
+          showToast('Draft officially submitted for Brand Custodian review and synchronized to database!', 'success');
         };
         DOM.stepperActionsBar.appendChild(btnSubmit);
       } else if (stage === 'in_review') {
@@ -3259,21 +3358,24 @@ With this release, our system eliminates human managers and editorial review bec
         if (!latestCheckResults) return;
 
         const record = {
-          id: `rev-${Date.now()}`,
+          id: ensureUuid(latestCheckResults.id),
+          revisionId: ensureUuid(latestCheckResults.revisionId),
           timestamp: new Date().toISOString(),
           title: (DOM.contentTitle && DOM.contentTitle.value.trim()) || latestCheckResults.title,
           type: latestCheckResults.type,
           score: latestCheckResults.score,
           findings: latestCheckResults.findings,
           rawText: (DOM.draftInput && DOM.draftInput.value.trim()) || latestCheckResults.rawText,
-          status: 'rejected',
+          status: 'changes_requested',
+          workflowStage: 'changes_requested',
           engine: latestCheckResults.engine || activeEngineMode,
           claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
           reviewerNotes: DOM.rejectReviewerNotes.value.trim() || 'Author revision required to address flagged policy findings.'
         };
 
-        const updatedHistory = [record, ...currentReviewHistory];
+        const updatedHistory = [record, ...currentReviewHistory.filter(r => r.id !== record.id)];
         saveHistory(updatedHistory);
+        updateWorkflowUI('changes_requested');
 
         closeModal('modal-reject');
         showToast('Draft recorded as Changes Requested in Review History.', 'error');
@@ -3298,21 +3400,24 @@ With this release, our system eliminates human managers and editorial review bec
 
       const approvedContent = (DOM.suggestedRevisionText && DOM.suggestedRevisionText.value.trim()) || latestCheckResults.rawText;
       const record = {
-        id: `rev-${Date.now()}`,
+        id: ensureUuid(latestCheckResults.id),
+        revisionId: ensureUuid(latestCheckResults.revisionId),
         timestamp: new Date().toISOString(),
         title: (DOM.contentTitle && DOM.contentTitle.value.trim()) || latestCheckResults.title,
         type: latestCheckResults.type,
         score: latestCheckResults.score,
         findings: latestCheckResults.findings,
         rawText: approvedContent,
-        status: 'approved',
+        status: 'brand_approved',
+        workflowStage: 'brand_approved',
         engine: latestCheckResults.engine || activeEngineMode,
         claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
         reviewerNotes: null
       };
 
-      const updatedHistory = [record, ...currentReviewHistory];
+      const updatedHistory = [record, ...currentReviewHistory.filter(r => r.id !== record.id)];
       saveHistory(updatedHistory);
+      updateWorkflowUI('brand_approved');
 
       closeModal('modal-approve');
       showToast('Version officially approved and logged in Review History.', 'success');

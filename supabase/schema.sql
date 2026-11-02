@@ -188,7 +188,7 @@ CREATE POLICY "org_select_own" ON public.organizations
 -- 6.2 Profiles: Users can view profiles in their own organization; edit their own profile
 DROP POLICY IF EXISTS "profiles_select_org" ON public.profiles;
 CREATE POLICY "profiles_select_org" ON public.profiles
-    FOR SELECT USING (organization_id = public.get_auth_org_id());
+    FOR SELECT USING (id = auth.uid() OR organization_id = public.get_auth_org_id());
 
 DROP POLICY IF EXISTS "profiles_update_self" ON public.profiles;
 CREATE POLICY "profiles_update_self" ON public.profiles
@@ -235,6 +235,19 @@ CREATE POLICY "campaigns_update_role" ON public.campaigns
             -- Legal officers can update when brand_approved or in_review
             (public.get_auth_role() = 'legal' AND current_status IN ('brand_approved', 'in_review'))
         )
+    )
+    WITH CHECK (
+        organization_id = public.get_auth_org_id()
+        AND (
+            -- Creators can keep in drafting or submit to in_review
+            (public.get_auth_role() = 'creator' AND current_status IN ('drafting', 'in_review'))
+            OR
+            -- Custodians can transition to in_review, changes_requested, or brand_approved
+            (public.get_auth_role() = 'custodian' AND current_status IN ('in_review', 'changes_requested', 'brand_approved'))
+            OR
+            -- Legal officers can transition to brand_approved, changes_requested, or legally_cleared
+            (public.get_auth_role() = 'legal' AND current_status IN ('brand_approved', 'changes_requested', 'legally_cleared'))
+        )
     );
 
 -- 6.5 Campaign Revisions:
@@ -253,6 +266,24 @@ CREATE POLICY "revisions_select_org" ON public.campaign_revisions
 DROP POLICY IF EXISTS "revisions_insert_org" ON public.campaign_revisions;
 CREATE POLICY "revisions_insert_org" ON public.campaign_revisions
     FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.campaigns c 
+            WHERE c.id = campaign_revisions.campaign_id 
+            AND c.organization_id = public.get_auth_org_id()
+        )
+    );
+
+-- Update permitted for org members (enables upserts and revision updates)
+DROP POLICY IF EXISTS "revisions_update_org" ON public.campaign_revisions;
+CREATE POLICY "revisions_update_org" ON public.campaign_revisions
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM public.campaigns c 
+            WHERE c.id = campaign_revisions.campaign_id 
+            AND c.organization_id = public.get_auth_org_id()
+        )
+    )
+    WITH CHECK (
         EXISTS (
             SELECT 1 FROM public.campaigns c 
             WHERE c.id = campaign_revisions.campaign_id 
