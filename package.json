@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/rulesEngine.test.js && node tests/aiReview.test.js && node tests/collaborativeWorkflow.test.js && node tests/supabaseWorkflow.test.js",
+    "test": "node tests/rulesEngine.test.js && node tests/aiReview.test.js && node tests/collaborativeWorkflow.test.js && node tests/supabaseWorkflow.test.js && node tests/governanceIntelligence.test.js",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"

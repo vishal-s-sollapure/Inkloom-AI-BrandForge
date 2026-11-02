@@ -227,7 +227,7 @@ With this release, our system eliminates human managers and editorial review bec
     hfilterRejCount: document.getElementById('hfilter-rej-count'),
     historyStatusBtns: document.querySelectorAll('.history-status-btn'),
 
-    // Insights
+    // Insights & Governance Intelligence
     insightsFrequentRules: document.getElementById('insights-frequent-rules'),
     insightsHighRisks: document.getElementById('insights-high-risks'),
     insightsDistributionBars: document.getElementById('insights-distribution-bars'),
@@ -235,6 +235,45 @@ With this release, our system eliminates human managers and editorial review bec
     insightsContentArea: document.getElementById('insights-content-area'),
     insightsEmptyState: document.getElementById('insights-empty-state'),
     btnToggleDemoInsights: document.getElementById('btn-toggle-demo-insights'),
+    insightsTimeFilter: document.getElementById('insights-time-filter'),
+    govDatasetBadge: document.getElementById('gov-dataset-badge'),
+    govDemoBanner: document.getElementById('gov-demo-banner'),
+    btnRevertRealInsights: document.getElementById('btn-revert-real-insights'),
+    btnExportGovReport: document.getElementById('btn-export-governance-report'),
+    btnEmptyGotoChecker: document.getElementById('btn-empty-goto-checker'),
+    btnEmptyToggleDemo: document.getElementById('btn-empty-toggle-demo'),
+
+    // KPI Ribbon
+    govKpiComplianceRate: document.getElementById('gov-kpi-compliance-rate'),
+    govKpiComplianceSub: document.getElementById('gov-kpi-compliance-sub'),
+    govKpiTotalCampaigns: document.getElementById('gov-kpi-total-campaigns'),
+    govKpiTotalSub: document.getElementById('gov-kpi-total-sub'),
+    govKpiInReview: document.getElementById('gov-kpi-in-review'),
+    govKpiLegallyCleared: document.getElementById('gov-kpi-legally-cleared'),
+    govKpiChangesRequested: document.getElementById('gov-kpi-changes-requested'),
+    govKpiTurnaroundTime: document.getElementById('gov-kpi-turnaround-time'),
+    govKpiTurnaroundSub: document.getElementById('gov-kpi-turnaround-sub'),
+    govKpiPendingAge: document.getElementById('gov-kpi-pending-age'),
+    govKpiPendingSub: document.getElementById('gov-kpi-pending-sub'),
+    govKpiTotalViolations: document.getElementById('gov-kpi-total-violations'),
+    govKpiViolationsSub: document.getElementById('gov-kpi-violations-sub'),
+
+    // Sections
+    govBottleneckBadge: document.getElementById('gov-bottleneck-badge'),
+    govBottleneckBody: document.getElementById('gov-bottleneck-body'),
+    govRecurringCountBadge: document.getElementById('gov-recurring-count-badge'),
+    govRecurringCategories: document.getElementById('gov-recurring-categories'),
+    govFrictionCountBadge: document.getElementById('gov-friction-count-badge'),
+    govPolicyFrictionCards: document.getElementById('gov-policy-friction-cards'),
+    govActionableRecommendations: document.getElementById('gov-actionable-recommendations'),
+
+    // Export Governance Modal
+    modalExportGovernance: document.getElementById('modal-export-governance'),
+    exportGovPreviewArea: document.getElementById('export-gov-preview-area'),
+    btnExportGovFormatMd: document.getElementById('btn-export-gov-format-md'),
+    btnExportGovFormatJson: document.getElementById('btn-export-gov-format-json'),
+    btnCopyGovReport: document.getElementById('btn-copy-gov-report'),
+    btnDownloadGovReport: document.getElementById('btn-download-gov-report'),
 
     // Modals
     modalApprove: document.getElementById('modal-approve'),
@@ -1920,132 +1959,921 @@ With this release, our system eliminates human managers and editorial review bec
     });
   }
 
-  function renderInsights() {
-    const list = useDemoInsights ? SAMPLE_INSIGHTS_HISTORY : currentReviewHistory;
+  /* ===================================================================
+     8.1 Governance Intelligence & Policy Friction Radar Engine
+     =================================================================== */
 
-    if (list.length === 0) {
-      DOM.insightsContentArea.style.display = 'none';
-      DOM.insightsEmptyState.style.display = 'block';
-      return;
+  const AMBIGUOUS_QUALITATIVE_TERMS = [
+    {
+      word: 'professional',
+      category: 'Tone & Demeanor',
+      frictionReason: 'Subjective adjective without operational style standard. Creators and reviewers frequently disagree on what tone constitutes "professional".',
+      recommendation: 'Specify concrete style conventions (e.g. AP Style, third-person perspective, active verbs, exclusion of colloquial slang).',
+      rewriteTemplate: 'Content must adhere to standard AP Style guidelines, maintain third-person perspective, and avoid informal slang.'
+    },
+    {
+      word: 'modern',
+      category: 'Visual & Voice',
+      frictionReason: 'Vague temporal descriptor. Lacks measurable typography, layout, or syntax criteria.',
+      recommendation: 'Replace with defined structural attributes: paragraph caps of <= 3 sentences, clear subheads every 150 words, and branded color palette.',
+      rewriteTemplate: 'Structure layout with concise paragraphs (maximum 3 sentences) and distinct section subheadings every 150 words.'
+    },
+    {
+      word: 'appropriate',
+      category: 'Content Scope',
+      frictionReason: 'Subjective gatekeeping word that grants arbitrary discretionary veto power to reviewers without clear boundaries.',
+      recommendation: 'Define explicit inclusion and exclusion topics rather than relying on discretionary appropriateness.',
+      rewriteTemplate: 'Content must directly address enterprise brand safety criteria and exclude unverified third-party promotional material.'
+    },
+    {
+      word: 'attractive',
+      category: 'Visual Rules',
+      frictionReason: 'Aesthetic opinion with zero technical specification. Creates endless subjective revision cycles between design and editorial teams.',
+      recommendation: 'Define explicit visual parameters: minimum 16px clear space, 4.5:1 WCAG contrast ratio, and approved brand assets.',
+      rewriteTemplate: 'Visual assets must maintain a minimum 16px clear-space boundary and comply with WCAG 2.1 AA 4.5:1 contrast standards.'
+    },
+    {
+      word: 'clean',
+      category: 'Visual & Layout',
+      frictionReason: 'Subjective design term often used vaguely for whitespace, margins, or minimal typography.',
+      recommendation: 'Specify layout grid spacing, margin requirements, and maximum visual density.',
+      rewriteTemplate: 'Maintain balanced whitespace with standard 24px container margins and approved typography hierarchy.'
+    },
+    {
+      word: 'cutting-edge',
+      category: 'Brand Voice',
+      frictionReason: 'Superlative marketing buzzword that diminishes technical authority and risks consumer regulatory challenge.',
+      recommendation: 'Describe specific, verified platform features or audited capabilities instead of superlative hype.',
+      rewriteTemplate: 'Describe specific technical architecture and verified capabilities without using superlative buzzwords.'
+    },
+    {
+      word: 'world-class',
+      category: 'Value Proposition',
+      frictionReason: 'Unsubstantiated promissory phrase that triggers legal review scrutiny and consumer skepticism.',
+      recommendation: 'Require audited customer case studies, uptime percentages, or independent benchmark comparisons.',
+      rewriteTemplate: 'Support quality assertions with audited performance metrics or documented customer case studies.'
+    },
+    {
+      word: 'high-quality',
+      category: 'Editorial Standards',
+      frictionReason: 'Vague quality assertion that lacks concrete editorial or proofreading criteria.',
+      recommendation: 'Define specific proofreading tiers: zero grammar errors, verified hyperlinks, and mandatory brand asset review.',
+      rewriteTemplate: 'Drafts must achieve zero spelling/grammar errors in automated linting and pass two-tier editorial verification.'
+    },
+    {
+      word: 'engaging',
+      category: 'Tone & Style',
+      frictionReason: 'Subjective reader-reaction goal rather than an actionable writing guideline.',
+      recommendation: 'Specify actionable reader-engagement mechanisms: clear call-to-actions (CTAs), structured bullet points, or question hooks.',
+      rewriteTemplate: 'Include a distinct call-to-action (CTA) and format key takeaways as scannable bullet points.'
+    },
+    {
+      word: 'compelling',
+      category: 'Messaging Rules',
+      frictionReason: 'Qualitative aspiration that gives creators no instruction on how to structure persuasive copy.',
+      recommendation: 'Require problem-solution narrative framing supported by verified customer evidence.',
+      rewriteTemplate: 'Structure messaging using a problem-agitation-solution narrative backed by verified customer data.'
     }
+  ];
 
-    DOM.insightsContentArea.style.display = 'block';
-    DOM.insightsEmptyState.style.display = 'none';
+  function filterCampaignsByDate(campaigns, dateFilter = 'all') {
+    if (!Array.isArray(campaigns)) return [];
+    if (dateFilter === 'all') return [...campaigns];
+    const now = Date.now();
+    const days = dateFilter === '7d' ? 7 : (dateFilter === '30d' ? 30 : 0);
+    if (!days) return [...campaigns];
+    const cutoff = now - (days * 24 * 60 * 60 * 1000);
+    return campaigns.filter(c => {
+      const timestamp = new Date(c.timestamp || c.created_at || 0).getTime();
+      return !isNaN(timestamp) && timestamp >= cutoff;
+    });
+  }
 
-    // 1. Aggregate rule frequencies
+  function analyzeGovernanceMetrics(campaigns = [], dateFilter = 'all') {
+    const filtered = filterCampaignsByDate(campaigns, dateFilter);
+    const total = filtered.length;
+
+    let inReviewCount = 0;
+    let brandApprovedCount = 0;
+    let legallyClearedCount = 0;
+    let changesRequestedCount = 0;
+    let draftingCount = 0;
+    let totalViolations = 0;
+    let highSeverityViolations = 0;
     const ruleCounts = {};
-    const highRisks = [];
-    let approvedCount = 0;
-    let flaggedCount = 0;
 
-    list.forEach(review => {
-      const norm = normalizeCampaignStatus(review.status || review.workflowStage);
-      if (norm === 'brand_approved' || norm === 'legally_cleared') approvedCount++;
-      if (norm === 'changes_requested') flaggedCount++;
+    filtered.forEach(c => {
+      const status = normalizeCampaignStatus(c.workflowStage || c.status || c.current_status);
+      if (status === 'in_review') inReviewCount++;
+      else if (status === 'brand_approved') brandApprovedCount++;
+      else if (status === 'legally_cleared') legallyClearedCount++;
+      else if (status === 'changes_requested') changesRequestedCount++;
+      else draftingCount++;
 
-      if (Array.isArray(review.findings)) {
-        review.findings.forEach(f => {
-          ruleCounts[f.ruleTitle] = (ruleCounts[f.ruleTitle] || 0) + 1;
-          if (f.severity === 'high' && !highRisks.some(hr => hr.ruleTitle === f.ruleTitle)) {
-            highRisks.push(f);
-          }
+      if (Array.isArray(c.findings)) {
+        totalViolations += c.findings.length;
+        c.findings.forEach(f => {
+          if (f.severity === 'high') highSeverityViolations++;
+          const title = f.ruleTitle || f.ruleCitation || 'Unspecified Rule';
+          ruleCounts[title] = (ruleCounts[title] || 0) + 1;
         });
       }
     });
 
-    // Render frequent rules
-    DOM.insightsFrequentRules.innerHTML = '';
-    const sortedRules = Object.entries(ruleCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const completedCount = brandApprovedCount + legallyClearedCount + changesRequestedCount;
+    const compliantCount = brandApprovedCount + legallyClearedCount;
+    const complianceRate = completedCount > 0 ? Math.round((compliantCount / completedCount) * 100) : null;
 
-    if (sortedRules.length === 0) {
-      DOM.insightsFrequentRules.innerHTML = '<p class="font-hint">No rule violations recorded.</p>';
-    } else {
-      sortedRules.forEach(([ruleTitle, count]) => {
-        const item = document.createElement('div');
-        item.className = 'insight-list-item';
+    const sortedRules = Object.entries(ruleCounts).sort((a, b) => b[1] - a[1]);
+    const topViolatedRule = sortedRules.length > 0
+      ? { ruleTitle: sortedRules[0][0], count: sortedRules[0][1] }
+      : null;
 
-        const spanTitle = document.createElement('span');
-        spanTitle.textContent = ruleTitle;
-        spanTitle.style.fontWeight = '500';
+    return {
+      totalCampaigns: total,
+      inReviewCount,
+      brandApprovedCount,
+      legallyClearedCount,
+      changesRequestedCount,
+      draftingCount,
+      completedCount,
+      compliantCount,
+      complianceRate,
+      totalViolations,
+      highSeverityViolations,
+      topViolatedRule,
+      ruleCounts,
+      hasSufficientData: total > 0
+    };
+  }
 
-        const spanCount = document.createElement('span');
-        spanCount.className = 'badge';
-        spanCount.textContent = `${count}x`;
+  function categorizeFindingType(finding) {
+    const type = String(finding.type || '').toLowerCase();
+    const rule = String(finding.ruleTitle || finding.ruleCitation || '').toLowerCase();
 
-        item.appendChild(spanTitle);
-        item.appendChild(spanCount);
-        DOM.insightsFrequentRules.appendChild(item);
+    if (type === 'term_avoid' || rule.includes('avoided term') || rule.includes('prohibited')) {
+      return { id: 'term_avoid', label: 'Prohibited Terminology', icon: '⛔' };
+    }
+    if (type === 'claim_verification' || rule.includes('claim') || rule.includes('guarantee') || rule.includes('verification')) {
+      return { id: 'promissory_claim', label: 'Unverified Promissory Claims', icon: '⚖️' };
+    }
+    if (type === 'tone_style' || rule.includes('tone') || rule.includes('voice') || rule.includes('hyperbole')) {
+      return { id: 'tone_voice', label: 'Tone & Voice Mismatch', icon: '🎙️' };
+    }
+    if (type === 'accessibility' || rule.includes('readability') || rule.includes('sentence') || rule.includes('word')) {
+      return { id: 'accessibility', label: 'Readability & Length Limits', icon: '📏' };
+    }
+    if (type === 'visual_identity' || rule.includes('visual') || rule.includes('logo') || rule.includes('typography')) {
+      return { id: 'visual_identity', label: 'Visual Identity & Trademark', icon: '🎨' };
+    }
+    return { id: 'general_policy', label: 'General Brand Policy', icon: '📋' };
+  }
+
+  function detectRecurringViolations(campaigns = []) {
+    if (!Array.isArray(campaigns) || campaigns.length === 0) return [];
+
+    const map = new Map();
+
+    campaigns.forEach(c => {
+      if (!Array.isArray(c.findings)) return;
+
+      c.findings.forEach(f => {
+        const title = f.ruleTitle || f.ruleCitation || 'Unspecified Rule';
+        const cat = categorizeFindingType(f);
+        const severity = f.severity || 'medium';
+
+        if (!map.has(title)) {
+          map.set(title, {
+            ruleTitle: title,
+            category: cat.label,
+            categoryId: cat.id,
+            categoryIcon: cat.icon,
+            guidelineSection: f.guidelineSection || 'Brand Standards',
+            totalCount: 0,
+            highSeverityCount: 0,
+            mediumSeverityCount: 0,
+            lowSeverityCount: 0,
+            affectedCampaignIds: new Set(),
+            sampleCampaignId: c.id,
+            sampleCampaignTitle: c.title || 'Untitled Draft',
+            sampleEvidence: f.evidence || f.matchedText || null,
+            suggestedReplacement: f.suggestedReplacement || f.replacement || null
+          });
+        }
+
+        const entry = map.get(title);
+        entry.totalCount++;
+        if (severity === 'high') entry.highSeverityCount++;
+        else if (severity === 'low') entry.lowSeverityCount++;
+        else entry.mediumSeverityCount++;
+
+        if (c.id) entry.affectedCampaignIds.add(c.id);
       });
+    });
+
+    return Array.from(map.values())
+      .map(entry => ({
+        ...entry,
+        affectedCampaignCount: entry.affectedCampaignIds.size,
+        affectedCampaignIds: Array.from(entry.affectedCampaignIds)
+      }))
+      .sort((a, b) => b.totalCount - a.totalCount);
+  }
+
+  function computeReviewEfficiency(campaigns = []) {
+    if (!Array.isArray(campaigns) || campaigns.length === 0) {
+      return {
+        hasTurnaroundData: false,
+        averageTurnaroundHours: null,
+        averageTurnaroundFormatted: 'No completed reviews',
+        pendingQueueAgeHours: null,
+        inReviewCount: 0,
+        brandApprovedCount: 0,
+        bottleneck: {
+          stage: 'none',
+          severity: 'normal',
+          message: 'No pending campaign bottlenecks detected.'
+        }
+      };
     }
 
-    // Render high risks
-    DOM.insightsHighRisks.innerHTML = '';
-    if (highRisks.length === 0) {
-      DOM.insightsHighRisks.innerHTML = '<p style="color: var(--status-success-text); font-size: 0.8rem;">No high-priority unresolved risks detected in review history.</p>';
-    } else {
-      highRisks.slice(0, 4).forEach(f => {
-        const item = document.createElement('div');
-        item.className = 'insight-list-item';
-        item.style.borderColor = 'var(--sev-high-border)';
+    const now = Date.now();
+    const turnaroundDurationsMs = [];
+    const pendingAgesMs = [];
+    let inReviewCount = 0;
+    let brandApprovedCount = 0;
 
-        const text = document.createElement('span');
-        text.textContent = f.ruleTitle;
-        text.style.color = 'var(--sev-high-text)';
+    campaigns.forEach(c => {
+      const status = normalizeCampaignStatus(c.workflowStage || c.status || c.current_status);
+      const createdAt = new Date(c.timestamp || c.created_at || 0).getTime();
 
-        item.appendChild(text);
-        DOM.insightsHighRisks.appendChild(item);
-      });
-    }
+      if (status === 'in_review') {
+        inReviewCount++;
+        if (!isNaN(createdAt) && createdAt > 0) {
+          pendingAgesMs.push(Math.max(0, now - createdAt));
+        }
+      } else if (status === 'brand_approved') {
+        brandApprovedCount++;
+        if (!isNaN(createdAt) && createdAt > 0) {
+          pendingAgesMs.push(Math.max(0, now - createdAt));
+        }
+      }
 
-    // Render distribution bars
-    DOM.insightsDistributionBars.innerHTML = '';
-    const total = list.length;
-    const approvedPct = Math.round((approvedCount / total) * 100) || 0;
-    const flaggedPct = Math.round((flaggedCount / total) * 100) || 0;
+      const completedAt = new Date(
+        (c.legalOfficerSignoff && c.legalOfficerSignoff.timestamp) ||
+        (c.brandCustodianSignoff && c.brandCustodianSignoff.timestamp) ||
+        c.updated_at ||
+        0
+      ).getTime();
 
-    const createBar = (label, count, pct, color) => {
-      const container = document.createElement('div');
-      container.className = 'insight-bar-container';
+      if (!isNaN(createdAt) && !isNaN(completedAt) && completedAt > createdAt) {
+        turnaroundDurationsMs.push(completedAt - createdAt);
+      }
+    });
 
-      const header = document.createElement('div');
-      header.className = 'insight-bar-header';
-      header.innerHTML = `<span>${label} (${count})</span><strong>${pct}%</strong>`;
+    const avgTurnaroundMs = turnaroundDurationsMs.length > 0
+      ? turnaroundDurationsMs.reduce((a, b) => a + b, 0) / turnaroundDurationsMs.length
+      : null;
 
-      const track = document.createElement('div');
-      track.className = 'insight-bar-track';
+    const avgTurnaroundHours = avgTurnaroundMs !== null
+      ? Math.round((avgTurnaroundMs / (1000 * 60 * 60)) * 10) / 10
+      : null;
 
-      const fill = document.createElement('div');
-      fill.className = 'insight-bar-fill';
-      fill.style.width = `${pct}%`;
-      fill.style.backgroundColor = color;
+    const avgPendingAgeHours = pendingAgesMs.length > 0
+      ? Math.round((pendingAgesMs.reduce((a, b) => a + b, 0) / (pendingAgesMs.length * 1000 * 60 * 60)) * 10) / 10
+      : null;
 
-      track.appendChild(fill);
-      container.appendChild(header);
-      container.appendChild(track);
-      return container;
+    let bottleneck = {
+      stage: 'healthy',
+      severity: 'normal',
+      message: 'Workflow velocity is balanced. Campaigns are progressing smoothly.'
     };
 
-    DOM.insightsDistributionBars.appendChild(createBar('Approved for Publication', approvedCount, approvedPct, 'var(--status-success-text)'));
-    DOM.insightsDistributionBars.appendChild(createBar('Flagged for Revision', flaggedCount, flaggedPct, 'var(--sev-high-text)'));
-
-    // Render guideline gap advice
-    DOM.insightsGuidelineAdvice.innerHTML = '';
-    const adviceP = document.createElement('p');
-
-    if (sortedRules.length > 0) {
-      const topRule = sortedRules[0][0];
-      const strong = document.createElement('strong');
-      strong.textContent = 'High Friction Area Detected: ';
-      const em = document.createElement('em');
-      em.textContent = `"${topRule}"`;
-      const textAfter = document.createTextNode(` is your organization's most repeated brand inconsistency (${sortedRules[0][1]} times). Consider refining guidelines to provide clearer copy examples or distributing an approved facts cheat-sheet.`);
-      adviceP.appendChild(strong);
-      adviceP.appendChild(em);
-      adviceP.appendChild(textAfter);
-    } else {
-      adviceP.textContent = 'Guidelines are performing effectively with minimal repeated discrepancies across reviews.';
+    if (inReviewCount >= 3) {
+      bottleneck = {
+        stage: 'in_review',
+        severity: inReviewCount >= 5 ? 'critical' : 'warning',
+        message: `Brand Custodian Triage Backlog: ${inReviewCount} campaigns currently awaiting brand voice review.`
+      };
+    } else if (brandApprovedCount >= 2) {
+      bottleneck = {
+        stage: 'brand_approved',
+        severity: 'warning',
+        message: `Legal Sign-Off Queue: ${brandApprovedCount} brand-approved campaigns pending compliance seal issuance.`
+      };
     }
-    DOM.insightsGuidelineAdvice.appendChild(adviceP);
+
+    return {
+      hasTurnaroundData: turnaroundDurationsMs.length > 0,
+      averageTurnaroundHours: avgTurnaroundHours,
+      averageTurnaroundFormatted: avgTurnaroundHours !== null ? `${avgTurnaroundHours} hrs` : 'Requires 2+ completed reviews',
+      pendingQueueAgeHours: avgPendingAgeHours,
+      inReviewCount,
+      brandApprovedCount,
+      bottleneck
+    };
+  }
+
+  function runPolicyFrictionRadar(guidelines = {}, campaigns = []) {
+    const frictionFindings = [];
+    let findingCounter = 1;
+
+    const voiceText = String(guidelines.brandVoice || '');
+    const accessText = String(guidelines.accessibilityRules || '');
+    const visualText = String(guidelines.visualRules || '');
+    const avoidTerms = Array.isArray(guidelines.avoidTerms) ? guidelines.avoidTerms : [];
+    const prefTerms = Array.isArray(guidelines.preferredTerms) ? guidelines.preferredTerms : [];
+    const claims = Array.isArray(guidelines.verificationClaims) ? guidelines.verificationClaims : [];
+
+    const sectionsToScan = [
+      { name: 'Brand Voice & Demeanor', text: voiceText },
+      { name: 'Accessibility & Readability', text: accessText },
+      { name: 'Visual Identity Standards', text: visualText }
+    ];
+
+    AMBIGUOUS_QUALITATIVE_TERMS.forEach(dict => {
+      sectionsToScan.forEach(sec => {
+        const regex = new RegExp(`\\b${dict.word}\\b`, 'i');
+        if (regex.test(sec.text)) {
+          const sentences = sec.text.split(/(?<=[.!?])\s+/);
+          const matchedSentence = sentences.find(s => regex.test(s)) || sec.text;
+
+          frictionFindings.push({
+            id: `friction-vague-${findingCounter++}`,
+            frictionType: 'Subjective Ambiguity (Text-Based)',
+            badgeClass: 'ambiguity',
+            severity: 'medium',
+            guidelineSection: sec.name,
+            detectedWord: dict.word,
+            quotedGuideline: matchedSentence.trim(),
+            whyFriction: dict.frictionReason,
+            empiricalEvidence: 'Qualitative adjectives without operational criteria generate interpretation divergence between Creators and Reviewers.',
+            recommendation: dict.recommendation,
+            proposedRuleRewrite: dict.rewriteTemplate
+          });
+        }
+      });
+    });
+
+    const brevityMatch = accessText.match(/(\d+)\s*words/i);
+    const sentenceLimit = brevityMatch ? parseInt(brevityMatch[1], 10) : 30;
+    if (sentenceLimit <= 30 && claims.length >= 4) {
+      frictionFindings.push({
+        id: `friction-conflict-${findingCounter++}`,
+        frictionType: 'Potential Rule Contradiction',
+        badgeClass: 'contradiction',
+        severity: 'high',
+        guidelineSection: 'Accessibility vs. Regulatory Compliance',
+        detectedWord: 'sentenceLimit',
+        quotedGuideline: `Sentence limit capped at ${sentenceLimit} words, while ${claims.length} promissory claims require mandatory substantiating qualifiers.`,
+        whyFriction: 'Writers cannot include legally mandated qualification statements without exceeding the single-sentence word threshold.',
+        empiricalEvidence: 'Creates recurring tension where Legal requests factual disclosure expansions while Brand Custodians reject long sentences.',
+        recommendation: 'Explicitly exempt legal disclaimer footnotes or permit structured bullet points for multi-clause disclosures.',
+        proposedRuleRewrite: `Sentences must not exceed ${sentenceLimit} words. Structured disclaimers and legal qualifiers formatted as bullet points are exempt from this threshold.`
+      });
+    }
+
+    avoidTerms.forEach(at => {
+      const term = typeof at === 'string' ? at : (at.term || '');
+      if (prefTerms.some(pt => pt.toLowerCase() === term.toLowerCase())) {
+        frictionFindings.push({
+          id: `friction-dup-${findingCounter++}`,
+          frictionType: 'Conflicting Terminology Rule',
+          badgeClass: 'contradiction',
+          severity: 'high',
+          guidelineSection: 'Preferred vs. Avoided Terminology',
+          detectedWord: term,
+          quotedGuideline: `"${term}" is listed in both Preferred Terms and Avoided Terms.`,
+          whyFriction: 'Direct logical contradiction. Content will trigger both approval and violation flags simultaneously.',
+          empiricalEvidence: 'Automated rules engine and human reviewers receive contradictory instructions.',
+          recommendation: `Remove "${term}" from one of the lists to establish a single source of truth.`,
+          proposedRuleRewrite: `Remove "${term}" from Preferred Terms and standardize on "${at.replacement || 'approved alternative'}".`
+        });
+      }
+    });
+
+    const recurring = detectRecurringViolations(campaigns);
+    recurring.forEach(rec => {
+      if (rec.totalCount >= 2 && rec.affectedCampaignCount >= 2) {
+        frictionFindings.push({
+          id: `friction-empirical-${findingCounter++}`,
+          frictionType: 'High Disagreement Rate (Empirical Pattern)',
+          badgeClass: 'empirical',
+          severity: rec.highSeverityCount >= 2 ? 'high' : 'medium',
+          guidelineSection: rec.guidelineSection,
+          detectedWord: rec.ruleTitle,
+          quotedGuideline: `Rule: "${rec.ruleTitle}" (${rec.category})`,
+          whyFriction: `Creators consistently trigger this rule (${rec.totalCount} times across ${rec.affectedCampaignCount} campaigns), indicating guideline misunderstanding or missing authoring guidance.`,
+          empiricalEvidence: `Empirically verified across ${rec.affectedCampaignCount} real campaign drafts. Latest occurrence in "${rec.sampleCampaignTitle}".`,
+          recommendation: 'Provide pre-approved copy snippets in brand guidelines and add proactive creator guidance before submission.',
+          proposedRuleRewrite: `Provide explicit authorized alternatives directly in the guideline: replace instances of "${rec.sampleEvidence || 'flagged terms'}" with "${rec.suggestedReplacement || 'approved enterprise phrasing'}".`
+        });
+      }
+    });
+
+    return frictionFindings;
+  }
+
+  function generateGovernanceRecommendations(metrics = {}, recurring = [], friction = []) {
+    const recommendations = [];
+    let recCounter = 1;
+
+    if (recurring.length > 0) {
+      const top = recurring[0];
+      recommendations.push({
+        id: `rec-${recCounter++}`,
+        priority: 'high',
+        impact: 'Immediate Blocker Reduction',
+        category: 'Creator Enablement',
+        title: `Eliminate Recurring Discrepancies on "${top.ruleTitle}"`,
+        description: `This single rule accounts for ${top.totalCount} violations across ${top.affectedCampaignCount} campaigns. Distributing an approved alternatives cheat-sheet to creators will immediately reduce review turnaround cycles.`,
+        actionItem: `Publish pre-approved phrasing in the Guidelines tab for "${top.ruleTitle}".`
+      });
+    }
+
+    const vagueFindings = friction.filter(f => f.frictionType.includes('Ambiguity'));
+    if (vagueFindings.length > 0) {
+      const topVague = vagueFindings[0];
+      recommendations.push({
+        id: `rec-${recCounter++}`,
+        priority: 'medium',
+        impact: 'Reviewer-Creator Alignment',
+        category: 'Policy Modernization',
+        title: `Clarify Ambiguous Term "${topVague.detectedWord}" in ${topVague.guidelineSection}`,
+        description: topVague.whyFriction,
+        actionItem: `Adopt proposed measurable rewrite: "${topVague.proposedRuleRewrite}"`
+      });
+    }
+
+    if (metrics.inReviewCount >= 3) {
+      recommendations.push({
+        id: `rec-${recCounter++}`,
+        priority: 'high',
+        impact: 'Workflow Velocity',
+        category: 'Triage Optimization',
+        title: `Expedite Brand Custodian Queue (${metrics.inReviewCount} Campaigns Pending)`,
+        description: 'Multiple campaigns are awaiting brand voice sign-off. Reviewers can leverage side-by-side diff comparisons to accelerate approvals.',
+        actionItem: 'Prioritize older submissions in the review queue to prevent publishing bottlenecks.'
+      });
+    }
+
+    if (recommendations.length === 0) {
+      recommendations.push({
+        id: `rec-default`,
+        priority: 'low',
+        impact: 'Continuous Governance',
+        category: 'Baseline Governance',
+        title: 'Maintain Regular Multi-Role Governance Reviews',
+        description: 'Your brand guidelines and review history show zero critical bottlenecks. Continue submitting drafts and recording compliance seals.',
+        actionItem: 'Run periodic policy friction scans as new marketing channels and guidelines are added.'
+      });
+    }
+
+    return recommendations;
+  }
+
+  function generateGovernanceReport(metrics, recurring, efficiency, friction, recommendations, format = 'markdown') {
+    if (format === 'json') {
+      return JSON.stringify({
+        generatedAt: new Date().toISOString(),
+        platform: 'BrandForge Intelligent Brand Governance',
+        metrics,
+        recurringViolations: recurring,
+        reviewEfficiency: efficiency,
+        policyFrictionRadar: friction,
+        recommendations
+      }, null, 2);
+    }
+
+    const lines = [
+      `# BrandForge Governance Intelligence & Policy Friction Report`,
+      `**Generated:** ${new Date().toLocaleString()}`,
+      `**Platform:** BrandForge Multi-Role Governance Engine (Codex 48 Round 3)`,
+      ``,
+      `## 1. Executive Summary & Governance KPIs`,
+      `- **Total Campaigns Evaluated:** ${metrics.totalCampaigns}`,
+      `- **Overall Compliance Rate:** ${metrics.complianceRate !== null ? metrics.complianceRate + '%' : 'Pending Review'}`,
+      `- **Awaiting Brand Review:** ${metrics.inReviewCount}`,
+      `- **Brand Approved:** ${metrics.brandApprovedCount}`,
+      `- **Legally Cleared (Sealed):** ${metrics.legallyClearedCount}`,
+      `- **Changes Requested:** ${metrics.changesRequestedCount}`,
+      `- **Total Policy Violations Detected:** ${metrics.totalViolations} (${metrics.highSeverityViolations} High Severity)`,
+      `- **Average Review Turnaround Time:** ${efficiency.averageTurnaroundFormatted}`,
+      ``,
+      `## 2. Review Pipeline & Bottleneck Radar`,
+      `- **Bottleneck Status:** ${efficiency.bottleneck.message} [${efficiency.bottleneck.severity.toUpperCase()}]`,
+      `- **Average Pending Queue Age:** ${efficiency.pendingQueueAgeHours !== null ? efficiency.pendingQueueAgeHours + ' hours' : 'N/A'}`,
+      ``,
+      `## 3. Recurring Brand Violations (Top Drift Areas)`,
+      recurring.length === 0 ? `*No recurring violations detected across evaluated campaigns.*` :
+        recurring.slice(0, 5).map((r, i) =>
+          `${i + 1}. **${r.ruleTitle}** (${r.category})\n   - Frequency: ${r.totalCount}x across ${r.affectedCampaignCount} campaign(s)\n   - Severity: ${r.highSeverityCount} High, ${r.mediumSeverityCount} Medium\n   - Section: ${r.guidelineSection}`
+        ).join('\n'),
+      ``,
+      `## 4. Policy Friction Radar (Guideline Ambiguity & Conflicts)`,
+      friction.length === 0 ? `*Zero policy friction or contradictory guidelines identified.*` :
+        friction.map((f, i) =>
+          `### ${i + 1}. [${f.frictionType}] ${f.guidelineSection}\n` +
+          `- **Quoted Text:** *"${f.quotedGuideline}"*\n` +
+          `- **Friction Cause:** ${f.whyFriction}\n` +
+          `- **Evidence:** ${f.empiricalEvidence}\n` +
+          `- **Proposed Measurable Rewrite:** \`${f.proposedRuleRewrite}\`\n`
+        ).join('\n'),
+      ``,
+      `## 5. Prioritized Actionable Recommendations`,
+      recommendations.map((rec, i) =>
+        `${i + 1}. **[${rec.priority.toUpperCase()}] ${rec.title}** (${rec.category})\n   - Impact: ${rec.impact}\n   - Rationale: ${rec.description}\n   - Action: ${rec.actionItem}`
+      ).join('\n'),
+      ``,
+      `---`,
+      `*Report generated by BrandForge. Advisory recommendations do not automatically alter saved brand guidelines.*`
+    ];
+
+    return lines.join('\n');
+  }
+
+  /* ===================================================================
+     8.2 Governance Intelligence Dashboard Rendering
+     =================================================================== */
+
+  let currentGovernanceTimeFilter = 'all';
+
+  function renderInsights() {
+    let list = [];
+    const isConnected = SupabaseManager.connectionState === 'authenticated';
+
+    if (useDemoInsights) {
+      list = SAMPLE_INSIGHTS_HISTORY;
+      if (DOM.govDemoBanner) DOM.govDemoBanner.style.display = 'flex';
+      if (DOM.govDatasetBadge) {
+        DOM.govDatasetBadge.textContent = 'Previewing Demo Sample Analytics';
+        DOM.govDatasetBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+        DOM.govDatasetBadge.style.color = '#fbbf24';
+        DOM.govDatasetBadge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+      }
+      if (DOM.btnToggleDemoInsights) DOM.btnToggleDemoInsights.textContent = 'Switch to Real Data';
+    } else {
+      if (DOM.govDemoBanner) DOM.govDemoBanner.style.display = 'none';
+      if (isConnected) {
+        // Only include authentic organization records
+        list = currentReviewHistory.filter(r => r.isCloudPersisted === true || (!String(r.id).startsWith('demo-') && isValidUuid(r.id)));
+        if (DOM.govDatasetBadge) {
+          DOM.govDatasetBadge.textContent = `${(SupabaseManager.organization && SupabaseManager.organization.name) || 'Cloud Workspace'} (PostgreSQL)`;
+          DOM.govDatasetBadge.style.background = 'rgba(96, 165, 250, 0.15)';
+          DOM.govDatasetBadge.style.color = '#60a5fa';
+          DOM.govDatasetBadge.style.borderColor = 'rgba(96, 165, 250, 0.3)';
+        }
+      } else {
+        // Sandbox mode with local real session records
+        list = currentReviewHistory.filter(r => !String(r.id).startsWith('demo-'));
+        if (DOM.govDatasetBadge) {
+          DOM.govDatasetBadge.textContent = 'Local Organization Sandbox';
+          DOM.govDatasetBadge.style.background = 'rgba(148, 163, 184, 0.15)';
+          DOM.govDatasetBadge.style.color = '#94a3b8';
+          DOM.govDatasetBadge.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+        }
+      }
+      if (DOM.btnToggleDemoInsights) DOM.btnToggleDemoInsights.textContent = 'Preview Demo Analytics';
+    }
+
+    if (list.length === 0) {
+      if (DOM.insightsContentArea) DOM.insightsContentArea.style.display = 'none';
+      if (DOM.insightsEmptyState) DOM.insightsEmptyState.style.display = 'block';
+
+      // Reset KPIs to clean empty states
+      if (DOM.govKpiComplianceRate) DOM.govKpiComplianceRate.textContent = '--%';
+      if (DOM.govKpiComplianceSub) DOM.govKpiComplianceSub.textContent = '0 of 0 resolved compliant';
+      if (DOM.govKpiTotalCampaigns) DOM.govKpiTotalCampaigns.textContent = '0';
+      if (DOM.govKpiInReview) DOM.govKpiInReview.textContent = '0';
+      if (DOM.govKpiLegallyCleared) DOM.govKpiLegallyCleared.textContent = '0';
+      if (DOM.govKpiChangesRequested) DOM.govKpiChangesRequested.textContent = '0';
+      if (DOM.govKpiTurnaroundTime) DOM.govKpiTurnaroundTime.textContent = '-- hrs';
+      if (DOM.govKpiTurnaroundSub) DOM.govKpiTurnaroundSub.textContent = 'No review history yet';
+      if (DOM.govKpiPendingAge) DOM.govKpiPendingAge.textContent = '-- hrs';
+      if (DOM.govKpiPendingSub) DOM.govKpiPendingSub.textContent = 'Queue velocity';
+      if (DOM.govKpiTotalViolations) DOM.govKpiTotalViolations.textContent = '0';
+      if (DOM.govKpiViolationsSub) DOM.govKpiViolationsSub.textContent = '0 High Risk Blockers';
+      return;
+    }
+
+    if (DOM.insightsContentArea) DOM.insightsContentArea.style.display = 'flex';
+    if (DOM.insightsEmptyState) DOM.insightsEmptyState.style.display = 'none';
+
+    // 1. Calculate Core Governance Metrics
+    const metrics = analyzeGovernanceMetrics(list, currentGovernanceTimeFilter);
+    const efficiency = computeReviewEfficiency(list);
+    const recurring = detectRecurringViolations(list);
+    const friction = runPolicyFrictionRadar(currentGuidelines, list);
+    const recommendations = generateGovernanceRecommendations(metrics, recurring, friction);
+
+    // 2. Populate KPI Ribbon
+    if (DOM.govKpiComplianceRate) {
+      DOM.govKpiComplianceRate.textContent = metrics.complianceRate !== null ? `${metrics.complianceRate}%` : 'N/A';
+      DOM.govKpiComplianceRate.style.color = metrics.complianceRate === null ? 'var(--text-muted)' : (metrics.complianceRate >= 80 ? 'var(--status-success-text)' : (metrics.complianceRate >= 60 ? 'var(--sev-med-text)' : 'var(--sev-high-text)'));
+    }
+    if (DOM.govKpiComplianceSub) {
+      DOM.govKpiComplianceSub.textContent = `${metrics.compliantCount} of ${metrics.completedCount} resolved compliant`;
+    }
+    if (DOM.govKpiTotalCampaigns) DOM.govKpiTotalCampaigns.textContent = metrics.totalCampaigns.toString();
+    if (DOM.govKpiTotalSub) DOM.govKpiTotalSub.textContent = `Across active channel formats`;
+    if (DOM.govKpiInReview) DOM.govKpiInReview.textContent = metrics.inReviewCount.toString();
+    if (DOM.govKpiLegallyCleared) DOM.govKpiLegallyCleared.textContent = metrics.legallyClearedCount.toString();
+    if (DOM.govKpiChangesRequested) DOM.govKpiChangesRequested.textContent = metrics.changesRequestedCount.toString();
+
+    if (DOM.govKpiTurnaroundTime) {
+      DOM.govKpiTurnaroundTime.textContent = efficiency.averageTurnaroundHours !== null ? `${efficiency.averageTurnaroundHours} hrs` : '-- hrs';
+    }
+    if (DOM.govKpiTurnaroundSub) {
+      DOM.govKpiTurnaroundSub.textContent = efficiency.hasTurnaroundData ? 'Submission to Sign-off' : 'Requires 2+ completed reviews';
+    }
+    if (DOM.govKpiPendingAge) {
+      DOM.govKpiPendingAge.textContent = efficiency.pendingQueueAgeHours !== null ? `${efficiency.pendingQueueAgeHours} hrs` : '-- hrs';
+    }
+    if (DOM.govKpiPendingSub) {
+      DOM.govKpiPendingSub.textContent = `${metrics.inReviewCount} pending in queue`;
+    }
+    if (DOM.govKpiTotalViolations) DOM.govKpiTotalViolations.textContent = metrics.totalViolations.toString();
+    if (DOM.govKpiViolationsSub) DOM.govKpiViolationsSub.textContent = `${metrics.highSeverityViolations} High Severity Blockers`;
+
+    // 3. Populate Collaborative Lifecycle Pipeline
+    if (DOM.insightsDistributionBars) {
+      DOM.insightsDistributionBars.innerHTML = '';
+      const total = metrics.totalCampaigns || 1;
+
+      const createBar = (label, count, color) => {
+        const pct = Math.round((count / total) * 100);
+        const container = document.createElement('div');
+        container.className = 'insight-bar-container';
+
+        const header = document.createElement('div');
+        header.className = 'insight-bar-header';
+        header.innerHTML = `<span>${label} (${count})</span><strong>${pct}%</strong>`;
+
+        const track = document.createElement('div');
+        track.className = 'insight-bar-track';
+
+        const fill = document.createElement('div');
+        fill.className = 'insight-bar-fill';
+        fill.style.width = `${pct}%`;
+        fill.style.backgroundColor = color;
+
+        track.appendChild(fill);
+        container.appendChild(header);
+        container.appendChild(track);
+        return container;
+      };
+
+      DOM.insightsDistributionBars.appendChild(createBar('Drafting (Authoring)', metrics.draftingCount, 'var(--text-muted)'));
+      DOM.insightsDistributionBars.appendChild(createBar('In Review (Awaiting Brand Custodian)', metrics.inReviewCount, '#fbbf24'));
+      DOM.insightsDistributionBars.appendChild(createBar('Brand Approved (Sign-off Granted)', metrics.brandApprovedCount, '#60a5fa'));
+      DOM.insightsDistributionBars.appendChild(createBar('Legally Cleared (Cryptographic Seal Issued)', metrics.legallyClearedCount, '#c084fc'));
+      DOM.insightsDistributionBars.appendChild(createBar('Changes Requested (Author Revisions Required)', metrics.changesRequestedCount, 'var(--sev-high-text)'));
+    }
+
+    // 4. Populate Bottleneck Diagnostic Box
+    if (DOM.govBottleneckBadge && DOM.govBottleneckBody) {
+      const bn = efficiency.bottleneck;
+      DOM.govBottleneckBadge.textContent = bn.severity === 'critical' ? 'Critical Bottleneck' : (bn.severity === 'warning' ? 'Queue Warning' : 'Healthy Velocity');
+      DOM.govBottleneckBadge.className = `badge ${bn.severity === 'critical' ? 'badge-danger' : (bn.severity === 'warning' ? 'badge-warning' : 'badge-success')}`;
+      if (bn.severity === 'critical') {
+        DOM.govBottleneckBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+        DOM.govBottleneckBadge.style.color = '#f87171';
+        DOM.govBottleneckBadge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+      } else if (bn.severity === 'warning') {
+        DOM.govBottleneckBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+        DOM.govBottleneckBadge.style.color = '#fbbf24';
+        DOM.govBottleneckBadge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+      } else {
+        DOM.govBottleneckBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+        DOM.govBottleneckBadge.style.color = '#34d399';
+        DOM.govBottleneckBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      }
+
+      DOM.govBottleneckBody.innerHTML = `
+        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${escapeHtml(bn.message)}</div>
+        <div>Turnaround benchmark: <strong>${escapeHtml(efficiency.averageTurnaroundFormatted)}</strong> across resolved submissions. Average pending campaign age: <strong>${efficiency.pendingQueueAgeHours !== null ? efficiency.pendingQueueAgeHours + ' hours' : 'N/A'}</strong>.</div>
+      `;
+    }
+
+    // 5. Populate Recurring Violations (Brand Drift Radar)
+    if (DOM.govRecurringCountBadge) {
+      DOM.govRecurringCountBadge.textContent = `${recurring.length} Tracked Rules`;
+    }
+    if (DOM.insightsFrequentRules) {
+      DOM.insightsFrequentRules.innerHTML = '';
+      if (recurring.length === 0) {
+        DOM.insightsFrequentRules.innerHTML = '<p class="font-hint" style="font-size: 0.8rem; padding: 12px;">Zero recurring violations recorded across evaluated campaigns. Brand guidelines are well-followed.</p>';
+      } else {
+        recurring.slice(0, 8).forEach(r => {
+          const item = document.createElement('div');
+          item.className = 'insight-list-item';
+          item.style.cursor = 'pointer';
+
+          const left = document.createElement('div');
+          left.style.display = 'flex';
+          left.style.alignItems = 'center';
+          left.style.gap = '8px';
+          left.style.flex = '1';
+
+          const icon = document.createElement('span');
+          icon.textContent = r.categoryIcon;
+          icon.style.fontSize = '1rem';
+
+          const textBlock = document.createElement('div');
+          const title = document.createElement('div');
+          title.textContent = r.ruleTitle;
+          title.style.fontWeight = '600';
+          title.style.color = 'var(--text-primary)';
+
+          const sub = document.createElement('div');
+          sub.style.fontSize = '0.72rem';
+          sub.style.color = 'var(--text-muted)';
+          sub.textContent = `${r.category} • Section: ${r.guidelineSection} • Affected: ${r.affectedCampaignCount} campaign(s)`;
+
+          textBlock.appendChild(title);
+          textBlock.appendChild(sub);
+          left.appendChild(icon);
+          left.appendChild(textBlock);
+
+          const right = document.createElement('div');
+          right.style.display = 'flex';
+          right.style.alignItems = 'center';
+          right.style.gap = '8px';
+
+          if (r.highSeverityCount > 0) {
+            const highBadge = document.createElement('span');
+            highBadge.className = 'badge';
+            highBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+            highBadge.style.color = '#f87171';
+            highBadge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            highBadge.textContent = `${r.highSeverityCount} High`;
+            right.appendChild(highBadge);
+          }
+
+          const freqBadge = document.createElement('span');
+          freqBadge.className = 'badge';
+          freqBadge.textContent = `${r.totalCount}x`;
+          right.appendChild(freqBadge);
+
+          const inspectBtn = document.createElement('button');
+          inspectBtn.className = 'btn btn-secondary btn-sm';
+          inspectBtn.style.padding = '2px 8px';
+          inspectBtn.style.fontSize = '0.7rem';
+          inspectBtn.textContent = 'Inspect';
+          inspectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const targetCampaign = list.find(c => c.id === r.sampleCampaignId) || list[0];
+            if (targetCampaign) openHistoryDetail(targetCampaign);
+          });
+          right.appendChild(inspectBtn);
+
+          item.appendChild(left);
+          item.appendChild(right);
+          DOM.insightsFrequentRules.appendChild(item);
+        });
+      }
+    }
+
+    // 6. Populate Policy Friction Radar Cards
+    if (DOM.govFrictionCountBadge) {
+      DOM.govFrictionCountBadge.textContent = `${friction.length} Friction Areas`;
+    }
+    if (DOM.govPolicyFrictionCards) {
+      DOM.govPolicyFrictionCards.innerHTML = '';
+      if (friction.length === 0) {
+        DOM.govPolicyFrictionCards.innerHTML = '<p class="font-hint" style="font-size: 0.8rem; padding: 12px;">Zero guideline ambiguities or policy conflicts detected in active brand guidelines.</p>';
+      } else {
+        friction.forEach(f => {
+          const card = document.createElement('div');
+          card.className = 'gov-friction-card';
+
+          const cardHeader = document.createElement('div');
+          cardHeader.className = 'gov-friction-card-header';
+
+          const badge = document.createElement('span');
+          badge.className = `gov-friction-badge ${f.badgeClass || 'ambiguity'}`;
+          badge.textContent = f.frictionType;
+
+          const secSpan = document.createElement('span');
+          secSpan.style.fontSize = '0.725rem';
+          secSpan.style.color = 'var(--text-muted)';
+          secSpan.style.fontWeight = '600';
+          secSpan.textContent = f.guidelineSection;
+
+          cardHeader.appendChild(badge);
+          cardHeader.appendChild(secSpan);
+
+          const quoteBox = document.createElement('div');
+          quoteBox.className = 'gov-friction-quote';
+          quoteBox.textContent = `"${f.quotedGuideline}"`;
+
+          const whyBox = document.createElement('div');
+          whyBox.className = 'gov-friction-why';
+          whyBox.innerHTML = `<strong>Root Cause:</strong> ${escapeHtml(f.whyFriction)} <div style="margin-top: 4px; font-size: 0.75rem; color: var(--text-secondary);"><strong>Evidence:</strong> ${escapeHtml(f.empiricalEvidence)}</div>`;
+
+          const rewriteBox = document.createElement('div');
+          rewriteBox.className = 'gov-friction-rewrite-box';
+
+          const rewriteLabelRow = document.createElement('div');
+          rewriteLabelRow.style.display = 'flex';
+          rewriteLabelRow.style.justifyContent = 'space-between';
+          rewriteLabelRow.style.alignItems = 'center';
+
+          const label = document.createElement('span');
+          label.className = 'gov-friction-rewrite-label';
+          label.textContent = 'Proposed Measurable Rewrite:';
+
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'btn btn-secondary btn-sm';
+          copyBtn.style.padding = '2px 8px';
+          copyBtn.style.fontSize = '0.675rem';
+          copyBtn.textContent = 'Copy Rule';
+          copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(f.proposedRuleRewrite).then(() => {
+              showToast(`Copied proposed rewrite for "${f.detectedWord}" to clipboard!`, 'success');
+            }).catch(() => {
+              showToast(`Failed to copy to clipboard.`, 'error');
+            });
+          });
+
+          rewriteLabelRow.appendChild(label);
+          rewriteLabelRow.appendChild(copyBtn);
+
+          const rewriteText = document.createElement('div');
+          rewriteText.className = 'gov-friction-rewrite-text';
+          rewriteText.textContent = f.proposedRuleRewrite;
+
+          rewriteBox.appendChild(rewriteLabelRow);
+          rewriteBox.appendChild(rewriteText);
+
+          card.appendChild(cardHeader);
+          card.appendChild(quoteBox);
+          card.appendChild(whyBox);
+          card.appendChild(rewriteBox);
+
+          DOM.govPolicyFrictionCards.appendChild(card);
+        });
+      }
+    }
+
+    // 7. Populate Actionable Governance Recommendations
+    if (DOM.govActionableRecommendations) {
+      DOM.govActionableRecommendations.innerHTML = '';
+      recommendations.forEach(rec => {
+        const card = document.createElement('div');
+        card.className = 'gov-recommendation-card';
+
+        const left = document.createElement('div');
+        left.className = 'gov-rec-left';
+
+        const meta = document.createElement('div');
+        meta.className = 'gov-rec-meta';
+
+        const prioBadge = document.createElement('span');
+        prioBadge.className = `gov-rec-priority ${rec.priority}`;
+        prioBadge.textContent = rec.priority.toUpperCase();
+
+        const catSpan = document.createElement('span');
+        catSpan.style.fontSize = '0.725rem';
+        catSpan.style.color = 'var(--text-muted)';
+        catSpan.textContent = `• ${rec.category} • Impact: ${rec.impact}`;
+
+        meta.appendChild(prioBadge);
+        meta.appendChild(catSpan);
+
+        const title = document.createElement('div');
+        title.className = 'gov-rec-title';
+        title.textContent = rec.title;
+
+        const desc = document.createElement('div');
+        desc.className = 'gov-rec-desc';
+        desc.textContent = rec.description;
+
+        const action = document.createElement('div');
+        action.className = 'gov-rec-action';
+        action.innerHTML = `<strong>Recommended Action:</strong> ${escapeHtml(rec.actionItem)}`;
+
+        left.appendChild(meta);
+        left.appendChild(title);
+        left.appendChild(desc);
+        left.appendChild(action);
+
+        card.appendChild(left);
+        DOM.govActionableRecommendations.appendChild(card);
+      });
+    }
+
+    // 8. Legacy element compatibility
+    if (DOM.insightsGuidelineAdvice) {
+      DOM.insightsGuidelineAdvice.innerHTML = '';
+      const adviceP = document.createElement('p');
+      if (recurring.length > 0) {
+        adviceP.innerHTML = `<strong>High Friction Area Detected:</strong> <em>"${escapeHtml(recurring[0].ruleTitle)}"</em> is your organization's most repeated brand inconsistency (${recurring[0].totalCount} times). Consider refining guidelines to provide clearer copy examples.`;
+      } else {
+        adviceP.textContent = 'Guidelines are performing effectively with minimal repeated discrepancies across reviews.';
+      }
+      DOM.insightsGuidelineAdvice.appendChild(adviceP);
+    }
   }
 
   function populateGuidelinesForm() {
@@ -3720,12 +4548,112 @@ With this release, our system eliminates human managers and editorial review bec
     });
 
     // Toggle Demo Analytics
-    DOM.btnToggleDemoInsights.addEventListener('click', () => {
-      useDemoInsights = !useDemoInsights;
-      DOM.btnToggleDemoInsights.textContent = useDemoInsights ? 'Showing Sample Data (Click for Real)' : 'Toggle Demo Analytics Data';
-      renderInsights();
-      showToast(useDemoInsights ? 'Displaying sample insights data.' : 'Displaying real review data.', 'info');
-    });
+    if (DOM.btnToggleDemoInsights) {
+      DOM.btnToggleDemoInsights.addEventListener('click', () => {
+        useDemoInsights = !useDemoInsights;
+        renderInsights();
+        showToast(useDemoInsights ? 'Displaying sample insights data.' : 'Displaying real review data.', 'info');
+      });
+    }
+
+    if (DOM.btnRevertRealInsights) {
+      DOM.btnRevertRealInsights.addEventListener('click', () => {
+        useDemoInsights = false;
+        renderInsights();
+        showToast('Switched back to authentic organization analytics.', 'info');
+      });
+    }
+
+    if (DOM.insightsTimeFilter) {
+      DOM.insightsTimeFilter.addEventListener('change', () => {
+        currentGovernanceTimeFilter = DOM.insightsTimeFilter.value;
+        renderInsights();
+      });
+    }
+
+    if (DOM.btnEmptyGotoChecker) {
+      DOM.btnEmptyGotoChecker.addEventListener('click', () => {
+        const checkerTab = document.getElementById('tab-btn-checker');
+        if (checkerTab) checkerTab.click();
+      });
+    }
+
+    if (DOM.btnEmptyToggleDemo) {
+      DOM.btnEmptyToggleDemo.addEventListener('click', () => {
+        useDemoInsights = true;
+        renderInsights();
+        showToast('Displaying sample demo analytics.', 'info');
+      });
+    }
+
+    // Governance Intelligence Report Export
+    let currentGovReportFormat = 'markdown';
+    let cachedGovReportData = null;
+
+    if (DOM.btnExportGovReport) {
+      DOM.btnExportGovReport.addEventListener('click', () => {
+        const list = useDemoInsights ? SAMPLE_INSIGHTS_HISTORY : currentReviewHistory.filter(r => !String(r.id).startsWith('demo-'));
+        const metrics = analyzeGovernanceMetrics(list, currentGovernanceTimeFilter);
+        const recurring = detectRecurringViolations(list);
+        const efficiency = computeReviewEfficiency(list);
+        const friction = runPolicyFrictionRadar(currentGuidelines, list);
+        const recommendations = generateGovernanceRecommendations(metrics, recurring, friction);
+
+        cachedGovReportData = { metrics, recurring, efficiency, friction, recommendations };
+        updateGovReportPreview();
+        openModal('modal-export-governance');
+      });
+    }
+
+    function updateGovReportPreview() {
+      if (!cachedGovReportData || !DOM.exportGovPreviewArea) return;
+      const { metrics, recurring, efficiency, friction, recommendations } = cachedGovReportData;
+      const report = generateGovernanceReport(metrics, recurring, efficiency, friction, recommendations, currentGovReportFormat);
+      DOM.exportGovPreviewArea.value = report;
+    }
+
+    if (DOM.btnExportGovFormatMd) {
+      DOM.btnExportGovFormatMd.addEventListener('click', () => {
+        currentGovReportFormat = 'markdown';
+        if (DOM.btnExportGovFormatMd) DOM.btnExportGovFormatMd.classList.add('active');
+        if (DOM.btnExportGovFormatJson) DOM.btnExportGovFormatJson.classList.remove('active');
+        if (DOM.btnDownloadGovReport) DOM.btnDownloadGovReport.textContent = 'Download Report (.md)';
+        updateGovReportPreview();
+      });
+    }
+
+    if (DOM.btnExportGovFormatJson) {
+      DOM.btnExportGovFormatJson.addEventListener('click', () => {
+        currentGovReportFormat = 'json';
+        if (DOM.btnExportGovFormatJson) DOM.btnExportGovFormatJson.classList.add('active');
+        if (DOM.btnExportGovFormatMd) DOM.btnExportGovFormatMd.classList.remove('active');
+        if (DOM.btnDownloadGovReport) DOM.btnDownloadGovReport.textContent = 'Download Report (.json)';
+        updateGovReportPreview();
+      });
+    }
+
+    if (DOM.btnCopyGovReport) {
+      DOM.btnCopyGovReport.addEventListener('click', () => {
+        if (!DOM.exportGovPreviewArea || !DOM.exportGovPreviewArea.value) return;
+        navigator.clipboard.writeText(DOM.exportGovPreviewArea.value).then(() => {
+          showToast('Governance report copied to clipboard!', 'success');
+        }).catch(() => {
+          DOM.exportGovPreviewArea.select();
+          document.execCommand('copy');
+          showToast('Governance report copied to clipboard!', 'success');
+        });
+      });
+    }
+
+    if (DOM.btnDownloadGovReport) {
+      DOM.btnDownloadGovReport.addEventListener('click', () => {
+        if (!DOM.exportGovPreviewArea || !DOM.exportGovPreviewArea.value) return;
+        const ext = currentGovReportFormat === 'json' ? 'json' : 'md';
+        const mime = currentGovReportFormat === 'json' ? 'application/json' : 'text/markdown';
+        triggerDownload(`brandforge-governance-report-${Date.now()}.${ext}`, DOM.exportGovPreviewArea.value, mime);
+        showToast(`Downloaded governance audit report (.${ext}).`, 'success');
+      });
+    }
 
     // Generic Modal Close Buttons
     document.querySelectorAll('.modal-close-btn, [data-close]').forEach(btn => {

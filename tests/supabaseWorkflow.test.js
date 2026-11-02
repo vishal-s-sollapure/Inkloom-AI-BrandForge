@@ -341,7 +341,9 @@ runTest('TC-SB-30: Gemini API key sanitization and safe diagnostic endpoint', ()
   const coreCode = fs.readFileSync(corePath, 'utf8');
 
   assert.ok(fnCode.includes('trim()') && fnCode.includes("replace(/^[\"']|[\"']$/g, '')"), 'Must sanitize API key whitespace and quotes');
-  assert.ok(fnCode.includes('geminiConfigured') && fnCode.includes('keyPrefix'), 'Must provide safe diagnostic endpoint');
+  assert.ok(fnCode.includes('geminiConfigured'), 'Must provide safe diagnostic endpoint');
+  assert.ok(!fnCode.includes('keyPrefix:'), 'Must not leak keyPrefix in diagnostic output');
+  assert.ok(!fnCode.includes('keyLength:'), 'Must not leak keyLength in diagnostic output');
   assert.ok(!fnCode.includes('apiKey: apiKey'), 'Diagnostic must never return full API key');
   assert.ok(coreCode.includes('x-goog-api-key'), 'Must send x-goog-api-key header');
 });

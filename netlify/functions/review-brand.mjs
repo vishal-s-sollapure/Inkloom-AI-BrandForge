@@ -52,16 +52,13 @@ export default async (req, context) => {
     const apiKey = rawApiKey.trim().replace(/^["']|["']$/g, '');
     const model = (process.env.GEMINI_MODEL || 'gemini-1.5-flash').trim();
 
-    // Safe diagnostic endpoint without exposing the secret
+    // Safe diagnostic endpoint without exposing any key metadata or secrets
     if (diagnostic === true || (req.url && req.url.includes('diagnostic=true'))) {
       const isConfigured = Boolean(apiKey && apiKey.length >= 20 && !apiKey.includes('placeholder'));
       return new Response(
         JSON.stringify({
           status: 'ok',
           geminiConfigured: isConfigured,
-          envVarFound: envVarName,
-          keyLength: apiKey.length,
-          keyPrefix: isConfigured ? apiKey.slice(0, 4) + '...' : 'NONE',
           model
         }),
         { status: 200, headers: CORS_HEADERS }
@@ -135,16 +132,13 @@ export async function handler(event, context) {
     const apiKey = rawApiKey.trim().replace(/^["']|["']$/g, '');
     const model = (process.env.GEMINI_MODEL || 'gemini-1.5-flash').trim();
 
-    // Safe diagnostic endpoint without exposing the secret
+    // Safe diagnostic endpoint without exposing any key metadata or secrets
     if (diagnostic === true || (req.url && req.url.includes('diagnostic=true'))) {
       const isConfigured = Boolean(apiKey && apiKey.length >= 20 && !apiKey.includes('placeholder'));
       return new Response(
         JSON.stringify({
           status: 'ok',
           geminiConfigured: isConfigured,
-          envVarFound: envVarName,
-          keyLength: apiKey.length,
-          keyPrefix: isConfigured ? apiKey.slice(0, 4) + '...' : 'NONE',
           model
         }),
         { status: 200, headers: CORS_HEADERS }

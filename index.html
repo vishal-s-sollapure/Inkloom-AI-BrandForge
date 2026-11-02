@@ -49,7 +49,7 @@
 
         <button class="nav-btn" role="tab" id="tab-btn-insights" aria-selected="false" aria-controls="view-insights" data-target="view-insights">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          Insights
+          Intelligence & Radar
         </button>
       </nav>
 
@@ -542,77 +542,188 @@
     </section>
 
     <!-- ===================================================================
-         TAB 4: INSIGHTS & GOVERNANCE DRIFT
+         TAB 4: GOVERNANCE INTELLIGENCE & POLICY FRICTION RADAR
          =================================================================== -->
     <section class="tab-view" id="view-insights" role="tabpanel" aria-labelledby="tab-btn-insights">
       <div class="content-card">
-        <div class="card-header">
+        
+        <!-- Header & Controls -->
+        <div class="card-header gov-dashboard-header">
           <div class="card-title-group">
-            <h2>Governance Insights & Guideline Gap Detection</h2>
-            <p>Aggregated patterns derived from actual stored review history</p>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <h2>Governance Intelligence & Policy Friction Radar</h2>
+              <span class="badge" id="gov-dataset-badge" style="background: rgba(96, 165, 250, 0.15); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.3);">Real Organization Data</span>
+            </div>
+            <p>Empirical compliance analytics, recurring violation tracking, review efficiency bottlenecks, and guideline ambiguity diagnosis.</p>
           </div>
-          <div>
-            <button class="btn btn-secondary btn-sm" id="btn-toggle-demo-insights">
-              Toggle Demo Analytics Data
+          <div class="gov-header-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <div class="gov-filter-group" style="display: flex; align-items: center; gap: 6px;">
+              <label for="insights-time-filter" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Time Window:</label>
+              <select id="insights-time-filter" class="form-select form-select-sm" style="font-size: 0.775rem; padding: 4px 8px; background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: var(--radius-sm);">
+                <option value="all" selected>All Time</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="7d">Last 7 Days</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-toggle-demo-insights" title="Toggle between authentic authorized organization data and preview demo dataset">
+              Preview Demo Analytics
+            </button>
+            <button class="btn btn-clay btn-sm" id="btn-export-governance-report" title="Generate comprehensive governance intelligence report">
+              Export Audit Report 📥
             </button>
           </div>
         </div>
 
-        <!-- Insights Container -->
-        <div id="insights-content-area">
-          <div class="insights-grid">
-            
-            <!-- Insight 1: Most Frequently Triggered Rules -->
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <h4>Most Frequently Triggered Rules</h4>
-              </div>
-              <div class="insight-list" id="insights-frequent-rules">
-                <!-- Dynamically rendered -->
-              </div>
-            </div>
-
-            <!-- Insight 2: High Priority Unresolved Findings -->
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <h4>High-Priority Governance Risks</h4>
-              </div>
-              <div class="insight-list" id="insights-high-risks">
-                <!-- Dynamically rendered -->
-              </div>
-            </div>
-
-            <!-- Insight 3: Approval Ratio & Status Distribution -->
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <h4>Approval & Review Distribution</h4>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;" id="insights-distribution-bars">
-                <!-- Dynamically rendered -->
-              </div>
-            </div>
-
-            <!-- Insight 4: Potential Guideline Gaps & Advice -->
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <h4>Guideline Gap & Clarity Recommendations</h4>
-              </div>
-              <div id="insights-guideline-advice" style="font-size: 0.825rem; color: var(--text-secondary); line-height: 1.5;">
-                <!-- Dynamically rendered -->
-              </div>
-            </div>
-
+        <!-- Demo Dataset Warning Banner (Visible only in demo preview mode) -->
+        <div id="gov-demo-banner" class="gov-demo-banner" style="display: none; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 16px; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #fbbf24;">
+            <span style="font-size: 1rem;">⚠️</span>
+            <span><strong>Sample Analytics Preview:</strong> Inspecting pre-configured multi-stage campaign drafts. Real organization metrics resume when switched back.</span>
           </div>
+          <button class="btn btn-secondary btn-sm" id="btn-revert-real-insights" style="padding: 2px 8px; font-size: 0.725rem;">Switch to Real Data</button>
+        </div>
+
+        <!-- Top Governance KPI Ribbon (8 Essential Metrics) -->
+        <div class="gov-kpi-ribbon" id="gov-kpi-ribbon">
+          <div class="gov-kpi-card" title="Percentage of resolved campaigns that successfully received brand approval or legal clearance without outstanding blockers">
+            <div class="gov-kpi-label">Overall Compliance Rate</div>
+            <div class="gov-kpi-num" id="gov-kpi-compliance-rate">--%</div>
+            <div class="gov-kpi-sub" id="gov-kpi-compliance-sub">0 of 0 resolved compliant</div>
+          </div>
+          <div class="gov-kpi-card" title="Total campaigns submitted and evaluated in the current workspace">
+            <div class="gov-kpi-label">Total Campaigns</div>
+            <div class="gov-kpi-num" id="gov-kpi-total-campaigns">0</div>
+            <div class="gov-kpi-sub" id="gov-kpi-total-sub">Across all formats</div>
+          </div>
+          <div class="gov-kpi-card" title="Campaigns currently submitted and pending Brand Custodian review">
+            <div class="gov-kpi-label">Awaiting Brand Review</div>
+            <div class="gov-kpi-num" id="gov-kpi-in-review" style="color: #fbbf24;">0</div>
+            <div class="gov-kpi-sub">Stage: In Review</div>
+          </div>
+          <div class="gov-kpi-card" title="Campaigns cleared by Legal Counsel with immutable cryptographic compliance seal issued">
+            <div class="gov-kpi-label">Legally Cleared & Sealed</div>
+            <div class="gov-kpi-num" id="gov-kpi-legally-cleared" style="color: #c084fc;">0</div>
+            <div class="gov-kpi-sub">Cryptographic Seal Issued</div>
+          </div>
+          <div class="gov-kpi-card" title="Campaigns flagged with policy violations requiring author revisions">
+            <div class="gov-kpi-label">Changes Requested</div>
+            <div class="gov-kpi-num" id="gov-kpi-changes-requested" style="color: var(--sev-high-text);">0</div>
+            <div class="gov-kpi-sub">Author Revisions Needed</div>
+          </div>
+          <div class="gov-kpi-card" title="Average duration from initial campaign submission to review decision">
+            <div class="gov-kpi-label">Avg Turnaround Time</div>
+            <div class="gov-kpi-num" id="gov-kpi-turnaround-time">-- hrs</div>
+            <div class="gov-kpi-sub" id="gov-kpi-turnaround-sub">Submission to Sign-off</div>
+          </div>
+          <div class="gov-kpi-card" title="Average duration pending campaigns have spent in review triage">
+            <div class="gov-kpi-label">Pending Review Age</div>
+            <div class="gov-kpi-num" id="gov-kpi-pending-age">-- hrs</div>
+            <div class="gov-kpi-sub" id="gov-kpi-pending-sub">Queue velocity</div>
+          </div>
+          <div class="gov-kpi-card" title="Cumulative brand guideline rule violations detected across campaign revisions">
+            <div class="gov-kpi-label">Total Policy Violations</div>
+            <div class="gov-kpi-num" id="gov-kpi-total-violations">0</div>
+            <div class="gov-kpi-sub" id="gov-kpi-violations-sub">0 High Risk Blockers</div>
+          </div>
+        </div>
+
+        <!-- Main Governance Dashboard Grid -->
+        <div id="insights-content-area" class="gov-main-dashboard" style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
+          
+          <!-- Row 1: Pipeline Distribution & Bottleneck Radar -->
+          <div class="gov-card-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+            <!-- Lifecycle Pipeline Distribution -->
+            <div class="insight-card gov-pipeline-card">
+              <div class="insight-card-header">
+                <h4>📊 Collaborative Lifecycle Pipeline</h4>
+                <span class="font-hint" style="font-size: 0.725rem;">Real-time campaign stage distribution</span>
+              </div>
+              <div id="insights-distribution-bars" class="gov-pipeline-bars" style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+
+            <!-- Review Turnaround & Bottleneck Diagnostic -->
+            <div class="insight-card gov-bottleneck-card">
+              <div class="insight-card-header">
+                <h4>⚡ Review Velocity & Bottleneck Radar</h4>
+                <span id="gov-bottleneck-badge" class="badge">Healthy</span>
+              </div>
+              <div id="gov-bottleneck-body" class="gov-bottleneck-content" style="font-size: 0.825rem; line-height: 1.5; color: var(--text-secondary); margin-top: 6px;">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2: Recurring Violations (Brand Drift Detection) -->
+          <div class="insight-card gov-recurring-section">
+            <div class="insight-card-header">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h4>🚨 Recurring Violation Detection & Brand Drift Radar</h4>
+                <span class="badge" id="gov-recurring-count-badge">0 Tracked Rules</span>
+              </div>
+              <span class="font-hint" style="font-size: 0.725rem;">Repeated rule infringements across revisions</span>
+            </div>
+            <div class="gov-recurring-categories" id="gov-recurring-categories" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; margin-top: 4px;">
+              <!-- Category Filter Pills rendered dynamically -->
+            </div>
+            <div class="insight-list" id="insights-frequent-rules">
+              <!-- Dynamically populated with recurring violation items -->
+            </div>
+            <!-- High risk container for backward compatibility with existing tests -->
+            <div id="insights-high-risks" style="display: none;"></div>
+          </div>
+
+          <!-- Row 3: Policy Friction Radar (Guideline Ambiguity & Conflicts) -->
+          <div class="insight-card gov-friction-section">
+            <div class="insight-card-header">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h4>🔍 Policy Friction Radar (Guideline Ambiguity & Conflicts)</h4>
+                <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);" id="gov-friction-count-badge">0 Friction Areas</span>
+              </div>
+              <span class="font-hint" style="font-size: 0.725rem;">Textual ambiguity, contradictory constraints & empirical review blockers</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.45;">
+              This diagnostic engine continuously analyzes your organization's active brand guidelines to identify vague qualitative wording, opposing editorial requirements, and rules that generate recurring review friction.
+            </p>
+            <div id="gov-policy-friction-cards" class="gov-friction-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px;">
+              <!-- Dynamically populated with Friction Cards -->
+            </div>
+            <!-- Legacy element preserved for test compatibility -->
+            <div id="insights-guideline-advice" style="display: none;"></div>
+          </div>
+
+          <!-- Row 4: Actionable Governance Recommendations -->
+          <div class="insight-card gov-recommendations-section">
+            <div class="insight-card-header">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h4>💡 Actionable Governance Recommendations</h4>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Prioritized Initiatives</span>
+              </div>
+              <span class="font-hint" style="font-size: 0.725rem;">Evidence-based policy, workflow, and creator enablement steps</span>
+            </div>
+            <div id="gov-actionable-recommendations" class="gov-recommendations-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
         </div>
 
         <!-- Empty Insights State -->
-        <div class="empty-state" id="insights-empty-state" style="display: none;">
-          <div class="empty-state-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <div class="empty-state" id="insights-empty-state" style="display: none; padding: 48px 20px;">
+          <div class="empty-state-icon" style="color: var(--accent-rose); opacity: 0.8;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><circle cx="12" cy="7" r="2"/></svg>
           </div>
-          <h4>Insufficient Review Data for Real Insights</h4>
-          <p>Run brand checks and approve reviews to build local governance intelligence, or click <strong>"Toggle Demo Analytics Data"</strong> to preview data visualizations.</p>
+          <h3 style="margin-top: 10px; font-size: 1.15rem;">No Organization Campaign History Yet</h3>
+          <p style="max-width: 540px; margin: 8px auto 16px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">
+            Governance Intelligence and Policy Friction Radar compute real-time metrics, bottleneck alerts, and drift detection from your authentic authorized campaign reviews. Submit your first campaign from the <strong>Content Checker</strong> tab to begin accumulating governance analytics.
+          </p>
+          <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" id="btn-empty-goto-checker">Create & Check Campaign ➔</button>
+            <button class="btn btn-secondary btn-sm" id="btn-empty-toggle-demo">Preview Sample Demo Analytics</button>
+          </div>
         </div>
+
       </div>
     </section>
 
@@ -1023,6 +1134,33 @@
 
       <div class="modal-footer" style="justify-content: flex-end;">
         <button class="btn btn-secondary" data-close="modal-workspace-sync">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Export Governance Intelligence & Policy Friction Report -->
+  <div class="modal-overlay" id="modal-export-governance" role="dialog" aria-modal="true" aria-labelledby="modal-export-gov-title">
+    <div class="modal-container" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 id="modal-export-gov-title">Export Governance Intelligence & Friction Report</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-close="modal-export-governance" aria-label="Close dialog">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">
+          Comprehensive governance audit document containing KPI metrics, recurring violation drift, empirical friction findings, and prioritized recommendations.
+        </p>
+        <textarea id="export-gov-preview-area" class="form-textarea" readonly style="height: 280px; font-family: var(--font-mono); font-size: 0.775rem; white-space: pre; background: var(--bg-surface);"></textarea>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-secondary btn-sm active" id="btn-export-gov-format-md">Markdown</button>
+          <button class="btn btn-secondary btn-sm" id="btn-export-gov-format-json">JSON</button>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-secondary" id="btn-copy-gov-report">Copy to Clipboard</button>
+          <button class="btn btn-clay" id="btn-download-gov-report">Download Report (.md)</button>
+          <button class="btn btn-secondary" data-close="modal-export-governance">Close</button>
+        </div>
       </div>
     </div>
   </div>
