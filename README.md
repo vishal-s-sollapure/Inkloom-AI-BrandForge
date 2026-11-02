@@ -7,7 +7,7 @@
 [![Vanilla JS](https://img.shields.io/badge/Stack-HTML5%20%2F%20CSS3%20%2F%20JS-F7DF1E?logo=javascript&logoColor=black)](#)
 [![Google Gemini](https://img.shields.io/badge/AI%20Engine-Gemini%20Flash-4285F4?logo=google&logoColor=white)](#)
 [![Supabase](https://img.shields.io/badge/Cloud%20DB-Supabase%20PostgreSQL%20%2B%20RLS-3ECF8E?logo=supabase&logoColor=white)](#)
-[![Automated Tests](https://img.shields.io/badge/Tests-60%2F60%20Passed-10B981)](#)
+[![Automated Tests](https://img.shields.io/badge/Tests-65%2F65%20Passed-10B981)](#)
 
 ---
 
@@ -35,7 +35,7 @@ In **Round 3 (The Finish)**, BrandForge completes its transformation into a prod
 - **Stage:** Round 3 — The Finish (Final Production Submission)
 - **Live Deployed Application:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
 - **Source Code Repository:** [https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge)
-- **Automated Test Coverage:** 60 / 60 tests passing across 4 comprehensive suites (100% success rate).
+- **Automated Test Coverage:** 65 / 65 tests passing across 4 comprehensive suites (100% success rate).
 
 ---
 
@@ -234,8 +234,13 @@ npm test
 - `TC-SB-18`: Compliance seal creation is restricted strictly to legal role in RLS policy &rarr; **PASS**
 - `TC-SB-19`: Database connectivity check queries organizations table to prevent false HTTP 401s &rarr; **PASS**
 - `TC-SB-20`: SupabaseManager cleanly distinguishes sandbox, connected, and authenticated states &rarr; **PASS**
+- `TC-SB-21`: Campaigns update policy contains WITH CHECK clause permitting valid status transitions &rarr; **PASS**
+- `TC-SB-22`: Campaign revisions table defines explicit UPDATE RLS policy to support upserts &rarr; **PASS**
+- `TC-SB-23`: Status normalization correctly maps legacy statuses to valid campaign_status enums &rarr; **PASS**
+- `TC-SB-24`: Database writes inspect Supabase errors and return explicit failure payloads &rarr; **PASS**
+- `TC-SB-25`: Profiles selection policy includes id = auth.uid() self-recovery guard &rarr; **PASS**
 
-**Overall Test Results: 60 / 60 Passed (100% Pass Rate)**
+**Overall Test Results: 65 / 65 Passed (100% Pass Rate)**
 
 ---
 

@@ -257,6 +257,46 @@ runTest('TC-SB-20: SupabaseManager cleanly distinguishes sandbox, connected, and
   assert.ok(appJs.includes("this.connectionState = 'authenticated'"), 'Must transition to authenticated when session verified');
 });
 
+// TC-SB-21: Campaigns update policy contains WITH CHECK clause permitting valid status transitions
+runTest('TC-SB-21: Campaigns update policy contains WITH CHECK clause permitting valid status transitions', () => {
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  assert.ok(sql.includes('WITH CHECK'), 'campaigns_update_role must define an explicit WITH CHECK clause');
+  assert.ok(sql.includes("(public.get_auth_role() = 'creator' AND current_status IN ('drafting', 'in_review'))"), 'Creator must be permitted to transition to in_review in WITH CHECK');
+  assert.ok(sql.includes("(public.get_auth_role() = 'custodian' AND current_status IN ('in_review', 'changes_requested', 'brand_approved'))"), 'Custodian must be permitted to transition to brand_approved in WITH CHECK');
+  assert.ok(sql.includes("(public.get_auth_role() = 'legal' AND current_status IN ('brand_approved', 'changes_requested', 'legally_cleared'))"), 'Legal must be permitted to transition to legally_cleared in WITH CHECK');
+});
+
+// TC-SB-22: Campaign revisions table has UPDATE RLS policy for revision upserts
+runTest('TC-SB-22: Campaign revisions table defines explicit UPDATE RLS policy to support upserts', () => {
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  assert.ok(sql.includes('CREATE POLICY "revisions_update_org" ON public.campaign_revisions'), 'revisions_update_org policy must exist');
+  assert.ok(sql.includes('FOR UPDATE USING'), 'Must permit FOR UPDATE on campaign_revisions');
+});
+
+// TC-SB-23: Status normalization maps legacy statuses to valid PostgreSQL enum values
+runTest('TC-SB-23: Status normalization correctly maps legacy statuses to valid campaign_status enums', () => {
+  const appJsPath = path.resolve(__dirname, '../app.js');
+  const appJs = fs.readFileSync(appJsPath, 'utf8');
+  assert.ok(appJs.includes('function normalizeCampaignStatus'), 'Must declare normalizeCampaignStatus function');
+  assert.ok(appJs.includes("s === 'approved'") && appJs.includes("return 'brand_approved'"), 'Must map approved to brand_approved');
+  assert.ok(appJs.includes("s === 'rejected'") && appJs.includes("return 'changes_requested'"), 'Must map rejected to changes_requested');
+});
+
+// TC-SB-24: Database writes return detailed failure responses and do not swallow errors
+runTest('TC-SB-24: Database writes inspect Supabase errors and return explicit failure payloads', () => {
+  const appJsPath = path.resolve(__dirname, '../app.js');
+  const appJs = fs.readFileSync(appJsPath, 'utf8');
+  assert.ok(appJs.includes("return { success: false, message: err.message };"), 'syncCampaignRecord must return false on exception');
+  assert.ok(appJs.includes("return { success: true, campaign:"), 'syncCampaignRecord must return true on successful write');
+  assert.ok(appJs.includes("throw new Error(`Campaign database write failed:"), 'syncCampaignRecord must throw if campResult.error');
+});
+
+// TC-SB-25: Profiles selection self-recovery policy enables users to select their own profile
+runTest('TC-SB-25: Profiles selection policy includes id = auth.uid() self-recovery guard', () => {
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  assert.ok(sql.includes('id = auth.uid() OR organization_id = public.get_auth_org_id()'), 'profiles_select_org must include id = auth.uid()');
+});
+
 console.log('========================================');
 console.log(`Supabase & Persistence Test Summary: ${passedTests} / ${passedTests + failedTests} PASSED`);
 console.log('========================================\n');
