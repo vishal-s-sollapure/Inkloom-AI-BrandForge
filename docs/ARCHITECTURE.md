@@ -100,3 +100,4 @@ The persistence layer runs on managed PostgreSQL in Supabase (`https://mkwpjspbe
    - Database functions enforce fixed `SET search_path = public, pg_temp` to mitigate search-path hijacking attacks.
 5. **Cryptographic Integrity Sealing:**
    - Pre-publication compliance seals use SHA-256 (NIST FIPS 180-4) hashes binding draft content, active guidelines, dual signer IDs, and timestamps.
+

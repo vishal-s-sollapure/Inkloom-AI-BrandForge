@@ -156,3 +156,4 @@ The Supabase project has 3 configured test accounts belonging to organization `1
 - **Deployment Platform:** Netlify (Continuous Deployment linked to `main`).
 - **Trigger:** A new git commit and push to `origin/main` automatically triggers Netlify's production build.
 - **Verification URL:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
+

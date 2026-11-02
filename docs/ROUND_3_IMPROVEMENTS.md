@@ -126,3 +126,4 @@ The major new capability delivered in Round 3 is the **Governance Intelligence &
 ## 4. Remaining Limitations & Operational Notes
 - **Gemini API Key Configuration:** In the Netlify environment, `GEMINI_API_KEY` was found to contain a Supabase JWT token. When a valid Google AI Studio key (`AIzaSy...`) is added to Netlify environment variables, the system seamlessly activates live Gemini 1.5 Flash inference. In the interim, BrandForge's deterministic rules engine reliably handles all evaluations.
 - **Turnaround Durations in Fresh Workspaces:** In newly provisioned workspaces with fewer than 2 completed campaigns, turnaround benchmarks display `"Requires 2+ completed reviews"` to prevent misleading zero-second statistical anomalies.
+

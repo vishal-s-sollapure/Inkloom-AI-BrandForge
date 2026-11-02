@@ -220,3 +220,4 @@ For live staging and production verification on [https://brandforge-inkloom.netl
    - Preview Markdown format.
    - Toggle JSON format.
    - Click **"Copy Report"** or **"Download Report"**.
+

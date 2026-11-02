@@ -584,3 +584,4 @@ export function generateGovernanceReport(metrics, recurring, efficiency, frictio
 
   return lines.join('\n');
 }
+

@@ -87,3 +87,4 @@ flowchart LR
 - **Multi-Lingual Brand Voice Analysis**: Gemini-powered tone and nuance evaluation across 25+ global languages and cultural contexts.
 - **Automated Legal Disclosure Engine**: Context-aware legal disclosure suggestions based on jurisdiction (FTC in US, ASA in UK, GDPR in EU) and campaign category (finance, health, software).
 - **Predictive Policy Simulation**: What-if policy impact modeling allowing brand directors to simulate how changing a rule will impact historical campaign compliance rates before publishing.
+
