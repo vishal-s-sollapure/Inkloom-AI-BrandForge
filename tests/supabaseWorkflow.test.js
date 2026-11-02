@@ -215,6 +215,48 @@ runTest('TC-SB-15: UUID validation accepts valid RFC 4122 UUIDs and rejects inva
   assert.strictEqual(uuidRegex.test(invalidUuid2), false, 'rev-timestamp must be rejected');
 });
 
+// TC-SB-16: Profiles update policy and anti-escalation enforcement
+runTest('TC-SB-16: Profiles update policy enforces self-ownership and anti-escalation guards', () => {
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  assert.ok(sql.includes('CREATE POLICY "profiles_update_self" ON public.profiles'), 'profiles_update_self policy exists');
+  assert.ok(sql.includes('id = auth.uid()'), 'profiles_update_self must restrict to id = auth.uid()');
+  assert.ok(sql.includes('trg_prevent_profile_escalation'), 'trg_prevent_profile_escalation must be active on profiles');
+});
+
+// TC-SB-17: Multi-tenant organizational isolation across tables
+runTest('TC-SB-17: RLS policies enforce strict organization isolation across all entity tables', () => {
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  assert.ok(sql.includes('organization_id = public.get_auth_org_id()'), 'Organizations must be filtered by get_auth_org_id()');
+  assert.ok(sql.includes('campaigns_select_org'), 'Campaigns must have org select policy');
+  assert.ok(sql.includes('campaigns_insert_creator'), 'Campaigns must have creator org insert policy');
+  assert.ok(sql.includes('guidelines_select_org'), 'Guidelines must have org select policy');
+});
+
+// TC-SB-18: Compliance seals restricted to Legal Officer role
+runTest('TC-SB-18: Compliance seal creation is restricted strictly to legal role in RLS policy', () => {
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  assert.ok(sql.includes('CREATE POLICY "seals_insert_legal" ON public.compliance_seals'), 'seals_insert_legal policy exists');
+  assert.ok(sql.includes("public.get_auth_role() = 'legal'"), 'seals_insert_legal must check get_auth_role() = legal');
+  assert.ok(sql.includes('legally_cleared_by = auth.uid()'), 'seals_insert_legal must bind legally_cleared_by to auth.uid()');
+});
+
+// TC-SB-19: Ping query design targets PostgreSQL public.organizations rather than unauthenticated REST root
+runTest('TC-SB-19: Database connectivity check queries organizations table to prevent false HTTP 401s', () => {
+  const appJsPath = path.resolve(__dirname, '../app.js');
+  const appJs = fs.readFileSync(appJsPath, 'utf8');
+  assert.ok(appJs.includes(".from('organizations').select('id, name, slug').limit(1)"), 'testConnection must query organizations table');
+  assert.strictEqual(appJs.includes("fetch(`${cleanUrl}/rest/v1/`"), false, 'Must not perform raw unauthenticated REST root fetch');
+});
+
+// TC-SB-20: Distinct connection states (sandbox, connected, authenticated)
+runTest('TC-SB-20: SupabaseManager cleanly distinguishes sandbox, connected, and authenticated states', () => {
+  const appJsPath = path.resolve(__dirname, '../app.js');
+  const appJs = fs.readFileSync(appJsPath, 'utf8');
+  assert.ok(appJs.includes("connectionState: 'sandbox'"), 'Must declare default sandbox state');
+  assert.ok(appJs.includes("this.connectionState = 'connected'"), 'Must transition to connected when gateway verified');
+  assert.ok(appJs.includes("this.connectionState = 'authenticated'"), 'Must transition to authenticated when session verified');
+});
+
 console.log('========================================');
 console.log(`Supabase & Persistence Test Summary: ${passedTests} / ${passedTests + failedTests} PASSED`);
 console.log('========================================\n');
