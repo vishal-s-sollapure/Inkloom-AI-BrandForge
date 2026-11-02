@@ -1,20 +1,28 @@
 # BrandForge
-### Intelligent Pre-Publication Brand Governance Platform
-**Inkloom AI Brand Governance Challenge — Round 2 (The Build)**[![Netlify Status](https://img.shields.io/badge/Netlify-Deployed%20Live-10B981?logo=netlify&logoColor=white)](https://brandforge-inkloom.netlify.app/)
+### Intelligent Pre-Publication Brand Governance & Compliance Platform
+**Inkloom AI Brand Governance Challenge — Round 3 (The Finish)**
+
+[![Netlify Status](https://img.shields.io/badge/Netlify-Deployed%20Live-10B981?logo=netlify&logoColor=white)](https://brandforge-inkloom.netlify.app/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?logo=github&logoColor=white)](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge)
 [![Vanilla JS](https://img.shields.io/badge/Stack-HTML5%20%2F%20CSS3%20%2F%20JS-F7DF1E?logo=javascript&logoColor=black)](#)
-[![Zero Build](https://img.shields.io/badge/Build-Zero%20Dependencies-10B981)](#)
-[![Automated Tests](https://img.shields.io/badge/Tests-20%2F20%20Passed-10B981)](#)
+[![Google Gemini](https://img.shields.io/badge/AI%20Engine-Gemini%20Flash-4285F4?logo=google&logoColor=white)](#)
+[![Supabase](https://img.shields.io/badge/Cloud%20DB-Supabase%20PostgreSQL%20%2B%20RLS-3ECF8E?logo=supabase&logoColor=white)](#)
+[![Automated Tests](https://img.shields.io/badge/Tests-55%2F55%20Passed-10B981)](#)
 
 ---
 
-## 📌 Project Overview
+## 📌 Executive Overview
 
-**BrandForge** is a pre-publication brand governance platform that reviews marketing copy against approved brand guidelines, preferred terminology, verified facts, and tone rules before content is published.
+**BrandForge** is an enterprise-grade pre-publication brand governance platform that evaluates marketing copy against approved brand guidelines, preferred terminology, verified facts, and tone rules before content is published.
 
 In fast-paced organizations, marketing teams, external agencies, and generative AI tools frequently introduce off-brand terminology (*"cheap tool"*, *"our bot"*), unsubstantiated superlatives (*"100% foolproof"*, *"guarantees zero risk"*), and aggressive hype that damages brand trust and creates regulatory exposure.
 
-BrandForge solves this problem by providing an explainable, human-centered review workbench that flags issues, cites active brand rules, differentiates rule mismatches from unverified factual claims, and generates editable, brand-aligned suggested revisions.
+In **Round 2 (The Build)**, BrandForge established its core foundation: a deterministic lexical rules engine, side-by-side visual diffs, and audit exports running client-side.
+
+In **Round 3 (The Finish)**, BrandForge completes its transformation into a production-grade, collaborative, AI-powered brand governance product delivering **all three committed Round 3 improvements**:
+1. **Evidence-Backed AI Brand Review** powered by Google Gemini with structured JSON schemas, policy grounding, claim-verification tagging, and deterministic fallback.
+2. **Collaborative Multi-Role Governance Workflow** backed by Supabase PostgreSQL, Row-Level Security (RLS), 3 distinct stakeholder roles (`Content Creator`, `Brand Custodian`, `Legal & Compliance Officer`), in-line contextual comments on visual diffs, and cryptographic SHA-256 compliance seals.
+3. **Governance Intelligence & Policy Friction Radar** providing aggregate analytics, guideline gap detection, and actionable clarity recommendations based on real review patterns.
 
 ---
 
@@ -24,75 +32,69 @@ BrandForge solves this problem by providing an explainable, human-centered revie
 - **Project Name:** BrandForge
 - **Participant:** Vishal S Sollapure
 - **Team Name:** BrandForge
-- **Stage:** Round 2 — Functional Minimum Viable Product (MVP)
+- **Stage:** Round 3 — The Finish (Final Production Submission)
 - **Live Deployed Application:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
 - **Source Code Repository:** [https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge)
-- **Submission Date:** October 28, 2026
+- **Automated Test Coverage:** 55 / 55 tests passing across 4 comprehensive suites (100% success rate).
 
 ---
 
-## 🚀 Key Features Implemented & Verified
+## 🚀 The Three Round 3 Improvements Delivered
 
-1. **Brand Checker Workbench:**
-   - Content title (<= 120 chars) and format selector (*Press Release, Social Post, Email Newsletter, Digital Ad, Landing Page, Thought Leadership Blog*).
-   - Rich draft editor with live word and character counters, boundary validation (min 4 words, max 25,000 chars).
-   - **Load Sample Campaign:** Instantly populates realistic marketing copy with intentional brand inconsistencies for demonstration.
-2. **Explainable Deterministic Rules Engine:**
-   - Detects avoided terminology with direct replacements.
-   - Flags missing preferred brand terminology.
-   - Identifies aggressive marketing hype and out-of-character tone.
-   - Detects unsupported superlatives and promissory assertions.
-   - **Policy Section Traceability:** Every finding includes an explicit policy section tag (`guidelineSection`).
-   - **Claim Verification Tagging:** Explicitly distinguishes confirmed rule mismatches from claims requiring human verification.
-   - Flags accessibility issues (sentences exceeding 30 words).
-3. **Heuristic Compliance Score:**
-   - Dynamic 0–100 score weighted by finding severity (High: -18, Medium: -8, Low: -3) with a minimum floor of 10. Explicitly labeled as a heuristic indicator, not a legal guarantee.
-4. **Suggested Revision Generator & Side-by-Side Visual Diff:**
-   - Synthesizes an editable suggested revision replacing avoided terms and softening hyperbole while preserving author voice and structure.
-   - **Side-by-Side Visual Diff:** Modal highlighting deleted terms (`.diff-del`) in red strikethrough and inserted terms (`.diff-ins`) in green with change count tracking.
-   - Actions to "Use Suggested Revision", "Compare with Original", "Copy Text", and "Re-run Check".
-5. **Dual-Action Human Governance:**
-   - **Explicit Approval:** Confirmation modal required before signing off and recording approved content into review history.
-   - **Explicit Rejection / Changes Requested:** Dedicated modal enabling reviewers to request changes with custom feedback notes.
-6. **Structured Audit Report Export:**
-   - Export review records as versioned JSON (`brandForgeAuditVersion: '2.0-MVP'`) or executive Markdown with clipboard copy and file download.
-7. **Brand Guidelines Configuration & Editorial Reference:**
-   - Custom editor for brand name, voice, preferred terms, avoided terms with replacements, approved facts, verification claims, accessibility rules, and visual formatting rules.
-   - Visual editorial reference table comparing tangible Good vs. Avoid examples.
-   - Persists in browser `localStorage` with defensive fallbacks and "Restore Defaults".
-8. **Local Review History & Multi-Status Filtering:**
-   - Searchable tabular log of past checks with date, title, format, score, findings count, status pills, and direct single-record JSON export.
-   - Status filter buttons: All, Approved, Changes Requested.
-   - Batch JSON export of entire review history.
-9. **Governance Insights Dashboard:**
-   - Aggregates repeat rule violations, high-risk items, and approval percentages with optional demo preview.
-10. **Defensive Storage Resilience:**
-    - Graceful in-memory fallback ensures the application continues operating smoothly if `localStorage` is disabled or blocked.
+### Improvement 1: Evidence-Backed AI Brand Review
+- **Secure Serverless Proxy:** External LLM calls route through a serverless Netlify function (`/.netlify/functions/review`), ensuring API credentials (`GEMINI_API_KEY`) never leak to client browsers.
+- **Strict Structured JSON Schema:** The model is constrained via Google Gemini Structured Outputs / JSON mode to return a strictly typed schema containing `findings` and `suggestedRevision`.
+- **Policy Grounding & Attribution:** Active brand guidelines (voice, tone, prohibited terms, approved facts) are injected into the grounding prompt. Every critique is bound to an explicit `guidelineSection` and `ruleCitation`.
+- **Factual Claims vs. Brand Violations:** Explicitly isolates claims requiring factual evidence (`factualVerificationRequired: true`) from straightforward stylistic or tone rule mismatches.
+- **Deterministic Offline Fallback:** If the external AI service is unreachable, timed out, or unconfigured, the system automatically falls back to the deterministic engine without breaking the user's workflow.
 
-### 🔍 Feature Implementation Categories
-- **A. Fully Implemented & Verified:** Features 1–10 above are 100% functional and tested in the current codebase.
-- **B. Scoped / Partially Implemented:** English-language copy focus; single-browser profile `localStorage` persistence.
-- **C. Excluded / Untested:** No external LLM API connection; no external web fact-checking; no legal compliance guarantees; no image OCR.
-- **D. Planned Roadmap (Round 3):** Collaborative roles, team comment threads, cryptographic audit seals, and constrained production LLM integration.
+### Improvement 2: Collaborative Multi-Role Governance Workflow
+- **Role-Based Access Control (RBAC):** Three distinct stakeholder roles with cryptographically and schema-enforced boundaries:
+  - **Content Creator (`creator`):** Ingests copy, runs AI checks, inspects visual diffs, and transitions drafts from `Drafting` ➔ `In Review`.
+  - **Brand Custodian (`custodian`):** Evaluates voice and tone, leaves in-line comments, and grants `Brand Approved` or issues `Changes Requested`.
+  - **Legal & Compliance Officer (`legal`):** Inspects factual claims, verifies evidence citations, and grants final `Legally Cleared` status.
+- **5-Stage State Machine:** `Drafting` ➔ `In Review` ➔ `Changes Requested` ➔ `Brand Approved` ➔ `Legally Cleared`. Unauthorized state transitions (e.g., creator self-approving or legal skipping brand custodian approval) are blocked both in frontend state and at the PostgreSQL RLS level.
+- **In-Line Contextual Comments on Visual Diffs:** Reviewers can highlight specific text spans in the side-by-side diff viewer to initiate threaded contextual discussions, complete with resolution toggles.
+- **Cryptographic SHA-256 Pre-Publication Seal:** When legal clearance is granted, the platform hashes the canonical content, active guideline version, dual sign-off user IDs, and timestamps using Web Cryptography SHA-256, generating an immutable, tamper-evident compliance receipt.
+- **Supabase Cloud Persistence & Row-Level Security:** 8 relational tables protected by PostgreSQL RLS policies, anti-escalation triggers (`prevent_profile_escalation`), search-path security (`SET search_path = public, pg_temp;`), and strictly append-only audit logs.
+- **3-State Real-Time Connection Indicator:** Seamlessly transitions between 🟡 **Local Sandbox Mode** (isolated browser storage), 🔵 **Gateway Verified** (Supabase connected, sign-in required), and 🟢 **Live Authenticated** (PostgreSQL + RLS active).
+
+### Improvement 3: Governance Intelligence & Policy Friction Radar
+- **Recurring Violation Analytics:** Identifies high-frequency rule infractions across historical reviews.
+- **Guideline Gap & Clarity Recommendations:** Heuristically detects ambiguous or overly restrictive rules where creators frequently trigger warnings, recommending editorial adjustments.
+- **Approval Distribution & Risk Breakdown:** Visual progress indicators tracking first-pass approval rates, rejection patterns, and high-severity compliance blockers.
 
 ---
 
 ## 🛠️ Technology Stack & Architecture
 
-BrandForge features a deliberate, transparent architectural design:
+BrandForge combines a lightweight, zero-build vanilla frontend with enterprise-grade cloud serverless services:
 
-1. **Active Deployed Runtime (Zero-Build Static Web Application):**
-   - **Structure:** Semantic HTML5 ([index.html](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/index.html)) with accessible ARIA landmarks, roles, and accessible dialogs.
-   - **Styling:** Vanilla CSS3 ([styles.css](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/styles.css)) featuring a bespoke dark, polished **plum, rose, and warm clay palette** (`#110913`, `#180D1C`, `#D9778F`, `#E0A899`, `#6E3358`). Fully responsive across desktop, tablet, and mobile, with visible focus indicators (`:focus-visible`) and reduced-motion support.
-   - **Logic:** Vanilla JavaScript ([app.js](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/app.js), ES2022) with a modular deterministic rules engine. DOM-safe element rendering prevents XSS vulnerabilities.
-   - **Persistence:** Browser `localStorage` with defensive in-memory fallback if storage is disabled or quota is exceeded.
-   - **Zero Build Requirement for Evaluators:** Runs immediately upon opening `index.html` in Chrome, Firefox, Safari, or Edge, or via `node server.js` / `npm start`.
-   - **Netlify Hosting:** Configured via [netlify.toml](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/netlify.toml) with `publish = "."` and zero build commands, deploying the root web application directly to [brandforge-inkloom.netlify.app](https://brandforge-inkloom.netlify.app/).
-
-2. **Prototype / Reference Scaffolding (`src/` & `package.json`):**
-   - The repository retains an experimental React 18 + TypeScript scaffold in `src/` (`App.tsx`, `main.tsx`, `components/`) explored during early design phases.
-   - Running `npm run build` executes `tsc && vite build`: `tsc` verifies strict TypeScript compilation across `src/`, and Vite validates root asset bundling into `dist/`.
-   - The active product runtime served on Netlify and evaluated for Round 2 is the robust zero-build vanilla web application at the repository root.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        BrandForge Client App                           │
+│     (HTML5 • CSS3 Plum/Rose Theme • Modular ES2022 JavaScript)         │
+└──────────────────┬───────────────────────────────┬─────────────────────┘
+                   │                               │
+        PostgREST / Auth API                Serverless Proxy
+     (Bearer JWT / Anon Key)              (POST /api/review)
+                   │                               │
+                   ▼                               ▼
+┌──────────────────────────────────────┐  ┌──────────────────────────────┐
+│       Supabase PostgreSQL 15+        │  │  Netlify Serverless Function │
+│  • Row-Level Security (RLS)          │  │  • Environment Security      │
+│  • 8 Relational Tables               │  │  • Input Validation          │
+│  • Anti-Escalation Triggers          │  │  • JSON Schema Enforcement   │
+│  • Append-Only Audit Trails          │  └──────────────┬───────────────┘
+│  • GoTrue Email/Password Auth        │                 │
+└──────────────────────────────────────┘                 ▼
+                                          ┌──────────────────────────────┐
+                                          │      Google Gemini API       │
+                                          │  • Gemini 1.5 / 2.5 Flash    │
+                                          │  • Structured JSON Output    │
+                                          │  • Policy Grounding Context  │
+                                          └──────────────────────────────┘
+```
 
 ### Complete Project File Structure
 
@@ -100,99 +102,79 @@ BrandForge features a deliberate, transparent architectural design:
 Inkloom-AI-BrandForge/
 ├── index.html                 # Semantic application shell & accessible layout (Active runtime)
 ├── styles.css                 # Responsive design system (Plum, rose, clay palette)
-├── app.js                     # Modular application logic, diff builder & rules engine
-├── server.js                  # Zero-dependency local Node.js static server (port 5173)
-├── netlify.toml               # Netlify configuration (publish = ".", command = "")
-├── package.json               # Scripts (test, start, dev, build) & prototype dependencies
-├── vite.config.ts             # Vite configuration for TypeScript validation
-├── src/                       # React / TypeScript prototype scaffold (Reference)
+├── app.js                     # Modular frontend logic, Supabase manager, diff builder & workflow engine
+├── server.js                  # Local Node.js test & development static server (port 5173)
+├── netlify.toml               # Netlify build, serverless functions, and header security config
+├── package.json               # Test runners, scripts, and production dependencies
+├── netlify/
+│   └── functions/
+│       ├── review.mjs         # Netlify serverless API endpoint for brand reviews
+│       ├── geminiReview.mjs   # Grounding prompt, JSON schema, and Gemini SDK integration
+│       └── supabaseClient.mjs # Server-side Supabase client configuration
+├── supabase/
+│   ├── schema.sql             # Complete 8-table relational schema with RLS and triggers
+│   └── migration_security_patch.sql # Standalone security patch for role escalation guards
 ├── tests/
-│   └── rulesEngine.test.js    # Automated unit test suite (20/20 passed)
-├── README.md                  # Comprehensive setup, architecture, and guide
-├── ROUND2-AUDIT.md            # Detailed 33-point requirements & security audit
-├── TEST-REPORT.md             # Empirical test results from 20 unit & 16 manual checks
-├── ROUND2-PROJECT-SUMMARY.md  # 2–3 page summary formatted for Google Drive PDF conversion
-├── ROUND2-SUBMISSION-NOTES.md # Submission checklist & copy-paste form answers
-├── ROUND2-DEMO-SCRIPT.md      # Exact 2–3 minute timed judge walkthrough script
-└── ROUND2-ROUND3-ROADMAP.md   # Exactly three substantial Round 3 improvements
+│   ├── rulesEngine.test.js    # 20 tests: Deterministic lexical engine & heuristic scoring
+│   ├── aiReview.test.js       # 10 tests: Schema compliance, grounding, and fallbacks
+│   ├── collaborativeWorkflow.test.js # 10 tests: RBAC, state machine, and SHA-256 seals
+│   └── supabaseWorkflow.test.js      # 15 tests: RLS schema, UUIDs, and append-only audits
+├── README.md                  # Comprehensive platform documentation & setup guide
+├── ROUND_3_THE_FINISH.md      # Round 3 formal submission specifications
+├── TEST-REPORT.md             # Empirical test results from all test suites
+└── .env.example               # Template for required environment variables
 ```
 
 ---
 
-## 📐 Rules Engine & Scoring Methodology
+## 🗄️ Relational Database Schema & Security Architecture
 
-BrandForge uses a transparent, deterministic rules engine:
+The platform's persistence layer is built on PostgreSQL with strict Row-Level Security:
 
-### 1. Evaluation Functions
-- `validateInput(title, text)`: Enforces required fields, title bounds (1–120 chars), draft minimum length (>= 4 words), and character limits (<= 25,000 chars).
-- `matchGuidelines(text, guidelines)`: Evaluates avoided terminology, verification claims, aggressive hype, and sentence length with explicit `guidelineSection` attribution.
-- `calculateScore(findings)`: Calculates the heuristic compliance score.
-- `generateSuggestedRevision(text, findings, guidelines)`: Synthesizes an intent-preserving editable draft.
-- `buildDiffData(originalText, suggestedText, findings, guidelines)`: Builds side-by-side visual diff markup (`.diff-del`, `.diff-ins`).
-- `generateAuditJson(record)` & `generateAuditMarkdown(record)`: Formats exportable audit reports.
+| Table Name | Purpose | RLS Policy & Security Boundary |
+| :--- | :--- | :--- |
+| `public.organizations` | Multi-tenant organization boundaries | Users can only view their active organization. |
+| `public.profiles` | User profiles, roles, and org bindings | Users view their own org; anti-escalation trigger blocks client-side role updates. |
+| `public.brand_guidelines` | Versioned brand guidelines | Org members can view; only Brand Custodians can modify. |
+| `public.campaigns` | Campaign metadata and lifecycle states | Org members view; creators create/edit drafts; custodians/legal execute approvals. |
+| `public.campaign_revisions` | Versioned history of drafts & reviews | Append-only revisions tied to campaigns; viewable by org members. |
+| `public.review_comments` | In-line contextual diff comment threads | Org members view; authors and custodians/legal can resolve. |
+| `public.compliance_seals` | Cryptographic SHA-256 compliance receipts | Viewable across org; insertable **only by Legal Officers** upon final clearance. |
+| `public.audit_events` | Immutable historical governance log | **Strictly append-only:** `UPDATE` and `DELETE` privileges revoked for all roles. |
 
-### 2. Scoring Formula
-The compliance score is a **heuristic indicator**, not a guarantee of legal or brand compliance:
+---
+
+## 📐 Scoring & Verification Methodology
+
+BrandForge combines transparent deterministic heuristics with AI evaluation:
+
+### Heuristic Scoring Formula
 $$\text{Score} = \max\left(10, \; 100 - \sum \text{Deductions}\right)$$
-- **High Severity Finding:** $-18$ points (e.g. prohibited terminology, unverified absolute guarantees).
-- **Medium Severity Finding:** $-8$ points (e.g. juvenile tone, aggressive marketing hype).
-- **Low Severity Finding:** $-3$ points (e.g. sentence $>30$ words, missing official brand name).
+- **High Severity Finding:** $-18$ points (Prohibited terminology, unverified absolute claims, critical legal risks).
+- **Medium Severity Finding:** $-8$ points (Aggressive hype, juvenile tone, off-brand messaging).
+- **Low Severity Finding:** $-3$ points (Accessibility issues, sentences $>30$ words, minor formatting).
+- Minimum floor: 10 points (explicitly designated as a heuristic governance score, not a legal warranty).
 
 ---
 
-## 💻 How to Run Locally
+## 🧪 Automated Testing Suite (55 / 55 Passed)
 
-### Option 1: Direct File Open (Zero Dependencies)
-Simply double-click `index.html` or open it directly in any modern browser (Google Chrome, Mozilla Firefox, Microsoft Edge, Safari).
+The platform is backed by 55 automated unit and integration tests executing across 4 specialized suites:
 
-### Option 2: Local Static Server (Node.js)
-```bash
-npm start
-# or: node server.js
-```
-Open your browser at `http://localhost:5173/` or `http://127.0.0.1:5173/`.
-
-### Option 3: Vite Dev Server
-```bash
-npm run dev
-```
-
----
-
-## 🌐 Deployment Information
-
-### Live Production Deployment
-- **Active URL:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
-- **Configuration:** Handled via [`netlify.toml`](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/netlify.toml) with `publish = "."` and zero build commands, deploying directly from GitHub `main`.
-
-### Deploying to GitHub Pages
-1. Push this repository to GitHub:
-   ```bash
-   git add .
-   git commit -m "feat: complete BrandForge Round 2 MVP"
-   git push origin main
-   ```
-2. In your GitHub repository, navigate to **Settings** > **Pages**.
-3. Under **Build and deployment** > **Branch**, select `main` and root folder `/`. Click **Save**.
-
----
-
-## 🧪 Testing Instructions & Results
-
-An automated unit test suite verifies the rules engine, scoring, diff builder, rejection flow, and serializers:
 ```bash
 npm test
-# or: node tests/rulesEngine.test.js
 ```
 
-### Actual Test Results (from `TEST-REPORT.md`):
+### Test Suite Breakdown:
+
+#### 1. Rules Engine & Heuristic Verification (`tests/rulesEngine.test.js`)
 - `TC-01`: Input validation rejects empty title or content &rarr; **PASS**
 - `TC-02`: Detects prohibited terminology (`"cheap tool"`, `"bulletproof"`, `"foolproof"`) &rarr; **PASS**
 - `TC-03`: Flags unapproved promissory claims for human verification (`"guaranteed"`, `"100%"`) &rarr; **PASS**
 - `TC-04`: Flags juvenile hyperbole and aggressive hype (`"literally magic"`, `"total dominance"`) &rarr; **PASS**
 - `TC-05`: Flags sentences exceeding the 30-word accessibility limit &rarr; **PASS**
 - `TC-06`: Returns zero findings and 100% score for compliant content &rarr; **PASS**
-- `TC-07`: Deducts score by severity with floor of 10 &rarr; **PASS**
+- `TC-07`: Deducts score by severity: High (-18), Medium (-8), Low (-3) with floor of 10 &rarr; **PASS**
 - `TC-08`: Generates transparent deterministic replacement preserving text structure &rarr; **PASS**
 - `TC-09`: Accurately computes words and characters with whitespace handling &rarr; **PASS**
 - `TC-10`: Safely escapes user-defined punctuation and special characters &rarr; **PASS**
@@ -201,39 +183,104 @@ npm test
 - `TC-13`: Search filter accurately matches records by title or content type &rarr; **PASS**
 - `TC-14`: Workflow loop: Applying revision and re-running elevates score &rarr; **PASS**
 - `TC-15`: Aggregates rule frequencies, approval distribution, and high risk findings &rarr; **PASS**
-- `TC-16`: Validates input boundary conditions (title length, word count, character caps) &rarr; **PASS**
+- `TC-16`: Validates input boundary conditions: title length, word count, character caps &rarr; **PASS**
 - `TC-17`: Every finding contains an explicit guidelineSection attribution &rarr; **PASS**
 - `TC-18`: buildDiffData generates HTML diff markup with deletions and insertions &rarr; **PASS**
 - `TC-19`: Records explicit rejection (changes requested) with reviewer notes and status filtering &rarr; **PASS**
 - `TC-20`: Audit serializer outputs valid, structured JSON and formatted Markdown &rarr; **PASS**
 
-**Result: 20 / 20 Tests Passed (100% Pass Rate).** Full details are documented in [`TEST-REPORT.md`](file:///c:/Users/VISHAL/OneDrive/Desktop/Inkloom-AI-BrandForge/TEST-REPORT.md).
+#### 2. AI Review Engine & Schemas (`tests/aiReview.test.js`)
+- `TC-AI-01`: Input validation rejects empty title, title > 120 chars, and brief content &rarr; **PASS**
+- `TC-AI-02`: Grounding prompt ingests active guidelines, avoided terms, and facts &rarr; **PASS**
+- `TC-AI-03`: GEMINI_REVIEW_SCHEMA enforces required findings and suggested revision keys &rarr; **PASS**
+- `TC-AI-04`: Deterministic fallback separates factual claims requiring evidence from violations &rarr; **PASS**
+- `TC-AI-05`: Flags prohibited terminology with exact replacement and high severity &rarr; **PASS**
+- `TC-AI-06`: Suggested revision substitutes avoided terms and preserves grammar &rarr; **PASS**
+- `TC-AI-07`: Heuristic score deducts by severity and respects minimum floor of 10 &rarr; **PASS**
+- `TC-AI-08`: reviewBrand() with forceEngine="deterministic" succeeds with full payload &rarr; **PASS**
+- `TC-AI-09`: reviewBrand() cleanly falls back to deterministic engine when API key is unset &rarr; **PASS**
+- `TC-AI-10`: reviewBrand() returns status 400 when title or content violates bounds &rarr; **PASS**
+
+#### 3. Collaborative Workflow & State Machine (`tests/collaborativeWorkflow.test.js`)
+- `TC-WF-01`: Three distinct stakeholder roles are defined with labels &rarr; **PASS**
+- `TC-WF-02`: Content Creator can transition Drafting -> In Review and re-submit after changes &rarr; **PASS**
+- `TC-WF-03`: Content Creator cannot unilaterally grant Brand Approval or Legal Clearance &rarr; **PASS**
+- `TC-WF-04`: Brand Custodian can approve brand voice or request changes on review queue &rarr; **PASS**
+- `TC-WF-05`: Legal Officer can grant legal clearance or request factual documentation &rarr; **PASS**
+- `TC-WF-06`: Legal Officer cannot bypass Brand Custodian approval directly from Drafting or In Review &rarr; **PASS**
+- `TC-WF-07`: In-line comment threads validate input and attach to review record &rarr; **PASS**
+- `TC-WF-08`: Comment resolution toggle toggles resolved state &rarr; **PASS**
+- `TC-WF-09`: generateComplianceSeal produces 64-char hex hash and binds dual sign-offs &rarr; **PASS**
+- `TC-WF-10`: verifyComplianceSeal validates intact content and flags tampered drafts &rarr; **PASS**
+
+#### 4. Supabase RLS & Persistence Security (`tests/supabaseWorkflow.test.js`)
+- `TC-SB-01`: supabase/schema.sql exists and is non-empty &rarr; **PASS**
+- `TC-SB-02`: Schema defines all 8 required relational tables &rarr; **PASS**
+- `TC-SB-03`: Schema enables RLS and configures user roles and lifecycle enums &rarr; **PASS**
+- `TC-SB-04`: Schema enforces append-only security for audit_events with no update/delete policies &rarr; **PASS**
+- `TC-SB-05`: getSupabaseConfig accurately evaluates environment credentials &rarr; **PASS**
+- `TC-SB-06`: LocalFallbackStore inserts campaign with status "drafting" and version 1 &rarr; **PASS**
+- `TC-SB-07`: LocalFallbackStore records append-only audit event with actor role and state transitions &rarr; **PASS**
+- `TC-SB-08`: LocalFallbackStore rejects audit event missing required fields &rarr; **PASS**
+- `TC-SB-09`: LocalFallbackStore records compliance seal with SHA-256 hash and dual sign-offs &rarr; **PASS**
+- `TC-SB-10`: LocalFallbackStore rejects compliance seal when signatures or hash are missing &rarr; **PASS**
+- `TC-SB-11`: Security-definer functions enforce fixed search_path = public, pg_temp &rarr; **PASS**
+- `TC-SB-12`: handle_new_user hardcodes default role 'creator' and does not trust client metadata &rarr; **PASS**
+- `TC-SB-13`: Profiles table has trigger preventing client-side role or organization escalation &rarr; **PASS**
+- `TC-SB-14`: supabase/migration_security_patch.sql exists and contains idempotent security hardening &rarr; **PASS**
+- `TC-SB-15`: UUID validation accepts valid RFC 4122 UUIDs and rejects invalid strings &rarr; **PASS**
+
+**Overall Test Results: 55 / 55 Passed (100% Pass Rate)**
 
 ---
 
-## 🔒 Privacy, Security & Architectural Disclosures
+## 💻 How to Run Locally
 
-- **100% Client-Side:** All checking, revision generation, and storage occurs in local browser memory and `localStorage`.
-- **Zero Third-Party Model Training:** Draft marketing copy is never transmitted across the network or shared with external generative AI APIs.
-- **LocalStorage Boundary:** `localStorage` is local to the single browser profile on a specific machine. It is **not** a shared team database and does not sync across multiple users or devices.
-- **No Real LLM:** The Round 2 MVP operates strictly on deterministic JavaScript heuristics. It does not connect to a live LLM service.
-- **No External Fact-Checking or Legal Guarantees:** BrandForge verifies text against configured brand rules; it does not claim to verify external factual reality or guarantee legal compliance.
-- **No Autonomous Overrides:** BrandForge never alters author text without explicit human review and confirmation.
-- **Impact Hypothesis Disclosure:** The proposed 80%+ review-time reduction is a conceptual design objective and engineering hypothesis, not an empirically measured production benchmark. No formal user time studies have been conducted for this MVP.
+### Option 1: Direct File Open (Zero Dependencies)
+Simply open `index.html` directly in any modern browser. BrandForge operates in **Local Sandbox Mode** with in-memory / localStorage persistence.
+
+### Option 2: Local Static Server (Node.js)
+```bash
+npm start
+# or: node server.js
+```
+Open your browser at `http://localhost:5173/`.
+
+### Option 3: Vite Dev Server
+```bash
+npm run dev
+```
 
 ---
 
-## 🔮 Three Major Round 3 Improvements (Roadmap)
+## 🌐 Environment Configuration
 
-The following three capabilities represent our planned roadmap for Round 3 (The Finish) and are not current features of the Round 2 MVP:
+To configure the live cloud services, set the following environment variables (e.g. in your Netlify Site Configuration or local `.env`):
 
-1. **Evidence-Backed AI Brand Review:**
-   - Integrate a production LLM service constrained by structured JSON schemas and approved brand documentation with citations to exact rules.
-   - Separate confirmed rule mismatches from claims that require external factual documentation.
-2. **Collaborative Governance Workflow:**
-   - Multi-user roles (Content Creator, Brand Custodian, Legal Counsel) with approval stages and assignment queues.
-   - In-line contextual comments and side-by-side visual diff comparison.
-   - Cryptographic SHA-256 pre-publication seals.
-3. **Governance Intelligence & Analytics:**
-   - Detect recurring team-wide brand violations over time.
-   - Identify ambiguous or contradictory guidelines where authors frequently request exemptions.
+```bash
+# Google Gemini API Key (Server-side only)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Supabase Project Credentials (Client and Serverless)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_public_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_private_service_role_key_here
+```
+
+---
+
+## 🔒 Privacy, Security & AI Governance Disclosures
+
+- **Stateless Serverless Proxy:** Marketing copy processed by the AI review engine is transmitted over HTTPS directly to the serverless function and evaluated via the Gemini API. Neither Netlify nor BrandForge permanently caches raw copy.
+- **Client-Side Secrets Protection:** All API keys (`GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) are strictly confined to server-side execution. Only the public `anon` key is used in the browser.
+- **Append-Only Auditing:** Governance events (`audit_events`) can never be modified or deleted by normal authenticated users.
+- **Anti-Escalation Architecture:** Regular users cannot self-assign higher roles (`custodian` or `legal`) via client requests; roles are governed by PostgreSQL triggers and administrative assignment.
+- **Verifiable Cryptography:** Compliance seals use SHA-256 to guarantee that approved text has not been tampered with prior to publication.
+
+---
+
+## 📄 License & Attribution
+
+Developed for the **Inkloom AI Brand Governance Challenge (Codex 48)**.  
+Participant: **Vishal S Sollapure** | Team: **BrandForge**  
+Live Application: [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
