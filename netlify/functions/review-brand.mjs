@@ -42,11 +42,31 @@ export default async (req, context) => {
       contentType,
       rawText,
       guidelines,
-      forceEngine
+      forceEngine,
+      diagnostic
     } = body;
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    // Check multiple potential environment variable names with whitespace and quote stripping
+    const envVarName = process.env.GEMINI_API_KEY ? 'GEMINI_API_KEY' : (process.env.GOOGLE_API_KEY ? 'GOOGLE_API_KEY' : (process.env.GOOGLE_GEMINI_API_KEY ? 'GOOGLE_GEMINI_API_KEY' : 'NONE'));
+    const rawApiKey = (envVarName !== 'NONE' ? process.env[envVarName] : '') || '';
+    const apiKey = rawApiKey.trim().replace(/^["']|["']$/g, '');
+    const model = (process.env.GEMINI_MODEL || 'gemini-1.5-flash').trim();
+
+    // Safe diagnostic endpoint without exposing the secret
+    if (diagnostic === true || (req.url && req.url.includes('diagnostic=true'))) {
+      const isConfigured = Boolean(apiKey && apiKey.length >= 20 && !apiKey.includes('placeholder'));
+      return new Response(
+        JSON.stringify({
+          status: 'ok',
+          geminiConfigured: isConfigured,
+          envVarFound: envVarName,
+          keyLength: apiKey.length,
+          keyPrefix: isConfigured ? apiKey.slice(0, 4) + '...' : 'NONE',
+          model
+        }),
+        { status: 200, headers: CORS_HEADERS }
+      );
+    }
 
     const result = await reviewBrand({
       title,
@@ -105,11 +125,31 @@ export async function handler(event, context) {
       contentType,
       rawText,
       guidelines,
-      forceEngine
+      forceEngine,
+      diagnostic
     } = body;
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    // Check multiple potential environment variable names with whitespace and quote stripping
+    const envVarName = process.env.GEMINI_API_KEY ? 'GEMINI_API_KEY' : (process.env.GOOGLE_API_KEY ? 'GOOGLE_API_KEY' : (process.env.GOOGLE_GEMINI_API_KEY ? 'GOOGLE_GEMINI_API_KEY' : 'NONE'));
+    const rawApiKey = (envVarName !== 'NONE' ? process.env[envVarName] : '') || '';
+    const apiKey = rawApiKey.trim().replace(/^["']|["']$/g, '');
+    const model = (process.env.GEMINI_MODEL || 'gemini-1.5-flash').trim();
+
+    // Safe diagnostic endpoint without exposing the secret
+    if (diagnostic === true || (req.url && req.url.includes('diagnostic=true'))) {
+      const isConfigured = Boolean(apiKey && apiKey.length >= 20 && !apiKey.includes('placeholder'));
+      return new Response(
+        JSON.stringify({
+          status: 'ok',
+          geminiConfigured: isConfigured,
+          envVarFound: envVarName,
+          keyLength: apiKey.length,
+          keyPrefix: isConfigured ? apiKey.slice(0, 4) + '...' : 'NONE',
+          model
+        }),
+        { status: 200, headers: CORS_HEADERS }
+      );
+    }
 
     const result = await reviewBrand({
       title,

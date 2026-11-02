@@ -394,9 +394,12 @@ export async function callGeminiApi({
   model = 'gemini-1.5-flash',
   timeoutMs = 8000
 }) {
+  const cleanApiKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
+  const cleanModel = (model || 'gemini-1.5-flash').trim();
+
   const { systemInstruction, userPrompt } = buildGeminiPrompt(title, contentType, rawText, guidelines);
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cleanModel)}:generateContent?key=${encodeURIComponent(cleanApiKey)}`;
 
   const requestBody = {
     system_instruction: {
@@ -423,7 +426,8 @@ export async function callGeminiApi({
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-goog-api-key': cleanApiKey
       },
       body: JSON.stringify(requestBody),
       signal: controller.signal
@@ -463,7 +467,7 @@ export async function callGeminiApi({
 
     parsed.claimsRequiringEvidenceCount = parsed.findings.filter(f => f.isVerificationNeeded).length;
     parsed.engine = 'gemini';
-    parsed.model = model;
+    parsed.model = cleanModel;
     parsed.isFallback = false;
 
     return parsed;
@@ -493,9 +497,17 @@ export async function reviewBrand({
     };
   }
 
+  const cleanApiKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
+  const cleanModel = (model || 'gemini-1.5-flash').trim();
+  const isKeyMissingOrPlaceholder = !cleanApiKey || cleanApiKey.includes('placeholder') || cleanApiKey === 'your_gemini_api_key_here' || cleanApiKey.length < 15;
+
   // 2. Forced or fallback deterministic mode
-  if (forceEngine === 'deterministic' || !apiKey) {
+  if (forceEngine === 'deterministic' || isKeyMissingOrPlaceholder) {
     const result = runDeterministicReview(rawText, guidelines);
+    const notice = isKeyMissingOrPlaceholder
+      ? 'Gemini API key not configured in Netlify environment variables (GEMINI_API_KEY). Evaluated using local deterministic rules engine.'
+      : null;
+
     return {
       status: 200,
       data: {
@@ -505,8 +517,8 @@ export async function reviewBrand({
         rawText,
         timestamp: new Date().toISOString(),
         engine: 'deterministic',
-        isFallback: forceEngine !== 'deterministic' && !apiKey,
-        notice: !apiKey ? 'Gemini API key not configured. Using local deterministic rules engine.' : null
+        isFallback: forceEngine !== 'deterministic' && isKeyMissingOrPlaceholder,
+        notice
       }
     };
   }
@@ -518,8 +530,8 @@ export async function reviewBrand({
       contentType,
       rawText,
       guidelines,
-      apiKey,
-      model
+      apiKey: cleanApiKey,
+      model: cleanModel
     });
 
     return {
@@ -537,6 +549,13 @@ export async function reviewBrand({
     console.warn(`[BrandForge AI Review] Falling back to deterministic engine due to: ${err.message}`);
     const fallbackResult = runDeterministicReview(rawText, guidelines);
 
+    let diagnosticNotice = `AI service unavailable (${err.message.slice(0, 100)}). Evaluated using local deterministic rules engine.`;
+    if (err.message.includes('API key not valid') || err.message.includes('400')) {
+      diagnosticNotice = 'The GEMINI_API_KEY configured in Netlify environment variables was rejected by Google as invalid (HTTP 400). Please check your key in Google AI Studio. Evaluated using local deterministic rules engine.';
+    } else if (err.message.includes('quota') || err.message.includes('429')) {
+      diagnosticNotice = 'Gemini rate limit or quota exceeded. Evaluated using local deterministic rules engine.';
+    }
+
     return {
       status: 200,
       data: {
@@ -548,7 +567,7 @@ export async function reviewBrand({
         engine: 'deterministic_fallback',
         isFallback: true,
         fallbackReason: err.message,
-        notice: `AI service unavailable (${err.message.slice(0, 100)}). Evaluated using deterministic rules engine.`
+        notice: diagnosticNotice
       }
     };
   }

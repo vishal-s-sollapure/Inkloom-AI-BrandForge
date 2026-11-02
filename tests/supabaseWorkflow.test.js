@@ -297,6 +297,55 @@ runTest('TC-SB-25: Profiles selection policy includes id = auth.uid() self-recov
   assert.ok(sql.includes('id = auth.uid() OR organization_id = public.get_auth_org_id()'), 'profiles_select_org must include id = auth.uid()');
 });
 
+// TC-SB-26: saveHistory does not perform unawaited background cloud writes
+runTest('TC-SB-26: saveHistory does not trigger unawaited background cloud sync writes', () => {
+  const appJsPath = path.resolve(__dirname, '../app.js');
+  const appJs = fs.readFileSync(appJsPath, 'utf8');
+  const saveHistoryFunc = appJs.slice(appJs.indexOf('function saveHistory('), appJs.indexOf('function saveHistory(') + 300);
+  assert.ok(!saveHistoryFunc.includes('SupabaseManager.syncCampaignRecord'), 'saveHistory must not invoke syncCampaignRecord in background');
+});
+
+// TC-SB-27: Approval modal guards success toast with verified cloud writes and halts on error
+runTest('TC-SB-27: Approval modal guards success toast with verified cloud writes', () => {
+  const appJsPath = path.resolve(__dirname, '../app.js');
+  const appJs = fs.readFileSync(appJsPath, 'utf8');
+  assert.ok(appJs.includes("if (!syncRes.success)"), 'Approval modal must verify syncCampaignRecord result');
+  assert.ok(appJs.includes("if (!statusRes.success)"), 'Approval modal must verify updateCampaignStatus result');
+  assert.ok(appJs.includes("showToast(`Approval persistence failed:"), 'Approval modal must alert on persistence failure');
+});
+
+// TC-SB-28: Legal clearance verifies all cloud writes before generating success toast
+runTest('TC-SB-28: Legal clearance verifies sync, status update, and seal recording', () => {
+  const appJsPath = path.resolve(__dirname, '../app.js');
+  const appJs = fs.readFileSync(appJsPath, 'utf8');
+  assert.ok(appJs.includes("if (!sealRes.success)"), 'Legal clearance must verify recordComplianceSeal response');
+  assert.ok(appJs.includes("showToast(`Legal clearance sync failed:"), 'Legal clearance must alert if campaign sync fails');
+});
+
+// TC-SB-29: Review history displays visual indicators distinguishing cloud from local sandbox actions
+runTest('TC-SB-29: Review history displays cloud vs local persistence badges', () => {
+  const appJsPath = path.resolve(__dirname, '../app.js');
+  const stylesPath = path.resolve(__dirname, '../styles.css');
+  const appJs = fs.readFileSync(appJsPath, 'utf8');
+  const styles = fs.readFileSync(stylesPath, 'utf8');
+
+  assert.ok(appJs.includes('badge-cloud') && appJs.includes('badge-local'), 'app.js must render badge-cloud and badge-local badges');
+  assert.ok(styles.includes('.badge-cloud') && styles.includes('.badge-local'), 'styles.css must style .badge-cloud and .badge-local');
+});
+
+// TC-SB-30: Gemini API key sanitization trims whitespace, strips quotes, and safe diagnostic endpoint
+runTest('TC-SB-30: Gemini API key sanitization and safe diagnostic endpoint', () => {
+  const fnPath = path.resolve(__dirname, '../netlify/functions/review-brand.mjs');
+  const corePath = path.resolve(__dirname, '../netlify/functions/reviewBrandCore.mjs');
+  const fnCode = fs.readFileSync(fnPath, 'utf8');
+  const coreCode = fs.readFileSync(corePath, 'utf8');
+
+  assert.ok(fnCode.includes('trim()') && fnCode.includes("replace(/^[\"']|[\"']$/g, '')"), 'Must sanitize API key whitespace and quotes');
+  assert.ok(fnCode.includes('geminiConfigured') && fnCode.includes('keyPrefix'), 'Must provide safe diagnostic endpoint');
+  assert.ok(!fnCode.includes('apiKey: apiKey'), 'Diagnostic must never return full API key');
+  assert.ok(coreCode.includes('x-goog-api-key'), 'Must send x-goog-api-key header');
+});
+
 console.log('========================================');
 console.log(`Supabase & Persistence Test Summary: ${passedTests} / ${passedTests + failedTests} PASSED`);
 console.log('========================================\n');

@@ -84,7 +84,9 @@ With this release, our system eliminates human managers and editorial review bec
         { ruleTitle: 'Promissory Claim Requiring Verification: "guaranteed"', severity: 'high', type: 'claim_verification' },
         { ruleTitle: 'Readability: Sentence exceeds 30 words', severity: 'low', type: 'accessibility' }
       ],
-      status: 'flagged'
+      status: 'changes_requested',
+      workflowStage: 'changes_requested',
+      isCloudPersisted: false
     },
     {
       id: 'demo-2',
@@ -95,7 +97,9 @@ With this release, our system eliminates human managers and editorial review bec
       findings: [
         { ruleTitle: 'Avoided Term: "our bot"', severity: 'medium', type: 'term_avoid' }
       ],
-      status: 'approved'
+      status: 'brand_approved',
+      workflowStage: 'brand_approved',
+      isCloudPersisted: false
     },
     {
       id: 'demo-3',
@@ -104,7 +108,9 @@ With this release, our system eliminates human managers and editorial review bec
       type: 'landing_page',
       score: 95,
       findings: [],
-      status: 'approved'
+      status: 'brand_approved',
+      workflowStage: 'brand_approved',
+      isCloudPersisted: false
     }
   ];
 
@@ -405,9 +411,6 @@ With this release, our system eliminates human managers and editorial review bec
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
-      }
-      if (history && history.length > 0) {
-        SupabaseManager.syncCampaignRecord(history[0]);
       }
       return true;
     } catch (e) {
@@ -1011,6 +1014,7 @@ With this release, our system eliminates human managers and editorial review bec
           status: currentStatus
         });
 
+        record.isCloudPersisted = true;
         return { success: true, campaign: campResult.data || record };
       } catch (err) {
         console.error('[BrandForge] Supabase Cloud Write Error:', err);
@@ -1068,18 +1072,23 @@ With this release, our system eliminates human managers and editorial review bec
             .eq('id', campaignId);
 
           if (error) {
-            showToast(`Status update failed in Supabase: ${error.message}`, 'error');
-            return { success: false, message: error.message };
+            const errorMsg = `Status update failed in Supabase: ${error.message}${error.details ? ' (' + error.details + ')' : ''}`;
+            console.error('[BrandForge] Status update error:', errorMsg);
+            showToast(errorMsg, 'error');
+            return { success: false, message: errorMsg };
           }
 
           await this.recordAuditEvent(campaignId, 'status_change', { status: previousStatus }, { status: normalizedTarget });
           return { success: true };
         } catch (err) {
-          showToast(`Status sync error: ${err.message}`, 'error');
-          return { success: false, message: err.message };
+          const errorMsg = `Status sync error: ${err.message}`;
+          console.error('[BrandForge] Status sync error:', errorMsg);
+          showToast(errorMsg, 'error');
+          return { success: false, message: errorMsg };
         }
       }
-      return { success: true };
+      return { success: true, localOnly: true };
+    },
     },
 
     // In-line comment creation
@@ -1163,17 +1172,23 @@ With this release, our system eliminates human managers and editorial review bec
           });
 
           if (error) {
-            console.warn('Could not record compliance seal in Supabase:', error.message);
+            const errorMsg = `Could not record compliance seal in Supabase: ${error.message}${error.details ? ' (' + error.details + ')' : ''}`;
+            console.warn('[BrandForge]', errorMsg);
+            return { success: false, message: errorMsg };
           } else {
             await this.recordAuditEvent(campaignId, 'seal_generated', null, {
               sealId: sealData.sealId,
               sha256: sealData.sha256Hash
             });
+            return { success: true, sealId: sealUuid };
           }
         } catch (err) {
-          console.warn('Compliance seal network notice:', err.message);
+          const errorMsg = `Compliance seal network notice: ${err.message}`;
+          console.warn('[BrandForge]', errorMsg);
+          return { success: false, message: errorMsg };
         }
       }
+      return { success: true, localOnly: true };
     },
 
     // Pull shared campaigns from Supabase cloud database
@@ -1260,7 +1275,8 @@ With this release, our system eliminates human managers and editorial review bec
               comments,
               complianceSeal: seal,
               timestamp: c.created_at,
-              engine: 'ai'
+              engine: 'ai',
+              isCloudPersisted: true
             };
           });
 
@@ -1580,12 +1596,21 @@ With this release, our system eliminates human managers and editorial review bec
   function updateOverviewMetrics() {
     const list = currentReviewHistory;
     const total = list.length;
-    const approved = list.filter(item => item.status === 'approved').length;
-    const flagged = list.filter(item => item.status === 'flagged' || item.status === 'rejected').length;
+    const approved = list.filter(item => {
+      const norm = normalizeCampaignStatus(item.status || item.workflowStage);
+      return norm === 'brand_approved' || norm === 'legally_cleared';
+    }).length;
+    const flagged = list.filter(item => {
+      const norm = normalizeCampaignStatus(item.status || item.workflowStage);
+      return norm === 'changes_requested';
+    }).length;
 
     // Calculate unresolved findings across flagged / rejected items
     let outstanding = 0;
-    list.filter(item => item.status !== 'approved').forEach(item => {
+    list.filter(item => {
+      const norm = normalizeCampaignStatus(item.status || item.workflowStage);
+      return norm !== 'brand_approved' && norm !== 'legally_cleared';
+    }).forEach(item => {
       outstanding += (item.findings ? item.findings.length : 0);
     });
 
@@ -1787,8 +1812,14 @@ With this release, our system eliminates human managers and editorial review bec
     DOM.historyTableBody.innerHTML = '';
 
     const allCount = list.length;
-    const appCount = list.filter(item => item.status === 'approved').length;
-    const rejCount = list.filter(item => item.status === 'rejected' || item.status === 'flagged').length;
+    const appCount = list.filter(item => {
+      const norm = normalizeCampaignStatus(item.status || item.workflowStage);
+      return norm === 'brand_approved' || norm === 'legally_cleared';
+    }).length;
+    const rejCount = list.filter(item => {
+      const norm = normalizeCampaignStatus(item.status || item.workflowStage);
+      return norm === 'changes_requested';
+    }).length;
 
     if (DOM.hfilterAllCount) DOM.hfilterAllCount.textContent = allCount.toString();
     if (DOM.hfilterAppCount) DOM.hfilterAppCount.textContent = appCount.toString();
@@ -1796,8 +1827,9 @@ With this release, our system eliminates human managers and editorial review bec
 
     const filtered = list.filter(item => {
       // 1. Status Filter
-      if (currentHistoryStatusFilter === 'approved' && item.status !== 'approved') return false;
-      if (currentHistoryStatusFilter === 'rejected' && item.status !== 'rejected' && item.status !== 'flagged') return false;
+      const norm = normalizeCampaignStatus(item.status || item.workflowStage);
+      if (currentHistoryStatusFilter === 'approved' && norm !== 'brand_approved' && norm !== 'legally_cleared') return false;
+      if (currentHistoryStatusFilter === 'rejected' && norm !== 'changes_requested') return false;
 
       // 2. Search Filter
       if (!searchTerm) return true;
@@ -1845,13 +1877,27 @@ With this release, our system eliminates human managers and editorial review bec
       const tdFindings = document.createElement('td');
       tdFindings.textContent = `${item.findings ? item.findings.length : 0} items`;
 
-      // Status
+      // Status & Persistence Indicator
       const tdStatus = document.createElement('td');
+      const normStatus = normalizeCampaignStatus(item.status || item.workflowStage);
       const statusPill = document.createElement('span');
-      const isRejected = item.status === 'rejected';
-      statusPill.className = `status-pill ${item.status || 'draft'}`;
-      statusPill.textContent = isRejected ? 'CHANGES REQUESTED' : (item.status || 'draft').toUpperCase();
+      statusPill.className = `status-pill ${normStatus}`;
+
+      let statusLabel = 'DRAFT';
+      if (normStatus === 'brand_approved') statusLabel = 'BRAND APPROVED';
+      else if (normStatus === 'legally_cleared') statusLabel = 'LEGALLY CLEARED';
+      else if (normStatus === 'changes_requested') statusLabel = 'CHANGES REQUESTED';
+      else if (normStatus === 'in_review') statusLabel = 'IN REVIEW';
+      statusPill.textContent = statusLabel;
       tdStatus.appendChild(statusPill);
+
+      // Visual indicator distinguishing Cloud-persisted from Local sandbox records
+      const isCloud = Boolean(item.isCloudPersisted);
+      const sourceBadge = document.createElement('span');
+      sourceBadge.className = isCloud ? 'badge-cloud' : 'badge-local';
+      sourceBadge.title = isCloud ? 'Persisted in Supabase PostgreSQL Cloud Database' : 'Saved locally in browser storage (Sandbox)';
+      sourceBadge.textContent = isCloud ? '☁ Cloud' : '💾 Local';
+      tdStatus.appendChild(sourceBadge);
 
       // Actions
       const tdAction = document.createElement('td');
@@ -1893,8 +1939,9 @@ With this release, our system eliminates human managers and editorial review bec
     let flaggedCount = 0;
 
     list.forEach(review => {
-      if (review.status === 'approved') approvedCount++;
-      if (review.status === 'flagged') flaggedCount++;
+      const norm = normalizeCampaignStatus(review.status || review.workflowStage);
+      if (norm === 'brand_approved' || norm === 'legally_cleared') approvedCount++;
+      if (norm === 'changes_requested') flaggedCount++;
 
       if (Array.isArray(review.findings)) {
         review.findings.forEach(f => {
@@ -2276,7 +2323,12 @@ With this release, our system eliminates human managers and editorial review bec
     currentInspectedRecord = record;
     DOM.detailDate.textContent = new Date(record.timestamp).toLocaleString();
     DOM.detailType.textContent = (record.type || 'General').replace('_', ' ');
-    const displayStatus = record.status === 'rejected' ? 'CHANGES REQUESTED' : (record.status || 'draft').toUpperCase();
+    const norm = normalizeCampaignStatus(record.status || record.workflowStage);
+    let displayStatus = 'DRAFT';
+    if (norm === 'brand_approved') displayStatus = 'BRAND APPROVED';
+    else if (norm === 'legally_cleared') displayStatus = 'LEGALLY CLEARED';
+    else if (norm === 'changes_requested') displayStatus = 'CHANGES REQUESTED';
+    else if (norm === 'in_review') displayStatus = 'IN REVIEW';
     DOM.detailStatus.textContent = displayStatus;
     DOM.detailScore.textContent = `${record.score}%`;
     DOM.detailContentText.textContent = record.rawText || '(No content preserved)';
@@ -2493,25 +2545,42 @@ With this release, our system eliminates human managers and editorial review bec
           btnSubmit.disabled = true;
           btnSubmit.innerHTML = '<span>Saving to Cloud... ⏳</span>';
 
-          latestCheckResults.id = ensureUuid(latestCheckResults.id);
-          latestCheckResults.revisionId = ensureUuid(latestCheckResults.revisionId);
-          latestCheckResults.workflowStage = 'in_review';
+          try {
+            latestCheckResults.id = ensureUuid(latestCheckResults.id);
+            latestCheckResults.revisionId = ensureUuid(latestCheckResults.revisionId);
+            latestCheckResults.workflowStage = 'in_review';
+            latestCheckResults.status = 'in_review';
 
-          const syncRes = await SupabaseManager.syncCampaignRecord(latestCheckResults);
-          if (!syncRes.success && SupabaseManager.connectionState === 'authenticated') {
+            const syncRes = await SupabaseManager.syncCampaignRecord(latestCheckResults);
+            if (!syncRes.success && SupabaseManager.connectionState === 'authenticated') {
+              btnSubmit.disabled = false;
+              btnSubmit.innerHTML = '<span>Submit for Brand Review ➔</span>';
+              showToast(`Submission failed: ${syncRes.message}`, 'error');
+              return;
+            }
+
+            if (SupabaseManager.connectionState === 'authenticated') {
+              latestCheckResults.isCloudPersisted = true;
+            }
+
+            updateWorkflowUI('in_review');
+
+            // Persist to local state and update review table
+            const updatedHistory = [latestCheckResults, ...currentReviewHistory.filter(r => r.id !== latestCheckResults.id)];
+            saveHistory(updatedHistory);
+
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = '<span>Submit for Brand Review ➔</span>';
-            showToast(`Submission failed: ${syncRes.message}`, 'error');
-            return;
+
+            const toastMsg = SupabaseManager.connectionState === 'authenticated'
+              ? 'Draft officially submitted for Brand Custodian review and synchronized to database!'
+              : 'Draft saved locally (Sandbox Mode). Connect Supabase to sync across team.';
+            showToast(toastMsg, 'success');
+          } catch (err) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<span>Submit for Brand Review ➔</span>';
+            showToast(`Submission error: ${err.message}`, 'error');
           }
-
-          updateWorkflowUI('in_review');
-
-          // Persist to local state and update review table
-          const updatedHistory = [latestCheckResults, ...currentReviewHistory.filter(r => r.id !== latestCheckResults.id)];
-          saveHistory(updatedHistory);
-
-          showToast('Draft officially submitted for Brand Custodian review and synchronized to database!', 'success');
         };
         DOM.stepperActionsBar.appendChild(btnSubmit);
       } else if (stage === 'in_review') {
@@ -2547,17 +2616,45 @@ With this release, our system eliminates human managers and editorial review bec
             showToast('Run check before approving.', 'error');
             return;
           }
-          latestCheckResults.id = ensureUuid(latestCheckResults.id);
-          latestCheckResults.brandCustodianSignoff = {
-            name: (SupabaseManager.profile && SupabaseManager.profile.full_name) || 'Brand Custodian',
-            userId: SupabaseManager.user ? SupabaseManager.user.id : null,
-            timestamp: new Date().toISOString(),
-            verified: true
-          };
-          latestCheckResults.workflowStage = 'brand_approved';
-          updateWorkflowUI('brand_approved');
-          await SupabaseManager.updateCampaignStatus(latestCheckResults.id, 'brand_approved', 'in_review');
-          showToast('Brand voice approved. Escalated to Legal for clearance.', 'success');
+          btnApprove.disabled = true;
+          const origText = btnApprove.textContent;
+          btnApprove.textContent = 'Approving... ⏳';
+
+          try {
+            latestCheckResults.id = ensureUuid(latestCheckResults.id);
+            latestCheckResults.revisionId = ensureUuid(latestCheckResults.revisionId);
+            latestCheckResults.brandCustodianSignoff = {
+              name: (SupabaseManager.profile && SupabaseManager.profile.full_name) || 'Brand Custodian',
+              userId: SupabaseManager.user ? SupabaseManager.user.id : null,
+              timestamp: new Date().toISOString(),
+              verified: true
+            };
+            latestCheckResults.workflowStage = 'brand_approved';
+            latestCheckResults.status = 'brand_approved';
+
+            if (SupabaseManager.connectionState === 'authenticated') {
+              const statusRes = await SupabaseManager.updateCampaignStatus(latestCheckResults.id, 'brand_approved', 'in_review');
+              if (!statusRes.success) {
+                btnApprove.disabled = false;
+                btnApprove.textContent = origText;
+                showToast(`Approval failed: ${statusRes.message}`, 'error');
+                return;
+              }
+              latestCheckResults.isCloudPersisted = true;
+            }
+
+            updateWorkflowUI('brand_approved');
+            const updatedHistory = [latestCheckResults, ...currentReviewHistory.filter(r => r.id !== latestCheckResults.id)];
+            saveHistory(updatedHistory);
+
+            btnApprove.disabled = false;
+            btnApprove.textContent = origText;
+            showToast('Brand voice approved. Escalated to Legal for clearance.', 'success');
+          } catch (err) {
+            btnApprove.disabled = false;
+            btnApprove.textContent = origText;
+            showToast(`Approval error: ${err.message}`, 'error');
+          }
         };
 
         const btnReject = document.createElement('button');
@@ -2704,18 +2801,40 @@ With this release, our system eliminates human managers and editorial review bec
       reviewerNotes: 'Final legal clearance granted. Cryptographic compliance seal generated.'
     };
 
-    const updatedHistory = [record, ...currentReviewHistory];
-    saveHistory(updatedHistory);
+    // If authenticated, sync campaign, update status, and record seal to Supabase
+    if (SupabaseManager.connectionState === 'authenticated') {
+      const syncRes = await SupabaseManager.syncCampaignRecord(record);
+      if (!syncRes.success) {
+        showToast(`Legal clearance sync failed: ${syncRes.message}`, 'error');
+        return;
+      }
 
-    // Sync to Supabase
-    await SupabaseManager.syncCampaignRecord(record);
-    await SupabaseManager.updateCampaignStatus(record.id, 'legally_cleared', 'brand_approved');
-    await SupabaseManager.recordComplianceSeal(record.id, record.revisionId, seal);
+      const statusRes = await SupabaseManager.updateCampaignStatus(record.id, 'legally_cleared', 'brand_approved');
+      if (!statusRes.success) {
+        showToast(`Status update to legally_cleared failed: ${statusRes.message}`, 'error');
+        return;
+      }
+
+      const sealRes = await SupabaseManager.recordComplianceSeal(record.id, record.revisionId, seal);
+      if (!sealRes.success) {
+        showToast(`Compliance seal recording failed: ${sealRes.message}`, 'error');
+        return;
+      }
+
+      record.isCloudPersisted = true;
+      latestCheckResults.isCloudPersisted = true;
+    }
+
+    const updatedHistory = [record, ...currentReviewHistory.filter(r => r.id !== record.id)];
+    saveHistory(updatedHistory);
 
     updateWorkflowUI('legally_cleared');
     openComplianceSealModal(record);
 
-    showToast('Pre-Publication Compliance Seal generated and recorded!', 'success');
+    const successMsg = SupabaseManager.connectionState === 'authenticated'
+      ? 'Pre-Publication Compliance Seal generated and recorded to Supabase Cloud!'
+      : 'Pre-Publication Compliance Seal generated and recorded in Local Sandbox.';
+    showToast(successMsg, 'success');
   }
 
   // Open Compliance Seal Certificate Modal
@@ -3354,31 +3473,74 @@ With this release, our system eliminates human managers and editorial review bec
 
     // Confirm Rejection Button
     if (DOM.modalConfirmRejectBtn) {
-      DOM.modalConfirmRejectBtn.addEventListener('click', () => {
+      DOM.modalConfirmRejectBtn.addEventListener('click', async () => {
         if (!latestCheckResults) return;
 
-        const record = {
-          id: ensureUuid(latestCheckResults.id),
-          revisionId: ensureUuid(latestCheckResults.revisionId),
-          timestamp: new Date().toISOString(),
-          title: (DOM.contentTitle && DOM.contentTitle.value.trim()) || latestCheckResults.title,
-          type: latestCheckResults.type,
-          score: latestCheckResults.score,
-          findings: latestCheckResults.findings,
-          rawText: (DOM.draftInput && DOM.draftInput.value.trim()) || latestCheckResults.rawText,
-          status: 'changes_requested',
-          workflowStage: 'changes_requested',
-          engine: latestCheckResults.engine || activeEngineMode,
-          claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
-          reviewerNotes: DOM.rejectReviewerNotes.value.trim() || 'Author revision required to address flagged policy findings.'
-        };
+        DOM.modalConfirmRejectBtn.disabled = true;
+        const originalText = DOM.modalConfirmRejectBtn.textContent;
+        DOM.modalConfirmRejectBtn.textContent = 'Saving... ⏳';
 
-        const updatedHistory = [record, ...currentReviewHistory.filter(r => r.id !== record.id)];
-        saveHistory(updatedHistory);
-        updateWorkflowUI('changes_requested');
+        try {
+          const campaignId = ensureUuid(latestCheckResults.id);
+          const revisionId = ensureUuid(latestCheckResults.revisionId);
+          const reviewerNotes = DOM.rejectReviewerNotes.value.trim() || 'Author revision required to address flagged policy findings.';
 
-        closeModal('modal-reject');
-        showToast('Draft recorded as Changes Requested in Review History.', 'error');
+          latestCheckResults.id = campaignId;
+          latestCheckResults.revisionId = revisionId;
+          latestCheckResults.status = 'changes_requested';
+          latestCheckResults.workflowStage = 'changes_requested';
+
+          const record = {
+            id: campaignId,
+            revisionId: revisionId,
+            timestamp: new Date().toISOString(),
+            title: (DOM.contentTitle && DOM.contentTitle.value.trim()) || latestCheckResults.title,
+            type: latestCheckResults.type,
+            score: latestCheckResults.score,
+            findings: latestCheckResults.findings,
+            rawText: (DOM.draftInput && DOM.draftInput.value.trim()) || latestCheckResults.rawText,
+            status: 'changes_requested',
+            workflowStage: 'changes_requested',
+            engine: latestCheckResults.engine || activeEngineMode,
+            claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
+            reviewerNotes: reviewerNotes,
+            isCloudPersisted: false
+          };
+
+          if (SupabaseManager.connectionState === 'authenticated') {
+            const statusRes = await SupabaseManager.updateCampaignStatus(record.id, 'changes_requested', latestCheckResults.workflowStage || 'in_review');
+            if (!statusRes.success) {
+              DOM.modalConfirmRejectBtn.disabled = false;
+              DOM.modalConfirmRejectBtn.textContent = originalText;
+              showToast(`Changes request failed: ${statusRes.message}`, 'error');
+              return;
+            }
+
+            if (reviewerNotes) {
+              await SupabaseManager.postComment(record.id, record.revisionId, 'Changes Requested', reviewerNotes);
+            }
+
+            record.isCloudPersisted = true;
+            latestCheckResults.isCloudPersisted = true;
+          }
+
+          const updatedHistory = [record, ...currentReviewHistory.filter(r => r.id !== record.id)];
+          saveHistory(updatedHistory);
+          updateWorkflowUI('changes_requested');
+
+          closeModal('modal-reject');
+          DOM.modalConfirmRejectBtn.disabled = false;
+          DOM.modalConfirmRejectBtn.textContent = originalText;
+
+          const msg = SupabaseManager.connectionState === 'authenticated'
+            ? 'Changes requested and updated in Supabase Cloud Database.'
+            : 'Draft recorded as Changes Requested in Review History.';
+          showToast(msg, 'info');
+        } catch (err) {
+          DOM.modalConfirmRejectBtn.disabled = false;
+          DOM.modalConfirmRejectBtn.textContent = originalText;
+          showToast(`Request error: ${err.message}`, 'error');
+        }
       });
     }
 
@@ -3395,32 +3557,88 @@ With this release, our system eliminates human managers and editorial review bec
     });
 
     // Confirm Approval Button
-    DOM.modalConfirmApproveBtn.addEventListener('click', () => {
+    DOM.modalConfirmApproveBtn.addEventListener('click', async () => {
       if (!latestCheckResults) return;
 
-      const approvedContent = (DOM.suggestedRevisionText && DOM.suggestedRevisionText.value.trim()) || latestCheckResults.rawText;
-      const record = {
-        id: ensureUuid(latestCheckResults.id),
-        revisionId: ensureUuid(latestCheckResults.revisionId),
-        timestamp: new Date().toISOString(),
-        title: (DOM.contentTitle && DOM.contentTitle.value.trim()) || latestCheckResults.title,
-        type: latestCheckResults.type,
-        score: latestCheckResults.score,
-        findings: latestCheckResults.findings,
-        rawText: approvedContent,
-        status: 'brand_approved',
-        workflowStage: 'brand_approved',
-        engine: latestCheckResults.engine || activeEngineMode,
-        claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
-        reviewerNotes: null
-      };
+      DOM.modalConfirmApproveBtn.disabled = true;
+      const originalText = DOM.modalConfirmApproveBtn.textContent;
+      DOM.modalConfirmApproveBtn.textContent = 'Approving... ⏳';
 
-      const updatedHistory = [record, ...currentReviewHistory.filter(r => r.id !== record.id)];
-      saveHistory(updatedHistory);
-      updateWorkflowUI('brand_approved');
+      try {
+        const approvedContent = (DOM.suggestedRevisionText && DOM.suggestedRevisionText.value.trim()) || latestCheckResults.rawText;
+        const campaignId = ensureUuid(latestCheckResults.id);
+        const revisionId = ensureUuid(latestCheckResults.revisionId);
 
-      closeModal('modal-approve');
-      showToast('Version officially approved and logged in Review History.', 'success');
+        latestCheckResults.id = campaignId;
+        latestCheckResults.revisionId = revisionId;
+        latestCheckResults.status = 'brand_approved';
+        latestCheckResults.workflowStage = 'brand_approved';
+        latestCheckResults.brandCustodianSignoff = {
+          name: (SupabaseManager.profile && SupabaseManager.profile.full_name) || 'Brand Custodian',
+          userId: SupabaseManager.user ? SupabaseManager.user.id : null,
+          timestamp: new Date().toISOString(),
+          verified: true
+        };
+
+        const record = {
+          id: campaignId,
+          revisionId: revisionId,
+          timestamp: new Date().toISOString(),
+          title: (DOM.contentTitle && DOM.contentTitle.value.trim()) || latestCheckResults.title,
+          type: latestCheckResults.type,
+          score: latestCheckResults.score,
+          findings: latestCheckResults.findings,
+          rawText: approvedContent,
+          status: 'brand_approved',
+          workflowStage: 'brand_approved',
+          engine: latestCheckResults.engine || activeEngineMode,
+          claimsRequiringEvidenceCount: latestCheckResults.claimsRequiringEvidenceCount || 0,
+          reviewerNotes: null,
+          brandCustodianSignoff: latestCheckResults.brandCustodianSignoff,
+          isCloudPersisted: false
+        };
+
+        // If authenticated to Supabase, sync changes and verify real cloud write
+        if (SupabaseManager.connectionState === 'authenticated') {
+          // 1. Sync campaign record & revision
+          const syncRes = await SupabaseManager.syncCampaignRecord(record);
+          if (!syncRes.success) {
+            DOM.modalConfirmApproveBtn.disabled = false;
+            DOM.modalConfirmApproveBtn.textContent = originalText;
+            showToast(`Approval persistence failed: ${syncRes.message}`, 'error');
+            return;
+          }
+
+          // 2. Advance lifecycle status
+          const statusRes = await SupabaseManager.updateCampaignStatus(record.id, 'brand_approved', latestCheckResults.workflowStage || 'in_review');
+          if (!statusRes.success) {
+            DOM.modalConfirmApproveBtn.disabled = false;
+            DOM.modalConfirmApproveBtn.textContent = originalText;
+            showToast(`Approval status transition failed: ${statusRes.message}`, 'error');
+            return;
+          }
+
+          record.isCloudPersisted = true;
+          latestCheckResults.isCloudPersisted = true;
+        }
+
+        const updatedHistory = [record, ...currentReviewHistory.filter(r => r.id !== record.id)];
+        saveHistory(updatedHistory);
+        updateWorkflowUI('brand_approved');
+
+        closeModal('modal-approve');
+        DOM.modalConfirmApproveBtn.disabled = false;
+        DOM.modalConfirmApproveBtn.textContent = originalText;
+
+        const successMsg = SupabaseManager.connectionState === 'authenticated'
+          ? 'Version officially approved and synchronized to Supabase Cloud Database!'
+          : 'Version officially approved and logged in Review History.';
+        showToast(successMsg, 'success');
+      } catch (err) {
+        DOM.modalConfirmApproveBtn.disabled = false;
+        DOM.modalConfirmApproveBtn.textContent = originalText;
+        showToast(`Approval error: ${err.message}`, 'error');
+      }
     });
 
     // Save Guidelines

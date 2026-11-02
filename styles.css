@@ -895,22 +895,73 @@ code, .font-mono {
   font-family: var(--font-mono);
 }
 
+.status-pill.brand_approved,
 .status-pill.approved {
   background: var(--status-success-bg);
   border: 1px solid var(--status-success-border);
   color: var(--status-success-text);
 }
 
+.status-pill.legally_cleared,
+.status-pill.cleared {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+}
+
+.status-pill.in_review,
+.status-pill.review {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.status-pill.changes_requested,
+.status-pill.rejected,
 .status-pill.flagged {
   background: var(--sev-high-bg);
   border: 1px solid var(--sev-high-border);
   color: var(--sev-high-text);
 }
 
+.status-pill.drafting,
 .status-pill.draft {
   background: var(--sev-low-bg);
   border: 1px solid var(--sev-low-border);
   color: var(--sev-low-text);
+}
+
+/* Cloud vs Local Persistence Indicator Badges */
+.badge-cloud {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  background: rgba(30, 144, 255, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.badge-local {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
 /* Empty States */
