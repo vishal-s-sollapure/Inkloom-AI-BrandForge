@@ -7,7 +7,7 @@
 [![Vanilla JS](https://img.shields.io/badge/Stack-HTML5%20%2F%20CSS3%20%2F%20JS-F7DF1E?logo=javascript&logoColor=black)](#)
 [![Google Gemini](https://img.shields.io/badge/AI%20Engine-Gemini%20Flash-4285F4?logo=google&logoColor=white)](#)
 [![Supabase](https://img.shields.io/badge/Cloud%20DB-Supabase%20PostgreSQL%20%2B%20RLS-3ECF8E?logo=supabase&logoColor=white)](#)
-[![Automated Tests](https://img.shields.io/badge/Tests-70%2F70%20Passed-10B981)](#)
+[![Automated Tests](https://img.shields.io/badge/Tests-85%2F85%20Passed-10B981)](#)
 
 ---
 
@@ -22,7 +22,7 @@ In **Round 2 (The Build)**, BrandForge established its core foundation: a determ
 In **Round 3 (The Finish)**, BrandForge completes its transformation into a production-grade, collaborative, AI-powered brand governance product delivering **all three committed Round 3 improvements**:
 1. **Evidence-Backed AI Brand Review** powered by Google Gemini with structured JSON schemas, policy grounding, claim-verification tagging, and deterministic fallback.
 2. **Collaborative Multi-Role Governance Workflow** backed by Supabase PostgreSQL, Row-Level Security (RLS), 3 distinct stakeholder roles (`Content Creator`, `Brand Custodian`, `Legal & Compliance Officer`), in-line contextual comments on visual diffs, and cryptographic SHA-256 compliance seals.
-3. **Governance Intelligence & Policy Friction Radar** providing aggregate analytics, guideline gap detection, and actionable clarity recommendations based on real review patterns.
+3. **Governance Intelligence & Policy Friction Radar** providing an 8-KPI health ribbon, collaborative lifecycle stage pipeline, review velocity and bottleneck diagnostics, recurring brand drift detection, automated policy friction scanner with concrete measurable rule rewrites, and exportable audit reporting (Markdown & JSON).
 
 ---
 
@@ -35,7 +35,18 @@ In **Round 3 (The Finish)**, BrandForge completes its transformation into a prod
 - **Stage:** Round 3 — The Finish (Final Production Submission)
 - **Live Deployed Application:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
 - **Source Code Repository:** [https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge)
-- **Automated Test Coverage:** 70 / 70 tests passing across 4 comprehensive suites (100% success rate).
+- **Automated Test Coverage:** 85 / 85 tests passing across 5 comprehensive suites (100% success rate).
+
+---
+
+## 📚 Complete Project Documentation
+
+Detailed technical documentation is available in the [`docs/`](docs/) directory:
+- 🏛️ [**System Architecture**](docs/ARCHITECTURE.md) — Architectural overview, frontend SPA design, serverless backend, Supabase database schema, and security boundaries.
+- 🎯 [**Round 3 Improvements Deep-Dive**](docs/ROUND_3_IMPROVEMENTS.md) — Comprehensive technical implementation of all 3 Round 3 commitments.
+- 🧪 [**Testing Guide & Verification Catalog**](docs/TESTING.md) — Execution commands, complete catalog of 85 automated tests, unit vs. integration testing, and manual verification checklists.
+- 🗺️ [**Product Roadmap & System Boundaries**](docs/ROADMAP.md) — Delivery maturity matrix, edge-case mitigation, and post-hackathon roadmap.
+- 📋 [**Final Verification Report**](docs/FINAL_VERIFICATION_REPORT.md) — Executive audit report covering features, database integrity, live tests, and build status.
 
 ---
 
@@ -60,9 +71,17 @@ In **Round 3 (The Finish)**, BrandForge completes its transformation into a prod
 - **3-State Real-Time Connection Indicator:** Seamlessly transitions between 🟡 **Local Sandbox Mode** (isolated browser storage), 🔵 **Gateway Verified** (Supabase connected, sign-in required), and 🟢 **Live Authenticated** (PostgreSQL + RLS active).
 
 ### Improvement 3: Governance Intelligence & Policy Friction Radar
-- **Recurring Violation Analytics:** Identifies high-frequency rule infractions across historical reviews.
-- **Guideline Gap & Clarity Recommendations:** Heuristically detects ambiguous or overly restrictive rules where creators frequently trigger warnings, recommending editorial adjustments.
-- **Approval Distribution & Risk Breakdown:** Visual progress indicators tracking first-pass approval rates, rejection patterns, and high-severity compliance blockers.
+- **8-Metric KPI Ribbon:** Real-time visibility into Total Audited Campaigns, Clean First-Pass Rate, Avg Turnaround Hours, Active Policy Friction Points, Critical Breaches Prevented, In-Flight Reviews Pending, Guideline Coverage Score, and Compliance Seals Logged.
+- **Collaborative Lifecycle Pipeline:** Visual distribution tracking campaigns across all 5 workflow stages (`Drafting`, `In Review`, `Changes Requested`, `Brand Approved`, `Legally Cleared`).
+- **Velocity & Bottleneck Radar:** Analyzes pending review queue aging, flags potential SLA breaches, and compares Creator turnaround vs. Reviewer response latency.
+- **Recurring Violations & Brand Drift Radar:** Groups and ranks historical rule breaches with frequency counts and direct "Inspect Campaign" modal shortcuts.
+- **Policy Friction Radar (Ambiguity Scanner):**
+  - Scans active brand guidelines for subjective or ambiguous qualitative terms (`"modern"`, `"clean"`, `"appropriate"`, `"professional"`).
+  - Flags conflicting guidelines (e.g., 30-word sentence limits conflicting with mandatory legal disclosure clauses).
+  - Identifies empirical review friction where campaigns repeatedly trigger reviewer rejections.
+  - Generates concrete, measurable rule rewrites with one-click clipboard copying.
+- **Advisory Non-Destructive Integrity:** Friction recommendations remain strictly advisory and never overwrite brand guidelines without administrator action.
+- **Exportable Governance Reports:** One-click generation of comprehensive governance audit reports in both formatted GitHub-Flavored Markdown and machine-readable JSON.
 
 ---
 
@@ -106,10 +125,19 @@ Inkloom-AI-BrandForge/
 ├── server.js                  # Local Node.js test & development static server (port 5173)
 ├── netlify.toml               # Netlify build, serverless functions, and header security config
 ├── package.json               # Test runners, scripts, and production dependencies
+├── docs/                      # Comprehensive technical documentation
+│   ├── ARCHITECTURE.md        # Architectural overview & security boundaries
+│   ├── ROUND_3_IMPROVEMENTS.md# Complete breakdown of all 3 commitments
+│   ├── TESTING.md             # 85-test execution catalog & manual verification checklists
+│   ├── ROADMAP.md             # Delivery maturity matrix & post-hackathon roadmap
+│   └── FINAL_VERIFICATION_REPORT.md # Final project audit & verification report
+├── src/
+│   └── services/
+│       └── governanceIntelligenceCore.mjs # Analytics engine, friction scanner & report serializers
 ├── netlify/
 │   └── functions/
-│       ├── review.mjs         # Netlify serverless API endpoint for brand reviews
-│       ├── geminiReview.mjs   # Grounding prompt, JSON schema, and Gemini SDK integration
+│       ├── review-brand.mjs   # Hardened Netlify serverless API endpoint
+│       ├── reviewBrandCore.mjs# Grounding prompt, JSON schema, and Gemini SDK integration
 │       └── supabaseClient.mjs # Server-side Supabase client configuration
 ├── supabase/
 │   ├── schema.sql             # Complete 8-table relational schema with RLS and triggers
@@ -118,10 +146,9 @@ Inkloom-AI-BrandForge/
 │   ├── rulesEngine.test.js    # 20 tests: Deterministic lexical engine & heuristic scoring
 │   ├── aiReview.test.js       # 10 tests: Schema compliance, grounding, and fallbacks
 │   ├── collaborativeWorkflow.test.js # 10 tests: RBAC, state machine, and SHA-256 seals
-│   └── supabaseWorkflow.test.js      # 15 tests: RLS schema, UUIDs, and append-only audits
+│   ├── supabaseWorkflow.test.js      # 30 tests: RLS schema, UUIDs, anti-escalation & status enums
+│   └── governanceIntelligence.test.js# 15 tests: Metrics, drift radar, friction scanner & exports
 ├── README.md                  # Comprehensive platform documentation & setup guide
-├── ROUND_3_THE_FINISH.md      # Round 3 formal submission specifications
-├── TEST-REPORT.md             # Empirical test results from all test suites
 └── .env.example               # Template for required environment variables
 ```
 
@@ -157,9 +184,9 @@ $$\text{Score} = \max\left(10, \; 100 - \sum \text{Deductions}\right)$$
 
 ---
 
-## 🧪 Automated Testing Suite (55 / 55 Passed)
+## 🧪 Automated Testing Suite (85 / 85 Passed)
 
-The platform is backed by 55 automated unit and integration tests executing across 4 specialized suites:
+The platform is backed by 85 automated unit and integration tests executing across 5 specialized suites in under 2 seconds:
 
 ```bash
 npm test
@@ -245,7 +272,24 @@ npm test
 - `TC-SB-29`: Review history displays cloud vs local persistence badges &rarr; **PASS**
 - `TC-SB-30`: Gemini API key sanitization and safe diagnostic endpoint &rarr; **PASS**
 
-**Overall Test Results: 70 / 70 Passed (100% Pass Rate)**
+#### 5. Governance Intelligence & Policy Friction Radar (`tests/governanceIntelligence.test.js`)
+- `TC-GI-01`: Status normalizer strictly maps legacy and variant statuses to enum values &rarr; **PASS**
+- `TC-GI-02`: Date range filtering scopes records by time window (7d, 30d, 90d, all) &rarr; **PASS**
+- `TC-GI-03`: Governance metrics calculates accurate counts and compliance rate &rarr; **PASS**
+- `TC-GI-04`: Returns meaningful empty states when dataset is empty &rarr; **PASS**
+- `TC-GI-05`: Recurring violation detector groups and ranks violations by frequency and drift trend &rarr; **PASS**
+- `TC-GI-06`: Review efficiency accurately computes turnaround time and pending queue age &rarr; **PASS**
+- `TC-GI-07`: Bottleneck detector flags warning when review backlog grows &rarr; **PASS**
+- `TC-GI-08`: Policy Friction Radar detects subjective adjectives (`"modern"`, `"clean"`, `"appropriate"`, `"professional"`) &rarr; **PASS**
+- `TC-GI-09`: Policy Friction Radar identifies conflict between sentence limits and legal disclosures &rarr; **PASS**
+- `TC-GI-10`: Policy Friction Radar flags rules with empirical review disagreement history &rarr; **PASS**
+- `TC-GI-11`: Every friction finding provides a concrete proposed rule rewrite and recommendation &rarr; **PASS**
+- `TC-GI-12`: Synthesizes prioritized governance recommendations &rarr; **PASS**
+- `TC-GI-13`: Serializes comprehensive report to Markdown and JSON formats &rarr; **PASS**
+- `TC-GI-14`: Engine is strictly non-destructive and preserves original guidelines object &rarr; **PASS**
+- `TC-GI-15`: Detects conflicting terms listed in both avoid and preferred lists &rarr; **PASS**
+
+**Overall Test Results: 85 / 85 Passed (100% Pass Rate)**
 
 ---
 
