@@ -1128,7 +1128,6 @@ With this release, our system eliminates human managers and editorial review bec
       }
       return { success: true, localOnly: true };
     },
-    },
 
     // In-line comment creation
     async postComment(campaignId, revisionId, targetText, commentText) {
@@ -4836,29 +4835,59 @@ With this release, our system eliminates human managers and editorial review bec
      11. App Initialization
      =================================================================== */
   function init() {
-    // Populate form with current guidelines
-    populateGuidelinesForm();
-
-    // Check if onboarding was dismissed previously
+    // 1. Setup events FIRST so navigation, tab switching, and buttons are guaranteed to be active
     try {
-      if (localStorage.getItem(STORAGE_KEYS.ONBOARDING_SEEN) === 'true') {
+      setupEventListeners();
+    } catch (e) {
+      console.error('[BrandForge] Event listener setup notice:', e);
+    }
+
+    // 2. Populate form with current guidelines
+    try {
+      populateGuidelinesForm();
+    } catch (e) {
+      console.error('[BrandForge] populateGuidelinesForm notice:', e);
+    }
+
+    // 3. Check if onboarding was dismissed previously
+    try {
+      if (DOM.onboardingBanner && localStorage.getItem(STORAGE_KEYS.ONBOARDING_SEEN) === 'true') {
         DOM.onboardingBanner.style.display = 'none';
       }
     } catch (e) { /* ignore */ }
 
-    // Initial table and metric render
-    updateOverviewMetrics();
-    renderHistoryTable();
-    renderInsights();
+    // 4. Initial table, overview metrics, and insights render
+    try {
+      updateOverviewMetrics();
+    } catch (e) {
+      console.error('[BrandForge] updateOverviewMetrics notice:', e);
+    }
 
-    // Initialize collaborative workflow stepper
-    updateWorkflowUI('drafting');
+    try {
+      renderHistoryTable();
+    } catch (e) {
+      console.error('[BrandForge] renderHistoryTable notice:', e);
+    }
 
-    // Initialize Supabase Manager
-    SupabaseManager.init();
+    try {
+      renderInsights();
+    } catch (e) {
+      console.error('[BrandForge] renderInsights notice:', e);
+    }
 
-    // Setup events
-    setupEventListeners();
+    // 5. Initialize collaborative workflow stepper
+    try {
+      updateWorkflowUI('drafting');
+    } catch (e) {
+      console.error('[BrandForge] updateWorkflowUI notice:', e);
+    }
+
+    // 6. Initialize Supabase Manager
+    try {
+      SupabaseManager.init();
+    } catch (e) {
+      console.error('[BrandForge] SupabaseManager.init notice:', e);
+    }
 
     console.log('BrandForge Round 3 initialized: Collaborative Governance & Cryptographic Seals Active.');
   }
