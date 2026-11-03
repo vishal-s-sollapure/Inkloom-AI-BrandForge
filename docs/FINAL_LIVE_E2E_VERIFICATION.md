@@ -7,7 +7,7 @@
 **Developer:** Vishal S Sollapure | **Team:** BrandForge  
 **Live Deployed Application:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)  
 **GitHub Repository:** [https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge) (`main` branch)  
-**Supabase Gateway:** `https://mkwpjspbetawtcbguozw.supabase.co`  
+**Supabase Gateway:** `https://<supabase-project-id>.supabase.co`  
 **Latest Deployed Commit:** `c4c655be65c930f585668ffd9eaca23e0453b1fa`
 
 ---
@@ -40,7 +40,7 @@ This document records the empirical results of the **Final Live End-to-End Verif
 ---
 
 ### Phase 2: Supabase Configuration & Identity Audit
-- **Supabase Gateway Status:** Reached at `https://mkwpjspbetawtcbguozw.supabase.co`. Responds with standard gateway routing payload (`{"error":"requested path is invalid"}`), confirming Kong API Gateway is live and healthy.
+- **Supabase Gateway Status:** Reached at `https://<supabase-project-id>.supabase.co`. Responds with standard gateway routing payload (`{"error":"requested path is invalid"}`), confirming Kong API Gateway is live and healthy.
 - **Relational Tables Provisioned (8 Tables):**
   1. `public.organizations`
   2. `public.profiles`
