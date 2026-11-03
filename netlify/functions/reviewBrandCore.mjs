@@ -391,11 +391,11 @@ export async function callGeminiApi({
   rawText,
   guidelines,
   apiKey,
-  model = 'gemini-1.5-flash',
+  model = 'gemini-2.5-flash',
   timeoutMs = 8000
 }) {
   const cleanApiKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
-  const cleanModel = (model || 'gemini-1.5-flash').trim();
+  const cleanModel = (model || 'gemini-2.5-flash').trim();
 
   const { systemInstruction, userPrompt } = buildGeminiPrompt(title, contentType, rawText, guidelines);
 
@@ -484,7 +484,7 @@ export async function reviewBrand({
   rawText,
   guidelines = {},
   apiKey = process.env.GEMINI_API_KEY,
-  model = process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+  model = process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   forceEngine = null // 'deterministic' | 'gemini' | null (auto)
 }) {
   // 1. Boundary check
@@ -498,7 +498,7 @@ export async function reviewBrand({
   }
 
   const cleanApiKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
-  const cleanModel = (model || 'gemini-1.5-flash').trim();
+  const cleanModel = (model || 'gemini-2.5-flash').trim();
   const isKeyMissingOrPlaceholder = !cleanApiKey || cleanApiKey.includes('placeholder') || cleanApiKey === 'your_gemini_api_key_here' || cleanApiKey.length < 15;
 
   // 2. Forced or fallback deterministic mode
