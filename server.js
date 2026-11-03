@@ -115,6 +115,31 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Handle Supabase Public Configuration Endpoint: GET /api/supabase-config
+  if (reqUrl === '/api/supabase-config' || reqUrl === '/.netlify/functions/supabase-config') {
+    const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
+    const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+    const isConfigured = Boolean(
+      url &&
+      url.startsWith('https://') &&
+      !url.includes('placeholder') &&
+      anonKey &&
+      anonKey.length > 20 &&
+      !anonKey.includes('placeholder')
+    );
+
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+    return res.end(JSON.stringify({
+      isConfigured,
+      url: isConfigured ? url : '',
+      anonKey: isConfigured ? anonKey : '',
+      status: isConfigured ? 'configured' : 'unconfigured'
+    }));
+  }
+
   // Static File Serving
   let targetPath = reqUrl === '/' ? '/index.html' : reqUrl;
   const filePath = path.join(__dirname, targetPath);

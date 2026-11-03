@@ -541,6 +541,23 @@ With this release, our system eliminates human managers and editorial review bec
 
     async init() {
       this.loadConfig();
+
+      // If not configured in localStorage, auto-fetch from Netlify serverless environment
+      if (!this.config.url || !this.config.anonKey) {
+        try {
+          const res = await fetch('/api/supabase-config');
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.isConfigured && data.url && data.anonKey) {
+              this.config = { url: data.url, anonKey: data.anonKey };
+              this.saveConfig(data.url, data.anonKey);
+            }
+          }
+        } catch (e) {
+          console.warn('[BrandForge] Notice: serverless Supabase config not reachable:', e.message);
+        }
+      }
+
       if (this.config.url && this.config.anonKey) {
         await this.connect(this.config.url, this.config.anonKey, false);
       } else {

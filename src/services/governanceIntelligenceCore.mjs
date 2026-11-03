@@ -460,7 +460,9 @@ export function runPolicyFrictionRadar(guidelines = {}, campaigns = []) {
 /**
  * Generate actionable, prioritized governance recommendations
  */
-export function generateGovernanceRecommendations(metrics = {}, recurring = [], friction = []) {
+export function generateGovernanceRecommendations(metrics = {}, recurring = [], frictionOrEfficiency = [], maybeFriction = []) {
+  // Support both (metrics, recurring, friction) and (metrics, recurring, efficiency, friction)
+  const friction = Array.isArray(frictionOrEfficiency) ? frictionOrEfficiency : (Array.isArray(maybeFriction) ? maybeFriction : []);
   const recommendations = [];
   let recCounter = 1;
 
@@ -525,18 +527,43 @@ export function generateGovernanceRecommendations(metrics = {}, recurring = [], 
 /**
  * Format governance intelligence report as structured Markdown or JSON
  */
-export function generateGovernanceReport(metrics, recurring, efficiency, friction, recommendations, format = 'markdown') {
-  if (format === 'json') {
+export function generateGovernanceReport(metricsOrCampaigns, recurringOrGuidelines, efficiencyOrFormat, friction, recommendations, format = 'markdown') {
+  let metrics, recurring, efficiency, frictionFindings, recs, fmt;
+
+  // Support both (metrics, recurring, efficiency, friction, recommendations, format)
+  // and convenient shorthand (campaigns, guidelines, { format: 'markdown' })
+  if (Array.isArray(metricsOrCampaigns)) {
+    const campaigns = metricsOrCampaigns;
+    const guidelines = recurringOrGuidelines || {};
+    metrics = analyzeGovernanceMetrics(campaigns);
+    recurring = detectRecurringViolations(campaigns);
+    efficiency = computeReviewEfficiency(campaigns);
+    frictionFindings = runPolicyFrictionRadar(guidelines, campaigns);
+    recs = generateGovernanceRecommendations(metrics, recurring, efficiency, frictionFindings);
+    fmt = (efficiencyOrFormat && typeof efficiencyOrFormat === 'object' && efficiencyOrFormat.format) || (typeof efficiencyOrFormat === 'string' ? efficiencyOrFormat : 'markdown');
+  } else {
+    metrics = metricsOrCampaigns || {};
+    recurring = recurringOrGuidelines || [];
+    efficiency = efficiencyOrFormat || {};
+    frictionFindings = friction || [];
+    recs = recommendations || [];
+    fmt = format || 'markdown';
+  }
+
+  if (fmt === 'json') {
     return JSON.stringify({
       generatedAt: new Date().toISOString(),
       platform: 'BrandForge Intelligent Brand Governance',
       metrics,
       recurringViolations: recurring,
       reviewEfficiency: efficiency,
-      policyFrictionRadar: friction,
-      recommendations
+      policyFrictionRadar: frictionFindings,
+      recommendations: recs
     }, null, 2);
   }
+
+  const bottleneckMessage = (efficiency.bottleneck && efficiency.bottleneck.message) || 'No workflow bottlenecks detected.';
+  const bottleneckSeverity = (efficiency.bottleneck && efficiency.bottleneck.severity) ? efficiency.bottleneck.severity.toUpperCase() : 'NORMAL';
 
   const lines = [
     `# BrandForge Governance Intelligence & Policy Friction Report`,
@@ -544,42 +571,42 @@ export function generateGovernanceReport(metrics, recurring, efficiency, frictio
     `**Platform:** BrandForge Multi-Role Governance Engine (Codex 48 Round 3)`,
     ``,
     `## 1. Executive Summary & Governance KPIs`,
-    `- **Total Campaigns Evaluated:** ${metrics.totalCampaigns}`,
-    `- **Overall Compliance Rate:** ${metrics.complianceRate !== null ? metrics.complianceRate + '%' : 'Pending Review'}`,
-    `- **Awaiting Brand Review:** ${metrics.inReviewCount}`,
-    `- **Brand Approved:** ${metrics.brandApprovedCount}`,
-    `- **Legally Cleared (Sealed):** ${metrics.legallyClearedCount}`,
-    `- **Changes Requested:** ${metrics.changesRequestedCount}`,
-    `- **Total Policy Violations Detected:** ${metrics.totalViolations} (${metrics.highSeverityViolations} High Severity)`,
-    `- **Average Review Turnaround Time:** ${efficiency.averageTurnaroundFormatted}`,
+    `- **Total Campaigns Evaluated:** ${metrics.totalCampaigns || 0}`,
+    `- **Overall Compliance Rate:** ${metrics.complianceRate !== null && metrics.complianceRate !== undefined ? metrics.complianceRate + '%' : 'Pending Review'}`,
+    `- **Awaiting Brand Review:** ${metrics.inReviewCount || 0}`,
+    `- **Brand Approved:** ${metrics.brandApprovedCount || 0}`,
+    `- **Legally Cleared (Sealed):** ${metrics.legallyClearedCount || 0}`,
+    `- **Changes Requested:** ${metrics.changesRequestedCount || 0}`,
+    `- **Total Policy Violations Detected:** ${metrics.totalViolations || 0} (${metrics.highSeverityViolations || 0} High Severity)`,
+    `- **Average Review Turnaround Time:** ${efficiency.averageTurnaroundFormatted || 'N/A'}`,
     ``,
     `## 2. Review Pipeline & Bottleneck Radar`,
-    `- **Bottleneck Status:** ${efficiency.bottleneck.message} [${efficiency.bottleneck.severity.toUpperCase()}]`,
-    `- **Average Pending Queue Age:** ${efficiency.pendingQueueAgeHours !== null ? efficiency.pendingQueueAgeHours + ' hours' : 'N/A'}`,
+    `- **Bottleneck Status:** ${bottleneckMessage} [${bottleneckSeverity}]`,
+    `- **Average Pending Queue Age:** ${efficiency.pendingQueueAgeHours !== null && efficiency.pendingQueueAgeHours !== undefined ? efficiency.pendingQueueAgeHours + ' hours' : 'N/A'}`,
     ``,
     `## 3. Recurring Brand Violations (Top Drift Areas)`,
     recurring.length === 0 ? `*No recurring violations detected across evaluated campaigns.*` :
       recurring.slice(0, 5).map((r, i) =>
-        `${i + 1}. **${r.ruleTitle}** (${r.category})\n   - Frequency: ${r.totalCount}x across ${r.affectedCampaignCount} campaign(s)\n   - Severity: ${r.highSeverityCount} High, ${r.mediumSeverityCount} Medium\n   - Section: ${r.guidelineSection}`
+        `${i + 1}. **${r.ruleTitle || r.ruleName}** (${r.category || 'General'})\n   - Frequency: ${r.totalCount || r.occurrences || 1}x across ${r.affectedCampaignCount || 1} campaign(s)\n   - Severity: ${r.highSeverityCount || 0} High, ${r.mediumSeverityCount || 0} Medium\n   - Section: ${r.guidelineSection || 'Brand Policy'}`
       ).join('\n'),
     ``,
     `## 4. Policy Friction Radar (Guideline Ambiguity & Conflicts)`,
-    friction.length === 0 ? `*Zero policy friction or contradictory guidelines identified.*` :
-      friction.map((f, i) =>
-        `### ${i + 1}. [${f.frictionType}] ${f.guidelineSection}\n` +
-        `- **Quoted Text:** *"${f.quotedGuideline}"*\n` +
-        `- **Friction Cause:** ${f.whyFriction}\n` +
-        `- **Evidence:** ${f.empiricalEvidence}\n` +
-        `- **Proposed Measurable Rewrite:** \`${f.proposedRuleRewrite}\`\n`
-      ).join('\n'),
+    frictionFindings.length === 0 ? `*Zero policy friction or contradictory guidelines identified.*` :
+      frictionFindings.map((f, i) =>
+        `### ${i + 1}. [${f.frictionType || f.severity || 'Friction'}] ${f.guidelineSection || f.title}\n` +
+        `- **Quoted Text:** *"${f.quotedGuideline || f.issue}"*\n` +
+        `- **Ambiguity / Conflict:** ${f.ambiguityAnalysis || f.recommendation}\n` +
+        `- **Proposed Objective Rewrite:** *"${f.proposedRewrite}"*`
+      ).join('\n\n'),
     ``,
-    `## 5. Prioritized Actionable Recommendations`,
-    recommendations.map((rec, i) =>
-      `${i + 1}. **[${rec.priority.toUpperCase()}] ${rec.title}** (${rec.category})\n   - Impact: ${rec.impact}\n   - Rationale: ${rec.description}\n   - Action: ${rec.actionItem}`
-    ).join('\n'),
-    ``,
-    `---`,
-    `*Report generated by BrandForge. Advisory recommendations do not automatically alter saved brand guidelines.*`
+    `## 5. Prioritized Governance Recommendations`,
+    recs.length === 0 ? `*All active governance policies performing within target thresholds.*` :
+      recs.map((r, i) =>
+        `### ${i + 1}. [Priority ${r.priority}] ${r.title}\n` +
+        `- **Action:** ${r.action}\n` +
+        `- **Target Stakeholder:** ${r.targetRole}\n` +
+        `- **Expected Impact:** ${r.expectedImpact}`
+      ).join('\n\n')
   ];
 
   return lines.join('\n');
