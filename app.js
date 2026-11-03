@@ -3008,7 +3008,7 @@ With this release, our system eliminates human managers and editorial review bec
     if (activeEngineMode === 'ai') {
       try {
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 9500);
+        const timer = setTimeout(() => controller.abort(), 24000);
 
         const response = await fetch('/api/review-brand', {
           method: 'POST',

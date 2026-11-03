@@ -392,7 +392,7 @@ export async function callGeminiApi({
   guidelines,
   apiKey,
   model = 'gemini-3.8-flash',
-  timeoutMs = 9000
+  timeoutMs = 22000
 }) {
   const cleanApiKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
   const cleanModel = (model || 'gemini-3.8-flash').trim();
