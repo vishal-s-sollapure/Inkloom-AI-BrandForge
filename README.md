@@ -2,10 +2,10 @@
 ### Intelligent Pre-Publication Brand Governance & Compliance Platform
 **Inkloom AI Brand Governance Challenge — Round 3 (The Finish)**
 
-[![Netlify Status](https://img.shields.io/badge/Netlify-Deployed%20Live-10B981?logo=netlify&logoColor=white)](https://brandforge-inkloom.netlify.app/)
+[![Netlify Status](https://img.shields.io/badge/Netlify-Deployed%20Live-10B981?logo=netlify&logoColor=white)](https://sprightly-banoffee-9bdfc5.netlify.app/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?logo=github&logoColor=white)](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge)
 [![Vanilla JS](https://img.shields.io/badge/Stack-HTML5%20%2F%20CSS3%20%2F%20JS-F7DF1E?logo=javascript&logoColor=black)](#)
-[![Google Gemini](https://img.shields.io/badge/AI%20Engine-Gemini%20Flash-4285F4?logo=google&logoColor=white)](#)
+[![Google Gemini](https://img.shields.io/badge/AI%20Engine-Gemini%203.8%20Flash-4285F4?logo=google&logoColor=white)](#)
 [![Supabase](https://img.shields.io/badge/Cloud%20DB-Supabase%20PostgreSQL%20%2B%20RLS-3ECF8E?logo=supabase&logoColor=white)](#)
 [![Automated Tests](https://img.shields.io/badge/Tests-85%2F85%20Passed-10B981)](#)
 
@@ -20,7 +20,7 @@ In fast-paced organizations, marketing teams, external agencies, and generative 
 In **Round 2 (The Build)**, BrandForge established its core foundation: a deterministic lexical rules engine, side-by-side visual diffs, and audit exports running client-side.
 
 In **Round 3 (The Finish)**, BrandForge completes its transformation into a production-grade, collaborative, AI-powered brand governance product delivering **all three committed Round 3 improvements**:
-1. **Evidence-Backed AI Brand Review** powered by Google Gemini with structured JSON schemas, policy grounding, claim-verification tagging, and deterministic fallback.
+1. **Evidence-Backed AI Brand Review** powered by Google Gemini (`gemini-3.8-flash`) with structured JSON schemas, policy grounding, claim-verification tagging, and deterministic fallback.
 2. **Collaborative Multi-Role Governance Workflow** backed by Supabase PostgreSQL, Row-Level Security (RLS), 3 distinct stakeholder roles (`Content Creator`, `Brand Custodian`, `Legal & Compliance Officer`), in-line contextual comments on visual diffs, and cryptographic SHA-256 compliance seals.
 3. **Governance Intelligence & Policy Friction Radar** providing an 8-KPI health ribbon, collaborative lifecycle stage pipeline, review velocity and bottleneck diagnostics, recurring brand drift detection, automated policy friction scanner with concrete measurable rule rewrites, and exportable audit reporting (Markdown & JSON).
 
@@ -33,7 +33,8 @@ In **Round 3 (The Finish)**, BrandForge completes its transformation into a prod
 - **Participant:** Vishal S Sollapure
 - **Team Name:** BrandForge
 - **Stage:** Round 3 — The Finish (Final Production Submission)
-- **Live Deployed Application:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
+- **Primary Live Production URL:** [https://sprightly-banoffee-9bdfc5.netlify.app/](https://sprightly-banoffee-9bdfc5.netlify.app/)
+- **Alternative Production Mirror:** [https://brandforge-inkloom.netlify.app/](https://brandforge-inkloom.netlify.app/)
 - **Source Code Repository:** [https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge](https://github.com/vishal-s-sollapure/Inkloom-AI-BrandForge)
 - **Automated Test Coverage:** 85 / 85 tests passing across 5 comprehensive suites (100% success rate).
 
@@ -42,6 +43,8 @@ In **Round 3 (The Finish)**, BrandForge completes its transformation into a prod
 ## 📚 Complete Project Documentation
 
 Detailed technical documentation is available in the [`docs/`](docs/) directory:
+- 🏆 [**Top-3 Readiness & Evaluation Report**](docs/TOP_3_READINESS_REPORT.md) — Comprehensive Codex 48 Round 3 competitive evaluation and score estimation.
+- 🚀 [**Production Deployment Audit**](docs/FINAL_PRODUCTION_DEPLOYMENT_AUDIT.md) — End-to-end audit of production site, serverless API routes, and cloud persistence.
 - 🏛️ [**System Architecture**](docs/ARCHITECTURE.md) — Architectural overview, frontend SPA design, serverless backend, Supabase database schema, and security boundaries.
 - 🎯 [**Round 3 Improvements Deep-Dive**](docs/ROUND_3_IMPROVEMENTS.md) — Comprehensive technical implementation of all 3 Round 3 commitments.
 - 🧪 [**Testing Guide & Verification Catalog**](docs/TESTING.md) — Execution commands, complete catalog of 85 automated tests, unit vs. integration testing, and manual verification checklists.
