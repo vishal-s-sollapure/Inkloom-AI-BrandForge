@@ -68,7 +68,7 @@ BrandForge uses secure Netlify Serverless Functions running on Node.js:
 
 ## 4. Supabase Database Schema & Multi-Tenant Model
 
-The persistence layer runs on managed PostgreSQL in Supabase (`https://mkwpjspbetawtcbguozw.supabase.co`):
+The persistence layer runs on managed PostgreSQL in Supabase (`https://[project-id].supabase.co`):
 
 | Table Name | Primary Purpose | Row Level Security (RLS) Policy |
 | :--- | :--- | :--- |

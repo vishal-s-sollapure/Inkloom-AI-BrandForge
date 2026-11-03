@@ -8,6 +8,11 @@
   # No frontend build command needed for Vanilla HTML5/CSS/JS runtime
   command = ""
 
+[build.environment]
+  # Exclude public client keys and project URLs from Netlify secrets scanning
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_ANON_KEY,SUPABASE_URL,VITE_SUPABASE_ANON_KEY,VITE_SUPABASE_URL"
+  SECRETS_SCAN_OMIT_PATHS = "docs/**,tests/**,.env.example"
+
 # API route rewrites to Netlify serverless functions
 [[redirects]]
   from = "/api/*"
