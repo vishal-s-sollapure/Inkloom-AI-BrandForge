@@ -392,14 +392,12 @@ export async function callGeminiApi({
   guidelines,
   apiKey,
   model = 'gemini-2.5-flash',
-  timeoutMs = 8000
+  timeoutMs = 9000
 }) {
   const cleanApiKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
   const cleanModel = (model || 'gemini-2.5-flash').trim();
 
   const { systemInstruction, userPrompt } = buildGeminiPrompt(title, contentType, rawText, guidelines);
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cleanModel)}:generateContent?key=${encodeURIComponent(cleanApiKey)}`;
 
   const requestBody = {
     system_instruction: {
@@ -419,62 +417,88 @@ export async function callGeminiApi({
     }
   };
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const candidateModels = [
+    cleanModel,
+    'gemini-2.5-flash',
+    'gemini-2.0-flash'
+  ].filter((m, i, arr) => m && arr.indexOf(m) === i);
 
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': cleanApiKey
-      },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal
-    });
+  let lastError = null;
 
-    clearTimeout(timer);
+  for (let i = 0; i < candidateModels.length; i++) {
+    const targetModel = candidateModels[i];
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(targetModel)}:generateContent?key=${encodeURIComponent(cleanApiKey)}`;
 
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      throw new Error(`Gemini API returned status ${res.status}: ${errText.slice(0, 300)}`);
-    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    const resJson = await res.json();
-    const candidate = resJson.candidates && resJson.candidates[0];
-    const textPart = candidate && candidate.content && candidate.content.parts && candidate.content.parts[0];
-    const rawContent = textPart && textPart.text;
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': cleanApiKey
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
 
-    if (!rawContent) {
-      throw new Error('Gemini API returned empty candidate response.');
-    }
+      clearTimeout(timer);
 
-    const parsed = JSON.parse(rawContent);
-
-    // Validate structured fields
-    if (typeof parsed.complianceScore !== 'number' || !Array.isArray(parsed.findings)) {
-      throw new Error('Gemini response did not conform to required JSON structure.');
-    }
-
-    // Ensure finding IDs and sane confidence bounds
-    parsed.findings.forEach((f, idx) => {
-      if (!f.findingId) f.findingId = `ai-finding-${idx + 1}`;
-      if (typeof f.confidence !== 'number' || f.confidence < 50 || f.confidence > 100) {
-        f.confidence = 90;
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        // If 404 (model not found) and more candidates exist, try next candidate model
+        if (res.status === 404 && i < candidateModels.length - 1) {
+          console.warn(`[BrandForge AI Review] Model '${targetModel}' returned 404. Trying fallback candidate '${candidateModels[i + 1]}'...`);
+          lastError = new Error(`Gemini API returned status ${res.status}: ${errText.slice(0, 300)}`);
+          continue;
+        }
+        throw new Error(`Gemini API returned status ${res.status}: ${errText.slice(0, 300)}`);
       }
-      f.isVerificationNeeded = Boolean(f.isVerificationNeeded);
-    });
 
-    parsed.claimsRequiringEvidenceCount = parsed.findings.filter(f => f.isVerificationNeeded).length;
-    parsed.engine = 'gemini';
-    parsed.model = cleanModel;
-    parsed.isFallback = false;
+      const resJson = await res.json();
+      const candidate = resJson.candidates && resJson.candidates[0];
+      const textPart = candidate && candidate.content && candidate.content.parts && candidate.content.parts[0];
+      const rawContent = textPart && textPart.text;
 
-    return parsed;
-  } catch (err) {
-    clearTimeout(timer);
-    throw err;
+      if (!rawContent) {
+        throw new Error('Gemini API returned empty candidate response.');
+      }
+
+      const parsed = JSON.parse(rawContent);
+
+      // Validate structured fields
+      if (typeof parsed.complianceScore !== 'number' || !Array.isArray(parsed.findings)) {
+        throw new Error('Gemini response did not conform to required JSON structure.');
+      }
+
+      // Ensure finding IDs and sane confidence bounds
+      parsed.findings.forEach((f, idx) => {
+        if (!f.findingId) f.findingId = `ai-finding-${idx + 1}`;
+        if (typeof f.confidence !== 'number' || f.confidence < 50 || f.confidence > 100) {
+          f.confidence = 90;
+        }
+        f.isVerificationNeeded = Boolean(f.isVerificationNeeded);
+      });
+
+      parsed.claimsRequiringEvidenceCount = parsed.findings.filter(f => f.isVerificationNeeded).length;
+      parsed.engine = 'gemini';
+      parsed.model = targetModel;
+      parsed.isFallback = false;
+
+      return parsed;
+    } catch (err) {
+      clearTimeout(timer);
+      lastError = err;
+      // If error is 404 and more candidates exist, loop continues
+      if (err.message && err.message.includes('404') && i < candidateModels.length - 1) {
+        continue;
+      }
+      throw err;
+    }
   }
+
+  throw lastError || new Error('All candidate Gemini models failed.');
 }
 
 // Master review dispatcher with defensive fallback
