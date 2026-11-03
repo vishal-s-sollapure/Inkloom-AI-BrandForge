@@ -50,7 +50,7 @@ export default async (req, context) => {
     const envVarName = process.env.GEMINI_API_KEY ? 'GEMINI_API_KEY' : (process.env.GOOGLE_API_KEY ? 'GOOGLE_API_KEY' : (process.env.GOOGLE_GEMINI_API_KEY ? 'GOOGLE_GEMINI_API_KEY' : 'NONE'));
     const rawApiKey = (envVarName !== 'NONE' ? process.env[envVarName] : '') || '';
     const apiKey = rawApiKey.trim().replace(/^["']|["']$/g, '');
-    const model = (body.model || process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+    const model = (body.model || process.env.GEMINI_MODEL || 'gemini-3.8-flash').trim();
 
     // Safe diagnostic endpoint without exposing any key metadata or secrets
     if (diagnostic === true || (req.url && req.url.includes('diagnostic=true'))) {
@@ -130,7 +130,7 @@ export async function handler(event, context) {
     const envVarName = process.env.GEMINI_API_KEY ? 'GEMINI_API_KEY' : (process.env.GOOGLE_API_KEY ? 'GOOGLE_API_KEY' : (process.env.GOOGLE_GEMINI_API_KEY ? 'GOOGLE_GEMINI_API_KEY' : 'NONE'));
     const rawApiKey = (envVarName !== 'NONE' ? process.env[envVarName] : '') || '';
     const apiKey = rawApiKey.trim().replace(/^["']|["']$/g, '');
-    const model = (body.model || process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+    const model = (body.model || process.env.GEMINI_MODEL || 'gemini-3.8-flash').trim();
 
     // Safe diagnostic endpoint without exposing any key metadata or secrets
     if (diagnostic === true || (req.url && req.url.includes('diagnostic=true'))) {

@@ -391,11 +391,11 @@ export async function callGeminiApi({
   rawText,
   guidelines,
   apiKey,
-  model = 'gemini-2.5-flash',
+  model = 'gemini-3.8-flash',
   timeoutMs = 9000
 }) {
   const cleanApiKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
-  const cleanModel = (model || 'gemini-2.5-flash').trim();
+  const cleanModel = (model || 'gemini-3.8-flash').trim();
 
   const { systemInstruction, userPrompt } = buildGeminiPrompt(title, contentType, rawText, guidelines);
 
@@ -419,6 +419,7 @@ export async function callGeminiApi({
 
   const candidateModels = [
     cleanModel,
+    'gemini-3.8-flash',
     'gemini-2.5-flash',
     'gemini-2.0-flash'
   ].filter((m, i, arr) => m && arr.indexOf(m) === i);
@@ -447,9 +448,9 @@ export async function callGeminiApi({
 
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
-        // If 404 (model not found) and more candidates exist, try next candidate model
-        if (res.status === 404 && i < candidateModels.length - 1) {
-          console.warn(`[BrandForge AI Review] Model '${targetModel}' returned 404. Trying fallback candidate '${candidateModels[i + 1]}'...`);
+        // If 404 (model retired) or 503 (high demand) and more candidates exist, try next candidate model
+        if ((res.status === 404 || res.status === 503) && i < candidateModels.length - 1) {
+          console.warn(`[BrandForge AI Review] Model '${targetModel}' returned ${res.status}. Trying fallback candidate '${candidateModels[i + 1]}'...`);
           lastError = new Error(`Gemini API returned status ${res.status}: ${errText.slice(0, 300)}`);
           continue;
         }
@@ -508,7 +509,7 @@ export async function reviewBrand({
   rawText,
   guidelines = {},
   apiKey = process.env.GEMINI_API_KEY,
-  model = process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  model = process.env.GEMINI_MODEL || 'gemini-3.8-flash',
   forceEngine = null // 'deterministic' | 'gemini' | null (auto)
 }) {
   // 1. Boundary check
@@ -522,7 +523,7 @@ export async function reviewBrand({
   }
 
   const cleanApiKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
-  const cleanModel = (model || 'gemini-2.5-flash').trim();
+  const cleanModel = (model || 'gemini-3.8-flash').trim();
   const isKeyMissingOrPlaceholder = !cleanApiKey || cleanApiKey.includes('placeholder') || cleanApiKey === 'your_gemini_api_key_here' || cleanApiKey.length < 15;
 
   // 2. Forced or fallback deterministic mode
