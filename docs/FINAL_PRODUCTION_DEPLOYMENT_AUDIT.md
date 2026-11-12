@@ -96,3 +96,4 @@ This production deployment audit evaluates the live BrandForge system against th
 3. **No Service-Role Key Exposure:** Client-side bundle references only the public anon key. Service-role credentials remain strictly server-side.
 4. **Append-Only Audit Trail:** `audit_events` table disallows `UPDATE` and `DELETE` operations, creating a tamper-evident audit history.
 5. **Input Boundary Protection:** Inputs capped at 120 characters for titles and 25,000 characters for drafts to prevent buffer exhaustion and DoS vectors.
+
